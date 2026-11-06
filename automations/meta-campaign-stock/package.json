@@ -5,7 +5,8 @@
   "main": "src/index.js",
   "scripts": {
     "export": "node src/index.js",
-    "export:dry": "DRY_RUN=true node src/index.js"
+    "export:dry": "DRY_RUN=true node src/index.js",
+    "whatsapp:test": "node scripts/whatsapp-test.js"
   },
   "engines": {
     "node": ">=18"
