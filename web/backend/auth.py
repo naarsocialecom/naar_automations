@@ -59,8 +59,7 @@ def init_auth(app):
 
     @app.before_request
     def require_login():
-        # /stock/<code>: a seller's own low-stock list from the WhatsApp link (the code is the key)
-        if request.path in OPEN_PATHS or request.path.startswith(('/static/', '/stock/')) or signed_in():
+        if request.path in OPEN_PATHS or request.path.startswith('/static/') or signed_in():
             return None
         if hmac.compare_digest(request.headers.get(INTERNAL_HEADER, ''), internal_token()):
             return None

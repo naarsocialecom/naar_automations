@@ -115,7 +115,7 @@ async function main() {
 
   const date = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
   const summary = query.summary
-    ? query.summary({ ...result, context: { ...context, sellerLists: config.sellerLists }, title: query.title, threshold: query.lowStockThreshold, date })
+    ? query.summary({ ...result, context, title: query.title, threshold: query.lowStockThreshold, date })
     : null;
   if (summary) log(`Summary:\n${summary.text}`);
   if (summary?.image) {
