@@ -7,6 +7,7 @@ const { exportSheets } = require("./exporter");
 const { aggregate } = require("./db");
 const { sendExport } = require("./mailer");
 const { sendToSlack } = require("./slack");
+const { writeSellerPdf } = require("./seller-pdf");
 
 const log = (...args) => console.log(`[${new Date().toISOString()}]`, ...args);
 
@@ -126,9 +127,19 @@ async function main() {
     log(`Dashboard image -> ${png}`);
   }
 
-  // WhatsApp preview (nothing sent): saved for the dashboard, numbers masked
+  // WhatsApp preview (nothing sent): saved for the dashboard, numbers masked.
+  // Long lists get their PDF in exports/seller-pdfs (rebuilt each run).
   if (summary?.whatsapp) {
     const wa = summary.whatsapp;
+    const pdfDir = path.join(config.export.dir, "seller-pdfs");
+    fs.rmSync(pdfDir, { recursive: true, force: true });
+    fs.mkdirSync(pdfDir, { recursive: true });
+    for (const s of wa.sellers.filter((x) => x.attachment)) {
+      const file = `${String(s.sellerId).replace(/[^A-Za-z0-9_-]/g, "") || "seller"}.pdf`;
+      await writeSellerPdf(path.join(pdfDir, file),
+        { storeName: s.storeName, products: s.attachment.products, threshold: query.lowStockThreshold, date });
+      s.attachment = { fileName: s.attachment.fileName, file, productCount: s.attachment.products.length };
+    }
     fs.writeFileSync(path.join(config.export.dir, "whatsapp-preview.json"),
       JSON.stringify({ generatedAt: new Date().toISOString(), ...wa }, null, 2));
     log(`WhatsApp preview: ${wa.sellers.length} seller message(s), ${wa.withNumber} with a number - nothing sent`);

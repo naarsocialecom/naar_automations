@@ -113,6 +113,13 @@
     font-size: 0.84rem; line-height: 1.5; white-space: pre-wrap; color: #172b4d; max-width: 560px;
 }
 
+.auto-wa-file {
+    display: flex; gap: 0.7rem; align-items: center; background: #fff; border-radius: 0.6rem;
+    padding: 0.6rem 0.8rem; margin-bottom: 0.8rem; font-size: 0.8rem; color: #44546f; white-space: normal;
+}
+.auto-wa-file i { font-size: 1.6rem; color: #d93025; }
+.auto-wa-link { display: inline-block; margin: 0 0.9rem 0.9rem; font-size: 0.82rem; font-weight: 600; color: #0c66e4; text-decoration: none; }
+
 .auto-footer { margin-top: 1.6rem; font-size: 0.8rem; color: #6b778c; }
 .auto-footer code { background: #f1f2f4; padding: 0 0.3rem; border-radius: 4px; }
 

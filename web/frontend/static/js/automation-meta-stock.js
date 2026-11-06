@@ -121,7 +121,9 @@ function render(data) {
                     <span class="auto-wa-phone${s.phone ? '' : ' is-missing'}">${s.phone ? `<i class="fab fa-whatsapp"></i> ${escapeHtml(s.phone)}` : escapeHtml(s.problem)}</span>
                     <span class="auto-wa-count">${s.productCount} low-stock product${s.productCount === 1 ? '' : 's'}</span>
                 </summary>
-                <div class="auto-wa-msg">${escapeHtml(s.message)}</div>
+                <div class="auto-wa-msg">${s.attachment ? `<div class="auto-wa-file"><i class="fas fa-file-pdf"></i>
+                    <span><b>${escapeHtml(s.attachment.fileName)}</b><br>${s.attachment.productCount} products · PDF</span></div>` : ''}${escapeHtml(s.message)}</div>
+                ${s.attachment ? `<a class="auto-wa-link" href="${API}/seller-pdf/${encodeURIComponent(s.attachment.file)}" target="_blank" rel="noopener"><i class="fas fa-file-pdf"></i> View the PDF this seller would get</a>` : ''}
             </details>`).join('');
     } else {
         $('autoWaMeta').textContent = wa ? 'No campaign store has products below the limit, so no messages.' : 'Run a test run to build the preview.';

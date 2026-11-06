@@ -10,6 +10,7 @@ file keeps it to one run at a time, also against the 11 AM timer.
 import json
 import logging
 import os
+import re
 import shutil
 import subprocess
 import threading
@@ -32,6 +33,9 @@ LOCK_FILE = '.run.lock'
 # Output of the latest run started from the website
 RUN_LOG = 'dashboard-run.log'
 WHATSAPP_PREVIEW = 'whatsapp-preview.json'
+# PDFs with a store's full list, attached when the list is too long for the message
+SELLER_PDFS = 'seller-pdfs'
+PDF_NAME = re.compile(r'^[A-Za-z0-9_-]{1,80}\.pdf$')
 # Only these reach the job; it reads everything else (Slack channel, tokens) from its own .env
 PASS_ENV = ('PATH', 'HOME', 'LANG', 'LC_ALL', 'TZ')
 
@@ -160,6 +164,15 @@ def meta_stock_run():
         time.sleep(0.1)
     logger.info(f"Meta campaign stock {mode} run started from the dashboard (pid {proc.pid})")
     return jsonify({'started': True, 'mode': mode}), 202
+
+
+@automations_bp.route('/api/automations/meta-campaign-stock/seller-pdf/<name>', methods=['GET'])
+def meta_stock_seller_pdf(name):
+    """The PDF a seller would get with the WhatsApp message (team only, behind the login)."""
+    path = Config.META_STOCK_EXPORT_DIR / SELLER_PDFS / name
+    if not PDF_NAME.match(name) or not path.is_file():
+        abort(404)
+    return send_file(path, mimetype='application/pdf', max_age=0)
 
 
 @automations_bp.route('/api/automations/meta-campaign-stock/image.png', methods=['GET'])
