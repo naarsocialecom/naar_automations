@@ -161,6 +161,8 @@ module.exports = function buildSummary({ title, threshold, date, context = {} })
     lowStock,
     contacts: context.contacts || new Map(),
     clean,
+    threshold,
+    lists: context.sellerLists,
     productName: (r) => {
       const variant = variantLabel(r);
       return (clean(r.title) || "Untitled") + (variant ? ` (${variant})` : "");

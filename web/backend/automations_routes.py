@@ -10,6 +10,7 @@ file keeps it to one run at a time, also against the 11 AM timer.
 import json
 import logging
 import os
+import re
 import shutil
 import subprocess
 import threading
@@ -32,6 +33,10 @@ LOCK_FILE = '.run.lock'
 # Output of the latest run started from the website
 RUN_LOG = 'dashboard-run.log'
 WHATSAPP_PREVIEW = 'whatsapp-preview.json'
+# Full low-stock lists behind the WhatsApp links (/stock/<code>); the job also deletes old ones
+SELLER_LISTS = 'seller-lists'
+LIST_DAYS = 7
+LIST_CODE = re.compile(r'^[A-Za-z0-9_-]{20,64}$')
 # Only these reach the job; it reads everything else (Slack channel, tokens) from its own .env
 PASS_ENV = ('PATH', 'HOME', 'LANG', 'LC_ALL', 'TZ')
 
@@ -160,6 +165,29 @@ def meta_stock_run():
         time.sleep(0.1)
     logger.info(f"Meta campaign stock {mode} run started from the dashboard (pid {proc.pid})")
     return jsonify({'started': True, 'mode': mode}), 202
+
+
+@automations_bp.route('/stock/<code>')
+def seller_stock_list(code):
+    """
+    Public page (no login) a seller opens from the WhatsApp message: their own low-stock
+    products. The random code in the link is the only key; it stops working after LIST_DAYS.
+    """
+    data = None
+    if LIST_CODE.match(code):
+        file = Config.META_STOCK_EXPORT_DIR / SELLER_LISTS / f'{code}.json'
+        try:
+            if datetime.now().timestamp() - file.stat().st_mtime < LIST_DAYS * 86400:
+                data = json.loads(file.read_text())
+        except (OSError, ValueError):
+            data = None
+    if not data:
+        return render_template('seller_stock.html', expired=True), 404
+    tz = ZoneInfo(Config.REPORT_TIMEZONE)
+    updated = datetime.fromisoformat(data['generatedAt'].replace('Z', '+00:00')).astimezone(tz)
+    return render_template('seller_stock.html', expired=False, store=data.get('storeName', ''),
+                           products=data.get('products', []), threshold=data.get('threshold', 5),
+                           updated=updated.strftime('%-d %b %Y, %-I:%M %p'))
 
 
 @automations_bp.route('/api/automations/meta-campaign-stock/image.png', methods=['GET'])

@@ -122,6 +122,7 @@ function render(data) {
                     <span class="auto-wa-count">${s.productCount} low-stock product${s.productCount === 1 ? '' : 's'}</span>
                 </summary>
                 <div class="auto-wa-msg">${escapeHtml(s.message)}</div>
+                ${s.listLink ? `<a class="auto-wa-link" href="${escapeHtml(s.listLink)}" target="_blank" rel="noopener"><i class="fas fa-mobile-alt"></i> Open the seller's full-list page</a>` : ''}
             </details>`).join('');
     } else {
         $('autoWaMeta').textContent = wa ? 'No campaign store has products below the limit, so no messages.' : 'Run a test run to build the preview.';

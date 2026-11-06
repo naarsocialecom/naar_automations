@@ -114,5 +114,11 @@ module.exports = {
       }
     : null,
   dryRun,
+  // Full low-stock lists for the WhatsApp links: saved in exports/seller-lists, served by the
+  // website at <PUBLIC_DASHBOARD_URL>/stock/<code>
+  sellerLists: {
+    listDir: path.resolve(__dirname, "..", process.env.EXPORT_DIR || "exports", "seller-lists"),
+    baseUrl: (process.env.PUBLIC_DASHBOARD_URL || "").replace(/\/$/, ""),
+  },
   deleteAfterSend: bool("DELETE_AFTER_SEND"),
 };
