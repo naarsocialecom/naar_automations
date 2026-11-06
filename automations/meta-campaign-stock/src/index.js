@@ -126,9 +126,20 @@ async function main() {
     log(`Dashboard image -> ${png}`);
   }
 
+  // WhatsApp preview (nothing sent): saved for the dashboard, numbers masked
+  if (summary?.whatsapp) {
+    const wa = summary.whatsapp;
+    fs.writeFileSync(path.join(config.export.dir, "whatsapp-preview.json"),
+      JSON.stringify({ generatedAt: new Date().toISOString(), ...wa }, null, 2));
+    log(`WhatsApp preview: ${wa.sellers.length} seller message(s), ${wa.withNumber} with a number - nothing sent`);
+  }
+
   const run = {
     ok: true,
     stats: summary?.stats || null,
+    whatsapp: summary?.whatsapp
+      ? { mode: "preview", sellers: summary.whatsapp.sellers.length, withNumber: summary.whatsapp.withNumber, sent: 0 }
+      : null,
     metaError: context.meta?.error || null,
     files: result.files.map((f) => path.basename(f)),
     posts: [],

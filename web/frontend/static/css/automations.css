@@ -94,6 +94,25 @@
 .auto-runs th:nth-child(n+3), .auto-runs td:nth-child(n+3) { text-align: right; font-variant-numeric: tabular-nums; }
 .auto-runs tr:last-child td { border-bottom: 0; }
 
+/* WhatsApp preview */
+.auto-wa { margin-top: 1.2rem; }
+.auto-wa .auto-panel-head i.fa-whatsapp { color: #1fa855; }
+.auto-wa-list { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.6rem; }
+.auto-wa-item { border: 1px solid #eef0f3; border-radius: 0.8rem; }
+.auto-wa-item summary {
+    display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto; gap: 0.8rem; align-items: center;
+    padding: 0.65rem 0.9rem; cursor: pointer; font-size: 0.86rem; list-style: none;
+}
+.auto-wa-item summary::-webkit-details-marker { display: none; }
+.auto-wa-item summary b { color: #172b4d; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.auto-wa-phone { color: #44546f; font-variant-numeric: tabular-nums; }
+.auto-wa-phone.is-missing { color: #ae2a19; }
+.auto-wa-count { font-size: 0.78rem; color: #b65c02; font-weight: 600; white-space: nowrap; }
+.auto-wa-msg {
+    margin: 0 0.9rem 0.9rem; padding: 0.9rem 1rem; background: #e7fbe9; border-radius: 0.2rem 0.9rem 0.9rem 0.9rem;
+    font-size: 0.84rem; line-height: 1.5; white-space: pre-wrap; color: #172b4d; max-width: 560px;
+}
+
 .auto-footer { margin-top: 1.6rem; font-size: 0.8rem; color: #6b778c; }
 .auto-footer code { background: #f1f2f4; padding: 0 0.3rem; border-radius: 4px; }
 

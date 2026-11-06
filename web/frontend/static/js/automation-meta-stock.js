@@ -108,6 +108,26 @@ function render(data) {
     $('autoExcelBtn').hidden = !data.excel;
     $('autoExcelMeta').textContent = data.excel ? `${data.excel.name} · ${when(data.excel.updated_at)}` : 'No Excel file yet.';
 
+    // WhatsApp preview: one message per campaign store, click to read it
+    const wa = data.whatsapp;
+    if (wa?.sellers?.length) {
+        const missing = wa.sellers.length - wa.withNumber;
+        $('autoWaMeta').textContent = `${wa.sellers.length} seller${wa.sellers.length === 1 ? '' : 's'} would get a message · `
+            + `${wa.withNumber} with a WhatsApp number${missing ? ` · ${missing} without` : ''} · built ${when(wa.generatedAt)}. Click a seller to read the message.`;
+        $('autoWaList').innerHTML = wa.sellers.map(s => `
+            <details class="auto-wa-item">
+                <summary>
+                    <b>${escapeHtml(s.storeName)}</b>
+                    <span class="auto-wa-phone${s.phone ? '' : ' is-missing'}">${s.phone ? `<i class="fab fa-whatsapp"></i> ${escapeHtml(s.phone)}` : escapeHtml(s.problem)}</span>
+                    <span class="auto-wa-count">${s.productCount} low-stock product${s.productCount === 1 ? '' : 's'}</span>
+                </summary>
+                <div class="auto-wa-msg">${escapeHtml(s.message)}</div>
+            </details>`).join('');
+    } else {
+        $('autoWaMeta').textContent = wa ? 'No campaign store has products below the limit, so no messages.' : 'Run a test run to build the preview.';
+        $('autoWaList').innerHTML = '';
+    }
+
     // History
     $('autoRuns').innerHTML = runs.length ? runs.slice(0, 10).map(run => {
         const st = run.stats || {};

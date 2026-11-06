@@ -31,6 +31,7 @@ HISTORY_FILE = 'run-history.json'
 LOCK_FILE = '.run.lock'
 # Output of the latest run started from the website
 RUN_LOG = 'dashboard-run.log'
+WHATSAPP_PREVIEW = 'whatsapp-preview.json'
 # Only these reach the job; it reads everything else (Slack channel, tokens) from its own .env
 PASS_ENV = ('PATH', 'HOME', 'LANG', 'LC_ALL', 'TZ')
 
@@ -59,6 +60,14 @@ def _history() -> list:
     except (OSError, ValueError) as e:
         logger.warning(f"Could not read {file}: {e}")
         return []
+
+
+def _whatsapp_preview() -> Optional[dict]:
+    """Latest WhatsApp preview from the job (numbers already masked; nothing has been sent)."""
+    try:
+        return json.loads((Config.META_STOCK_EXPORT_DIR / WHATSAPP_PREVIEW).read_text())
+    except (OSError, ValueError):
+        return None
 
 
 def _running_pid() -> Optional[int]:
@@ -116,6 +125,7 @@ def meta_stock_status():
         'image': _file_info(_latest_image()),
         'excel': _file_info(_latest_excel()),
         'running': _running_pid() is not None,
+        'whatsapp': _whatsapp_preview(),
         'run_log': _log_tail(),
     })
 

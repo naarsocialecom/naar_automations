@@ -261,8 +261,13 @@ async function buildSheets({ db, collection, aggregate, meta }) {
   const products = db.collection(collection);
   const metaResult = await loadMetaCampaigns(db, meta);
   const campaignsBySeller = new Map();
+  // Campaign stores' contact details, for the WhatsApp preview only (never written to the Excel file)
+  const contacts = new Map();
   for (const c of metaResult.campaigns) {
-    for (const s of c.sellers) campaignsBySeller.set(s.userId, [...(campaignsBySeller.get(s.userId) || []), c.name]);
+    for (const s of c.sellers) {
+      campaignsBySeller.set(s.userId, [...(campaignsBySeller.get(s.userId) || []), c.name]);
+      contacts.set(s.userId, { storeName: s.storeName, phone: s.phone, region: s.region });
+    }
   }
   const withCampaigns = (row) => ({ ...row, metaCampaigns: campaignsBySeller.get(row.sellerId) || [] });
 
@@ -324,6 +329,7 @@ async function buildSheets({ db, collection, aggregate, meta }) {
     context: {
       meta: { connected: metaResult.connected, error: metaResult.error, campaignRows },
       lowStock,
+      contacts,
       variantCount: campaignProducts.length,
       storeCount: sellerIds.length,
     },
@@ -338,7 +344,7 @@ async function loadMetaCampaigns(db, meta) {
     const campaigns = await fetchActiveCampaigns(meta);
     const sellers = await db
       .collection("sellerdetails")
-      .find({}, { projection: { _id: 0, userId: 1, storeName: 1 } })
+      .find({}, { projection: { _id: 0, userId: 1, storeName: 1, phone: 1, region: 1 } })
       .toArray();
     return { connected: true, campaigns: matchCampaigns(campaigns, sellers, loadMapping(meta.mappingFile)) };
   } catch (err) {
