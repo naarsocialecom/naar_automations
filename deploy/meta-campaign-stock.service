@@ -1,0 +1,18 @@
+# Daily Meta campaign stock report (automations/meta-campaign-stock/): reads MongoDB and Meta, posts
+# the dashboard image + Excel to Slack, deletes yesterday's post. Runs once and exits.
+# Triggered by meta-campaign-stock.timer.
+[Unit]
+Description=Naar daily Meta campaign stock report to Slack
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+WorkingDirectory=/root/naar_automations/automations/meta-campaign-stock
+# Settings come from automations/meta-campaign-stock/.env (loaded by the app itself)
+ExecStart=/usr/bin/env node src/index.js
+NoNewPrivileges=true
+ProtectSystem=full
+PrivateTmp=true

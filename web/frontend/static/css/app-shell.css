@@ -1,0 +1,48 @@
+/* ── App shell: left sidebar shared by every page ─────────────── */
+:root { --sidebar-w: 232px; }
+
+body.has-sidebar { padding-left: calc(var(--sidebar-w) + 2rem); }
+
+.app-sidebar {
+    position: fixed; inset: 0 auto 0 0; width: var(--sidebar-w); z-index: 50;
+    display: flex; flex-direction: column; gap: 1.2rem;
+    background: #ffffff; border-right: 1px solid #e6e8ec; padding: 1.4rem 0.9rem;
+}
+.app-brand {
+    display: flex; align-items: center; gap: 0.55rem; padding: 0 0.55rem 1rem;
+    border-bottom: 1px solid #eef0f3; text-decoration: none;
+}
+.app-brand img { height: 30px; width: auto; }
+.app-brand span { font-size: 1.05rem; font-weight: 700; color: #0747a6; letter-spacing: -0.01em; }
+
+.app-nav { display: flex; flex-direction: column; gap: 0.15rem; flex: 1; overflow-y: auto; }
+.app-nav-label {
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase;
+    color: #97a0af; padding: 1rem 0.65rem 0.4rem;
+}
+.app-nav-label:first-child { padding-top: 0.2rem; }
+.app-nav-link {
+    display: flex; align-items: center; gap: 0.7rem; width: 100%;
+    padding: 0.6rem 0.65rem; border-radius: 0.6rem; border: 0; background: none;
+    font: inherit; font-size: 0.88rem; font-weight: 600; color: #42526e; text-decoration: none; cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.app-nav-link i { width: 18px; text-align: center; color: #7a869a; transition: color 0.15s; }
+.app-nav-link:hover { background: #f4f5f7; color: #172b4d; }
+.app-nav-link.is-active { background: #e9f2ff; color: #0747a6; }
+.app-nav-link.is-active i { color: #0c66e4; }
+.app-sidebar-foot { border-top: 1px solid #eef0f3; padding-top: 0.8rem; }
+
+/* Narrow screens: the sidebar becomes a top bar */
+@media (max-width: 900px) {
+    body.has-sidebar { padding-left: 1rem; padding-right: 1rem; }
+    .app-sidebar {
+        position: static; width: auto; flex-direction: row; flex-wrap: wrap; align-items: center;
+        gap: 0.5rem; padding: 0.6rem; margin: -0.6rem 0 1.2rem; border: 1px solid #e6e8ec; border-radius: 1rem;
+    }
+    .app-brand { border: 0; padding: 0 0.4rem; }
+    .app-nav { flex-direction: row; flex-wrap: wrap; flex: 1; }
+    .app-nav-label { display: none; }
+    .app-nav-link { width: auto; }
+    .app-sidebar-foot { border: 0; padding: 0; }
+}

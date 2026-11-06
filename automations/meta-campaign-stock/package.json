@@ -1,0 +1,21 @@
+{
+  "name": "naar-meta-campaign-stock",
+  "version": "1.0.0",
+  "description": "Daily Slack report: active Meta campaigns, their stores, and products below the stock threshold",
+  "main": "src/index.js",
+  "scripts": {
+    "export": "node src/index.js",
+    "export:dry": "DRY_RUN=true node src/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@slack/web-api": "^7.19.0",
+    "dotenv": "^16.4.7",
+    "exceljs": "^4.4.0",
+    "mongodb": "^6.20.0",
+    "nodemailer": "^6.9.16",
+    "sharp": "^0.34.5"
+  }
+}

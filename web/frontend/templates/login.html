@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Sign in · Naar Automations</title>
+    <link rel="icon" href="https://gargashjirabackup.blob.core.windows.net/logos/naar/favicon.svg">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body { min-height: 100vh; display: grid; place-items: center; padding: 1rem; }
+        .login-card {
+            width: 100%; max-width: 380px; background: #fff; border: 1px solid #e6e8ec; border-radius: 1.2rem;
+            padding: 2.2rem 2rem 2rem; box-shadow: 0 10px 30px rgba(9, 30, 66, 0.08);
+        }
+        .login-brand { display: flex; align-items: center; gap: 0.55rem; margin-bottom: 1.6rem; }
+        .login-brand img { height: 34px; }
+        .login-brand span { font-size: 1.2rem; font-weight: 700; color: #0747a6; }
+        .login-card h1 { font-size: 1.1rem; margin-bottom: 0.3rem; }
+        .login-card p { font-size: 0.85rem; color: #5e6c84; margin-bottom: 1.3rem; }
+        .login-card label { display: block; font-size: 0.78rem; font-weight: 600; color: #42526e; margin-bottom: 0.35rem; }
+        .login-card input {
+            width: 100%; padding: 0.7rem 0.85rem; border: 1.5px solid #dfe1e6; border-radius: 0.7rem;
+            font: inherit; font-size: 0.95rem; outline: none;
+        }
+        .login-card input:focus { border-color: #0c66e4; box-shadow: 0 0 0 3px rgba(12, 102, 228, 0.15); }
+        .login-card button {
+            width: 100%; margin-top: 1rem; padding: 0.75rem; border: 0; border-radius: 0.7rem; cursor: pointer;
+            background: #0c66e4; color: #fff; font: inherit; font-weight: 600; font-size: 0.95rem;
+        }
+        .login-card button:hover { background: #0055cc; }
+        .login-error {
+            display: flex; gap: 0.5rem; align-items: center; background: #ffebe6; color: #ae2a19;
+            border-radius: 0.6rem; padding: 0.6rem 0.75rem; font-size: 0.84rem; margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <form class="login-card" method="post" action="/login">
+        <div class="login-brand">
+            <img src="https://gargashjirabackup.blob.core.windows.net/logos/naar/Naar%20logo.png" alt="Naar">
+            <span>Automations</span>
+        </div>
+        <h1>Sign in</h1>
+        <p>Enter the team password to open the dashboards.</p>
+        {% if error %}<div class="login-error" role="alert"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>{% endif %}
+        <input type="hidden" name="next" value="{{ next or '/' }}">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
+        <button type="submit">Sign in</button>
+    </form>
+</body>
+</html>
