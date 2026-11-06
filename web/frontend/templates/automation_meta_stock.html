@@ -17,7 +17,7 @@
     <div class="header">
         <div class="logo-area">
             <div class="logo-text">
-                <h1>Meta Campaign Stock Report</h1>
+                <h1>Meta Campaign Stock</h1>
                 <p class="auto-subtitle">Active Meta campaigns, their stores, and every product below the stock limit, posted to Slack once a day.</p>
             </div>
         </div>
@@ -28,6 +28,26 @@
     </div>
 
     <div id="autoError" class="auto-error" role="alert" hidden></div>
+
+    <!-- Run now -->
+    <section class="auto-run">
+        <div class="auto-run-text">
+            <div class="auto-run-title"><i class="fas fa-play-circle"></i> Run now</div>
+            <p>A <b>test run</b> builds the picture and Excel file and sends nothing. <b>Send to Slack</b> posts them to the
+                report's Slack channel and removes the previous report post. Takes about a minute.</p>
+        </div>
+        <div class="auto-run-actions">
+            <button type="button" class="auto-btn auto-btn--ghost" id="autoRunDry"><i class="fas fa-flask"></i> Test run</button>
+            <button type="button" class="auto-btn" id="autoRunSend"><i class="fab fa-slack"></i> Send to Slack</button>
+        </div>
+        <div class="auto-run-status" id="autoRunStatus" hidden>
+            <div class="auto-run-state" id="autoRunState"></div>
+            <details class="auto-run-output" id="autoRunOutput">
+                <summary>Show output</summary>
+                <pre class="auto-run-log" id="autoRunLog"></pre>
+            </details>
+        </div>
+    </section>
 
     <!-- Status cards -->
     <div class="auto-cards">
@@ -90,7 +110,7 @@
 
     <footer class="auto-footer">
         <i class="fas fa-info-circle"></i>
-        Runs on the server every day (timer: <code>meta-campaign-stock.timer</code>). This page only shows results; it never posts to Slack.
+        Runs on the server every day (timer: <code>meta-campaign-stock.timer</code>). Only one run can happen at a time, so a button run and the daily run never overlap.
     </footer>
 </div>
 <script type="module" src="{{ url_for('static', filename='js/automation-meta-stock.js') }}"></script>

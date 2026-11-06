@@ -4,9 +4,9 @@ One website and the scheduled jobs behind it.
 
 | Part | What it does | Runs |
 |---|---|---|
-| **Sprint Dashboard** (`/`) | Jira sprint progress, highlights, charts | Website |
-| **Data Operations** (`/ndo`) | NDO incidents and operations, daily summary to Slack | Website + 6 PM reminder and 7 PM post |
-| **Meta Campaign Stock** (`/automations/meta-campaign-stock`) | Active Meta campaigns and their stores' low stock, posted to Slack | 11 AM IST timer; the page shows its runs |
+| **Data & Operations** (`/`, `/ndo`) | NDO incidents and operations, daily summary to Slack | Website + 6 PM reminder and 7 PM post |
+| **Meta Campaign Stock** (`/automations/meta-campaign-stock`) | Active Meta campaigns and their stores' low stock, posted to Slack | 11 AM IST timer, or the page's **Test run** / **Send to Slack** buttons |
+| Sprint Dashboard (`/dashboard`) | Jira sprint progress, highlights, charts (not in the menu) | Website |
 
 ## Folders
 

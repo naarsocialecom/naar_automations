@@ -34,14 +34,51 @@ function recordRun(run) {
       // first run, or an unreadable file: start a new history
     }
     fs.mkdirSync(config.export.dir, { recursive: true });
-    const entry = { startedAt, finishedAt: new Date().toISOString(), dryRun: config.dryRun, ...run };
+    // "schedule" = the 11 AM timer, "dashboard" = a button on the website
+    const trigger = process.env.RUN_TRIGGER || "schedule";
+    const entry = { startedAt, finishedAt: new Date().toISOString(), dryRun: config.dryRun, trigger, ...run };
     fs.writeFileSync(file, JSON.stringify([entry, ...history].slice(0, HISTORY_SIZE), null, 2));
   } catch (err) {
     console.error(`[${new Date().toISOString()}] Could not save the run history:`, err.message);
   }
 }
 
+// One run at a time: the 11 AM timer and the dashboard's buttons share this lock file
+// (it holds the running process ID; the website reads it to show "running").
+const LOCK_FILE = path.join(config.export.dir, ".run.lock");
+
+const isAlive = (pid) => {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (err) {
+    return err.code === "EPERM";
+  }
+};
+
+function acquireLock() {
+  fs.mkdirSync(config.export.dir, { recursive: true });
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      fs.writeFileSync(LOCK_FILE, String(process.pid), { flag: "wx" });
+      process.on("exit", () => fs.rmSync(LOCK_FILE, { force: true }));
+      return true;
+    } catch (err) {
+      if (err.code !== "EEXIST") throw err;
+      const pid = Number(fs.readFileSync(LOCK_FILE, "utf8"));
+      if (pid && isAlive(pid)) return false;
+      fs.rmSync(LOCK_FILE, { force: true }); // left over from a run that crashed
+    }
+  }
+  return false;
+}
+
 async function main() {
+  if (!acquireLock()) {
+    log("Another run is already in progress, not starting a second one");
+    process.exitCode = 3;
+    return;
+  }
   const { query } = config;
   const collectionName = query.collection || config.mongo.collection;
   const client = new MongoClient(config.mongo.uri);

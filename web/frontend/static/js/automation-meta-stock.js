@@ -1,5 +1,6 @@
-// Meta campaign stock report: status page. Read-only — shows the run history the
-// job saves (run-history.json), the next run, the latest picture and the Excel file.
+// Meta campaign stock report page: run history (run-history.json), next run, latest
+// picture and Excel file, plus "Test run" / "Send to Slack" buttons that start the job
+// in the background and follow its output until it finishes.
 
 const API = '/api/automations/meta-campaign-stock';
 const $ = id => document.getElementById(id);
@@ -8,6 +9,9 @@ const escapeHtml = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;'
 const num = n => (n == null ? '–' : Number(n).toLocaleString('en-IN'));
 
 let TZ = 'Asia/Kolkata';
+let lastPostedChannels = '';
+let pollTimer = null;
+let wasRunning = false;
 
 // "Today, 11:00" / "Yesterday, 11:00" / "4 Nov, 11:00" in the report time zone
 function when(iso) {
@@ -66,6 +70,7 @@ function render(data) {
     $('autoNextRunNote').textContent = fromNow(data.next_run);
 
     // Posted to
+    lastPostedChannels = lastPosted ? lastPosted.posts.map(p => p.channel).join(', ') : '';
     if (lastPosted) {
         const channels = lastPosted.posts.map(p => p.channel);
         $('autoPosted').textContent = channels.join(', ');
@@ -106,9 +111,59 @@ function render(data) {
     // History
     $('autoRuns').innerHTML = runs.length ? runs.slice(0, 10).map(run => {
         const st = run.stats || {};
-        return `<tr><td>${when(run.finishedAt || run.startedAt)}</td><td>${chip(result(run))}</td>
+        const by = run.trigger === 'dashboard' ? '<span class="auto-by" title="Started from this page">button</span>' : '';
+        return `<tr><td>${when(run.finishedAt || run.startedAt)} ${by}</td><td>${chip(result(run))}</td>
             <td>${num(st.campaigns)}</td><td>${num(st.belowThreshold)}</td><td>${num(st.outOfStock)}</td></tr>`;
     }).join('') : '<tr><td colspan="5" class="auto-empty">No runs yet.</td></tr>';
+}
+
+// Run panel: buttons off while a run is going; its output is shown live
+function renderRun(data) {
+    const running = !!data.running;
+    $('autoRunDry').disabled = running;
+    $('autoRunSend').disabled = running;
+    const log = data.run_log;
+    $('autoRunStatus').hidden = !running && !log;
+    // Output open while running; folded away once it's done
+    if (running) $('autoRunOutput').open = true;
+    else if (wasRunning) $('autoRunOutput').open = false;
+    wasRunning = running;
+    if (running) {
+        $('autoRunState').innerHTML = '<span class="spinner-dot"></span> Running… this page updates by itself.';
+    } else if (log) {
+        const failed = log.lines.some(l => l.includes('Export failed'));
+        const busy = log.lines.some(l => l.includes('already in progress'));
+        $('autoRunState').innerHTML = busy ? '<i class="fas fa-hourglass-half"></i> Another run was in progress, so this one did not start.'
+            : failed ? '<i class="fas fa-times-circle" style="color:#ae2a19"></i> Last button run failed — see the output below.'
+            : `<i class="fas fa-check-circle" style="color:#216e4e"></i> Last button run finished · ${when(log.updated_at)}`;
+    }
+    if (log) {
+        const box = $('autoRunLog');
+        box.textContent = log.lines.join('\n');
+        box.scrollTop = box.scrollHeight;
+    }
+    // Keep checking while it runs; one last refresh when it ends
+    clearTimeout(pollTimer);
+    if (running) pollTimer = setTimeout(load, 3000);
+}
+
+async function startRun(mode) {
+    if (mode === 'send') {
+        const where = lastPostedChannels ? ` (${lastPostedChannels})` : '';
+        if (!confirm(`Post the Meta campaign stock report to Slack now${where}?\n\nThe previous report post in that channel is removed.`)) return;
+    }
+    $('autoRunDry').disabled = $('autoRunSend').disabled = true;
+    try {
+        const res = await fetch(`${API}/run`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode }),
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(body.error || `Could not start the run (${res.status})`);
+    } catch (e) {
+        $('autoError').textContent = e.message;
+        $('autoError').hidden = false;
+    }
+    load();
 }
 
 async function load() {
@@ -117,7 +172,9 @@ async function load() {
     try {
         const res = await fetch(API, { cache: 'no-store' });
         if (!res.ok) throw new Error(res.status === 401 ? 'Your session ended — reload the page to sign in again.' : `Could not load status (${res.status})`);
-        render(await res.json());
+        const data = await res.json();
+        render(data);
+        renderRun(data);
         $('autoError').hidden = true;
     } catch (e) {
         $('autoError').textContent = e.message;
@@ -128,4 +185,6 @@ async function load() {
 }
 
 $('autoRefresh').addEventListener('click', load);
+$('autoRunDry').addEventListener('click', () => startRun('dry'));
+$('autoRunSend').addEventListener('click', () => startRun('send'));
 load();

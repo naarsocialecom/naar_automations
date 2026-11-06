@@ -8,6 +8,32 @@
 .refresh-btn.is-spinning i { animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* Run now */
+.auto-run {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.8rem 1.5rem; align-items: center;
+    background: #fff; border: 1.5px solid #e9ecef; border-radius: 1.2rem; padding: 1.1rem 1.3rem; margin-bottom: 1.4rem;
+}
+.auto-run-title { font-weight: 700; font-size: 0.98rem; color: #172b4d; }
+.auto-run-title i { color: #0c66e4; margin-right: 0.35rem; }
+.auto-run-text p { font-size: 0.84rem; color: #5e6c84; margin-top: 0.3rem; line-height: 1.5; }
+.auto-run-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+.auto-run-actions .auto-btn { margin-top: 0; border: 0; cursor: pointer; font: inherit; font-weight: 600; font-size: 0.88rem; }
+.auto-btn.auto-btn--ghost { background: #f1f2f4; color: #172b4d; }
+.auto-btn.auto-btn--ghost:hover { background: #e4e6ea; }
+.auto-run-output summary { margin-top: 0.6rem; font-size: 0.8rem; color: #0c66e4; cursor: pointer; font-weight: 600; }
+.auto-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.auto-run-status { grid-column: 1 / -1; border-top: 1px solid #f0f1f4; padding-top: 0.9rem; }
+.auto-run-state { display: flex; align-items: center; gap: 0.5rem; font-size: 0.86rem; font-weight: 600; color: #172b4d; }
+.auto-run-state .spinner-dot {
+    width: 10px; height: 10px; border-radius: 50%; background: #0c66e4; animation: pulse 1s ease-in-out infinite;
+}
+@keyframes pulse { 50% { opacity: 0.3; } }
+.auto-run-log {
+    margin-top: 0.7rem; max-height: 220px; overflow: auto; background: #0f1b2d; color: #d6e2f5;
+    border-radius: 0.7rem; padding: 0.8rem 1rem; font-size: 0.76rem; line-height: 1.55; white-space: pre-wrap;
+}
+@media (max-width: 900px) { .auto-run { grid-template-columns: 1fr; } }
+
 /* Status cards */
 .auto-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1.4rem; }
 .auto-card {
@@ -77,4 +103,8 @@
 }
 @media (max-width: 600px) {
     .auto-cards { grid-template-columns: 1fr; }
+}
+.auto-by {
+    display: inline-block; margin-left: 0.3rem; padding: 0 0.4rem; border-radius: 4px;
+    background: #e9f2ff; color: #0747a6; font-size: 0.68rem; font-weight: 600;
 }

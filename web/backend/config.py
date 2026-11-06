@@ -139,8 +139,11 @@ class Config:
 
     # Automations (scheduled jobs in automations/, shown on the Automations pages)
     AUTOMATIONS_DIR = Path(_get('AUTOMATIONS_DIR') or BASE_DIR.parent.parent / 'automations')
-    # Meta campaign stock report: where its run history and latest files are, and when it runs
-    META_STOCK_EXPORT_DIR = Path(_get('META_STOCK_EXPORT_DIR') or AUTOMATIONS_DIR / 'meta-campaign-stock' / 'exports')
+    # Meta campaign stock report: its folder, where its run history and latest files are, and when it runs
+    META_STOCK_DIR = Path(_get('META_STOCK_DIR') or AUTOMATIONS_DIR / 'meta-campaign-stock')
+    META_STOCK_EXPORT_DIR = Path(_get('META_STOCK_EXPORT_DIR') or META_STOCK_DIR / 'exports')
+    # Node.js for the "Run now" buttons (blank = found on PATH)
+    NODE_BIN = _get('NODE_BIN')
     META_STOCK_FILE_PREFIX = _get('META_STOCK_FILE_PREFIX', 'product-export')
     # Shown on the page; the schedule itself is deploy/meta-campaign-stock.timer
     META_STOCK_RUN_TIME = _get('META_STOCK_RUN_TIME', '11:00')

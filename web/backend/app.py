@@ -60,8 +60,8 @@ def _render_sprint_dashboard():
 
 @app.route('/')
 def index():
-    """Serve the main dashboard page"""
-    return _render_sprint_dashboard()
+    """Home: the Data & Operations page (the Sprint Dashboard stays at /dashboard, unlisted)"""
+    return render_template('ndo.html', active_nav='ndo', snapshot='snapshot' in request.args)
 
 @app.route('/api/config', methods=['GET'])
 def get_config():
