@@ -357,14 +357,17 @@ def slack_text(report: Dict) -> str:
     lines += ['', "*Today's updates*"] + ([f"• {_slack_rich(line, report)}" for line in report['digest']]
                                          if report.get('digest') else ['• _No updates from developers today._'])
 
-    critical = [t for t in report['key_tickets'] if _urgency(t) == 0]
-    if critical:
-        lines += ['', '*Needs attention* _(Critical priority)_']
-        for t in critical[:3]:
-            details = ' · '.join([t['type'], f"{t['priority']} priority", t['status']])
-            lines.append(f"• <{t['url']}|{t['key']}> {_slack_escape(_short(t['summary'], 40))} — _{_slack_escape(details)}_")
-        if len(critical) > 3:
-            lines.append(f"_+{len(critical) - 3} more on the dashboard_")
+    # Incidents only (operations tickets are reviewed first): the same tickets as the
+    # dashboard's "High-Priority Incidents" tile, Critical first
+    urgent_inc = [t for t in report['key_tickets'] if t['type'] == INCIDENT and t['priority'] in URGENT_PRIORITIES]
+    lines += ['', '*High-priority incidents* _(Critical + High)_']
+    for t in urgent_inc[:5]:
+        details = f"{t['priority']} priority · {t['status']}"
+        lines.append(f"• <{t['url']}|{t['key']}> {_slack_escape(_short(t['summary'], 45))} — _{_slack_escape(details)}_")
+    if len(urgent_inc) > 5:
+        lines.append(f"_+{len(urgent_inc) - 5} more on the dashboard_")
+    if not urgent_inc:
+        lines.append('• _None: no open incident has Critical or High priority._')
 
     if report.get('dashboard_url'):
         lines += ['', f"<{report['dashboard_url']}/ndo|View full dashboard →>"]
