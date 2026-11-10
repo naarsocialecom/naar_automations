@@ -171,32 +171,31 @@ function renderAging() {
         </div>`).join('')}</div>`;
 }
 
-// Open tickets per Requirement Owner, split into in progress / on hold / to do.
+// Open tickets per Requirement Owner: total, with the incidents / operations split under the name.
 // A ticket with two owners counts under both; tickets without one go under "Not set".
-const OWNER_STATES = [['active', 'In progress', '#4f8fea'], ['hold', 'On hold', '#f5b25b'], ['todo', 'To do', '#c1c7d0']];
+const OWNER_TYPES = [['Incident', 'Incident', 'Incidents', '#f0806f'], ['Operations', 'Operation', 'Operations', '#4f8fea']];
 function renderOwners() {
     const rows = new Map();
     (report.tickets || []).forEach(t => {
-        const st = ticketState(t.status);
-        if (!OWNER_STATES.some(([k]) => k === st)) return;
         (t.owners?.length ? t.owners : ['Not set']).forEach(owner => {
-            if (!rows.has(owner)) rows.set(owner, { active: [], hold: [], todo: [] });
-            rows.get(owner)[st].push(t.key);
+            if (!rows.has(owner)) rows.set(owner, { Incident: [], Operations: [] });
+            rows.get(owner)[t.type]?.push(t.key);
         });
     });
-    const total = r => r.active.length + r.hold.length + r.todo.length;
-    // Most in progress first; "Not set" always last
-    const list = [...rows].sort(([a, x], [b, y]) => (a === 'Not set') - (b === 'Not set')
-        || y.active.length - x.active.length || total(y) - total(x) || a.localeCompare(b));
-    if (!list.length) { $('ndoOwnerChart').innerHTML = '<div class="ndo-muted">No open tickets.</div>'; return; }
-    const cell = (owner, label, keys) => `<td class="${keys.length ? '' : 'is-zero'}"${keys.length
-        ? ` title="${escapeHtml(`${owner} · ${label}: ${keys.join(', ')}`)}"` : ''}>${keys.length}</td>`;
-    $('ndoOwnerChart').innerHTML = `<table class="ndo-owner-table">
-        <thead><tr><th></th>${OWNER_STATES.map(([, label, color]) => `<th><i style="background:${color}"></i>${label}</th>`).join('')}<th>Total</th></tr></thead>
-        <tbody>${list.map(([owner, r]) => `<tr class="${owner === 'Not set' ? 'is-unset' : ''}">
-            <th scope="row"><span>${escapeHtml(owner)}</span></th>
-            ${OWNER_STATES.map(([k, label]) => cell(owner, label, r[k])).join('')}
-            <td class="ndo-owner-total">${total(r)}</td></tr>`).join('')}</tbody></table>`;
+    const total = r => r.Incident.length + r.Operations.length;
+    // Biggest first; "Not set" always last
+    const list = [...rows].sort(([a, x], [b, y]) => (a === 'Not set') - (b === 'Not set') || total(y) - total(x) || a.localeCompare(b));
+    $('ndoOwnerChart').innerHTML = list.length ? `<ul class="ndo-owner-list">${list.map(([owner, r]) => `
+        <li class="${owner === 'Not set' ? 'is-unset' : ''}">
+            <div class="ndo-owner-text">
+                <span class="ndo-owner-name">${escapeHtml(owner)}</span>
+                <span class="ndo-owner-types">${OWNER_TYPES.map(([ty, one, many, color]) => {
+                    const keys = r[ty]; const n = keys.length;
+                    return `<span class="${n ? '' : 'is-zero'}"${n ? ` title="${escapeHtml(`${owner} · ${many}: ${keys.join(', ')}`)}"` : ''}><i style="background:${color}"></i>${n} ${n === 1 ? one : many}</span>`;
+                }).join('')}</span>
+            </div>
+            <b class="ndo-owner-total">${total(r)}</b>
+        </li>`).join('')}</ul>` : '<div class="ndo-muted">No open tickets.</div>';
 }
 
 function ticketState(status) {
