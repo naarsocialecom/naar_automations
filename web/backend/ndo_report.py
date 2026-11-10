@@ -11,12 +11,8 @@ from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional
 
 PRIORITY_ORDER = ['Critical', 'Highest', 'High', 'Medium', 'Low', 'Lowest', 'None']
-SEVERITY_ORDER = ['Sev-0', 'Sev-1', 'Sev-2', 'Sev-3', 'Not set']
-# Always shown (as 0 when empty); Sev-3 only appears when an incident has it
-SEVERITY_ALWAYS = ['Sev-0', 'Sev-1', 'Sev-2', 'Not set']
 URGENT_PRIORITIES = {'Critical', 'Highest', 'High'}
 CRITICAL_PRIORITIES = {'Critical', 'Highest'}
-CRITICAL_SEVERITIES = {'Sev-0', 'Sev-1'}
 ON_HOLD_STATUSES = {'on-hold', 'on hold', 'blocked'}
 
 RAG_LABELS = {'green': 'On Track', 'amber': 'Moderate', 'red': 'Critical'}
@@ -85,16 +81,11 @@ def _short(text: str, limit: int = 60) -> str:
     return text[:limit].rsplit(' ', 1)[0].rstrip(' -:,;') + '…'
 
 
-# Severity mapped onto the priority scale, so a Sev-0 "Medium" still sorts with Critical
-_SEVERITY_AS_PRIORITY = {'Sev-0': 'Critical', 'Sev-1': 'High', 'Sev-2': 'Medium', 'Sev-3': 'Low'}
 
 
 def _urgency(t: Dict) -> int:
-    by_severity = _SEVERITY_AS_PRIORITY.get(t['severity'])
-    ranks = [_rank(t['priority'], PRIORITY_ORDER)]
-    if by_severity:
-        ranks.append(_rank(by_severity, PRIORITY_ORDER))
-    return min(ranks)
+    # The team follows up by Jira priority only (severity is not used for urgency)
+    return _rank(t['priority'], PRIORITY_ORDER)
 
 
 def normalize_issue(issue: Dict, jira_domain: str, severity_field: str, now: datetime) -> Dict:
@@ -130,21 +121,7 @@ def _status_phrase(tickets: List[Dict]) -> str:
 
 
 def _is_critical(t: Dict) -> bool:
-    return t['priority'] in CRITICAL_PRIORITIES or t['severity'] in CRITICAL_SEVERITIES
-
-
-def _why_critical(t: Dict) -> str:
-    """'Sev-1' or 'Critical priority': what makes a ticket count as critical."""
-    return t['severity'] if t['severity'] in CRITICAL_SEVERITIES else f"{t['priority']} priority"
-
-
-def _critical_reason(incidents: List[Dict]) -> str:
-    """'1 Sev-1 incident and 1 Critical-priority incident open' — says exactly why, not just 'critical'."""
-    groups = Counter(t['severity'] if t['severity'] in CRITICAL_SEVERITIES else f"{t['priority']}-priority"
-                     for t in incidents)
-    parts = [f"{n} {label} incident{'' if n == 1 else 's'}"
-             for label, n in sorted(groups.items(), key=lambda kv: (_rank(kv[0], SEVERITY_ORDER), kv[0]))]
-    return ' and '.join(parts) + ' open'
+    return t['priority'] in CRITICAL_PRIORITIES
 
 
 def compute_rag(tickets: List[Dict], stale_days: int) -> Dict:
@@ -158,9 +135,11 @@ def compute_rag(tickets: List[Dict], stale_days: int) -> Dict:
 
     red, amber = [], []
     if critical_inc:
-        red.append(_critical_reason(critical_inc))
+        red.append(f"{_plural(len(critical_inc), 'Critical-priority incident')} open")
     if len(critical_inc) == 0 and incidents:
-        amber.append(f"{_plural(len(incidents), 'incident')} open, none critical")
+        high_inc = [t for t in incidents if t['priority'] in URGENT_PRIORITIES]
+        amber.append(f"{_plural(len(incidents), 'incident')} open, none Critical priority"
+                     + (f" ({len(high_inc)} High)" if high_inc else ''))
     if urgent_ops:
         amber.append(f"{_plural(len(urgent_ops), 'high-priority operations ticket')} open")
     if unassigned_urgent:
@@ -229,12 +208,11 @@ def build_highlights(tickets: List[Dict], now: datetime, stale_days: int) -> Lis
 
 
 def key_tickets(tickets: List[Dict], limit: int = 15) -> List[Dict]:
-    """Incidents and high-priority tickets, most severe first."""
+    """Incidents and high-priority tickets, highest priority first."""
     chosen = [t for t in tickets if t['type'] == INCIDENT or t['priority'] in URGENT_PRIORITIES]
     chosen.sort(key=lambda t: (
         _urgency(t),
         _rank(t['priority'], PRIORITY_ORDER),
-        _rank(t['severity'], SEVERITY_ORDER),
         0 if t['type'] == INCIDENT else 1,
         t['created'] or '',
     ))
@@ -272,10 +250,6 @@ def build_report(tickets: List[Dict], *, day: str, now: datetime, issue_types: L
     priority = OrderedDict()
     for p in _ordered_counts(Counter(t['priority'] for t in tickets), PRIORITY_ORDER):
         priority[p] = {ty: sum(1 for t in tickets if t['type'] == ty and t['priority'] == p) for ty in types}
-
-    severity_counter = Counter(t['severity'] for t in tickets if t['type'] == INCIDENT)
-    for s in SEVERITY_ALWAYS:
-        severity_counter.setdefault(s, 0)
 
     status = OrderedDict()
     for s, _ in Counter(t['status'] for t in tickets).most_common():
@@ -329,7 +303,6 @@ def build_report(tickets: List[Dict], *, day: str, now: datetime, issue_types: L
         'key_tickets': key_tickets(tickets),
         'breakdown': {
             'priority': priority,
-            'severity': _ordered_counts(severity_counter, SEVERITY_ORDER),
             'status': status,
         },
         'tickets': sorted(tickets, key=lambda t: (
@@ -386,9 +359,9 @@ def slack_text(report: Dict) -> str:
 
     critical = [t for t in report['key_tickets'] if _urgency(t) == 0]
     if critical:
-        lines += ['', '*Needs attention* _(Critical priority or Sev-0 / Sev-1)_']
+        lines += ['', '*Needs attention* _(Critical priority)_']
         for t in critical[:3]:
-            details = ' · '.join([t['type'], _why_critical(t), t['status']])
+            details = ' · '.join([t['type'], f"{t['priority']} priority", t['status']])
             lines.append(f"• <{t['url']}|{t['key']}> {_slack_escape(_short(t['summary'], 40))} — _{_slack_escape(details)}_")
         if len(critical) > 3:
             lines.append(f"_+{len(critical) - 3} more on the dashboard_")

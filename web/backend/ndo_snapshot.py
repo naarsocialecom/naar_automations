@@ -22,8 +22,6 @@ PRIORITY_COLORS = {
     'Critical': '#bf2600', 'Highest': '#de350b', 'High': '#ff8b00',
     'Medium': '#ffc400', 'Low': '#36b37e', 'Lowest': '#00875a', 'None': '#a5adba',
 }
-SEVERITY_COLORS = {'Sev-0': '#bf2600', 'Sev-1': '#ff5630', 'Sev-2': '#ffab00', 'Sev-3': '#4c9aff',
-                   'Not set': '#c1c7d0'}
 
 _FONT_CANDIDATES = {
     'regular': ['/System/Library/Fonts/Supplemental/Arial.ttf',
@@ -128,13 +126,10 @@ def render_snapshot(report: Dict) -> bytes:
         d.text(_s(x0 + 18, ty0 + 12), str(value), font=_font(30, 'bold'), fill=color)
         d.text(_s(x0 + 18, ty0 + 52), label, font=_font(12), fill=MUTED)
 
-    # Breakdown bars
-    col_w = (WIDTH - 64 - 30) / 2
+    # Priority bar (incidents); the team follows up by priority, so no severity bar
     prio = [(p, v.get('Incident', 0), PRIORITY_COLORS.get(p, '#a5adba'))
             for p, v in report['breakdown']['priority'].items() if v.get('Incident')]
-    _stacked_bar(d, 32, 222, int(col_w), 14, prio, 'Priority — incidents')
-    sev = [(s, n, SEVERITY_COLORS.get(s, '#a5adba')) for s, n in report['breakdown']['severity'].items()]
-    _stacked_bar(d, int(32 + col_w + 30), 222, int(col_w), 14, sev, 'Severity — incidents')
+    _stacked_bar(d, 32, 222, int(WIDTH - 64), 14, prio, 'Priority — incidents')
 
     # One-line summary
     d.line(_s(32, 312, WIDTH - 32, 312), fill=LINE, width=SCALE)

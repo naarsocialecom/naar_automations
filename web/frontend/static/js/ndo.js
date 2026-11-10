@@ -162,7 +162,8 @@ function renderDevUpdates() {
         const refs  = u.ticket_refs || [];
         const state = ticketState(refs[0]?.status);
         const tags  = refs.map(r => {
-            const level = r.severity || (URGENT.has(r.priority) ? r.priority : '');
+            // The team follows up by priority, so tags show the priority (when it's urgent)
+            const level = URGENT.has(r.priority) ? r.priority : '';
             const tip   = r.summary ? `${r.key} — ${r.summary}` : `${r.key} — not found in Jira`;
             return `<a class="ndo-tag ndo-tag--${ticketState(r.status)}" href="${escapeHtml(r.url)}" target="_blank"
                        rel="noopener" title="${escapeHtml(tip)}"><b>${escapeHtml(r.key)}</b>${r.status ? ` · ${escapeHtml(r.status)}` : ''}${level ? ` · ${escapeHtml(level)}` : ''}</a>`;
@@ -221,15 +222,9 @@ function renderBreakdowns() {
         ].map(([st, label]) => `<tr class="ndo-today--${st}"><th scope="row"><i aria-hidden="true"></i>${label}</th>${types.map(ty => cell(keys[st][ty])).join('')}</tr>`).join('')}
         </tbody></table>`;
 
-    $('ndoSeverity').innerHTML = Object.entries(report.breakdown.severity).map(([sev, n]) =>
-        `<div class="ndo-sev ndo-sev--${chipClass(sev)}${n ? '' : ' is-zero'}"><b>${n}</b><span>${escapeHtml(sev)}</span></div>`
-    ).join('');
-
     // Incidents only: operations tickets are reviewed first and become incidents when they matter
     const incidents = report.totals.by_type.Incident ?? 0;
-    const note = `· ${incidents} incident${incidents === 1 ? '' : 's'}`;
-    $('ndoSevNote').textContent  = note;
-    $('ndoPrioNote').textContent = note;
+    $('ndoPrioNote').textContent = `· ${incidents} incident${incidents === 1 ? '' : 's'}`;
     // Critical / High / Medium always (zeros greyed), plus any other priority an incident actually has
     const counts = Object.fromEntries(Object.entries(report.breakdown.priority).map(([name, byType]) => [name, byType.Incident || 0]));
     const rows  = [...JIRA_PRIORITIES, ...Object.keys(counts).filter(p => !JIRA_PRIORITIES.includes(p) && counts[p])]
