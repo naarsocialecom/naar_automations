@@ -103,6 +103,7 @@ function render() {
     $('ndoRagLabel').textContent = rag.overridden ? `${rag.label} · set manually` : rag.label;
     $('ndoRagSelect').value = rag.overridden ? rag.level : '';
     $('ndoRagReasons').innerHTML = rag.reasons.map(r => `<li>${escapeHtml(r)}</li>`).join('');
+    document.querySelectorAll('#ndoRagRule [data-level]').forEach(el => el.classList.toggle('is-current', el.dataset.level === rag.auto_level));
 
     renderAging();
     renderOwners();
@@ -146,30 +147,32 @@ const JIRA_PRIORITIES = ['Critical', 'High', 'Medium'];
 // Open tickets by age since created: clustered columns, one group per age bucket with an
 // Incidents and an Operations bar side by side on one shared scale; hover a bar for its tickets
 function renderAging() {
+    // One straight column per age group: operations at the bottom, incidents stacked on top
     const aging = report.aging || {};
-    const parts = [['Incident', 'incident', 'Incidents'], ['Operations', 'ops', 'Operations']];
+    const parts = [['Operations', 'ops', 'Operations'], ['Incident', 'incident', 'Incidents']];
     const total = ty => (aging[ty] || []).reduce((a, b) => a + b.keys.length, 0);
     $('ndoAgeIncidentTotal').textContent = total('Incident');
     $('ndoAgeOpsTotal').textContent = total('Operations');
     const labels = (aging.Incident || aging.Operations || []).map(b => b.label);
-    const groups = labels.map((label, i) => ({
-        label,
-        bars: parts.map(([ty, cls, name]) => ({ cls, name, keys: aging[ty]?.[i]?.keys || [] })),
-    }));
-    const max = Math.max(1, ...groups.flatMap(g => g.bars.map(b => b.keys.length)));
+    const groups = labels.map((label, i) => {
+        const segs = parts.map(([ty, cls, name]) => ({ cls, name, keys: aging[ty]?.[i]?.keys || [] }));
+        return { label, segs, n: segs.reduce((a, x) => a + x.keys.length, 0) };
+    });
+    const max = Math.max(1, ...groups.map(g => g.n));
     $('ndoAgeChart').innerHTML = `<div class="ndo-age-plot">${groups.map(g => `
         <div class="ndo-age-group">
-            <div class="ndo-age-bars">${g.bars.map(b => {
-                const n = b.keys.length;
-                const tip = n ? `${b.name} · ${g.label} (${n}): ${b.keys.join(', ')}` : `${b.name} · ${g.label}: none`;
-                return `<div class="ndo-age-col${n ? '' : ' is-zero'}" title="${escapeHtml(tip)}">
-                    <span class="ndo-age-val">${n}</span>
-                    <div class="ndo-age-bar ndo-age-bar--${b.cls}" style="height:${n ? Math.max(3, n / max * 100).toFixed(1) : 0}%"></div>
-                </div>`;
-            }).join('')}</div>
+            <div class="ndo-age-bars">
+                <div class="ndo-age-col${g.n ? '' : ' is-zero'}">
+                    <span class="ndo-age-val">${g.n}</span>
+                    <div class="ndo-age-stack" style="height:${g.n ? Math.max(4, g.n / max * 100).toFixed(1) : 0}%">${g.segs.filter(x => x.keys.length).map(x =>
+                        `<div class="ndo-age-bar ndo-age-bar--${x.cls}" style="flex:${x.keys.length}"
+                            title="${escapeHtml(`${x.name} · ${g.label} (${x.keys.length}): ${x.keys.join(', ')}`)}">${x.keys.length}</div>`).join('')}</div>
+                </div>
+            </div>
             <span class="ndo-age-label">${escapeHtml(g.label)}</span>
         </div>`).join('')}</div>`;
 }
+
 // Open tickets per Requirement Owner, split into in progress / on hold / to do.
 // A ticket with two owners counts under both; tickets without one go under "Not set".
 const OWNER_STATES = [['active', 'In progress', '#0065ff'], ['hold', 'On hold', '#ff991f'], ['todo', 'To do', '#97a0af']];
@@ -187,13 +190,18 @@ function renderOwners() {
     // Most in progress first; "Not set" always last
     const list = [...rows].sort(([a, x], [b, y]) => (a === 'Not set') - (b === 'Not set')
         || y.active.length - x.active.length || total(y) - total(x) || a.localeCompare(b));
+    if (!list.length) { $('ndoOwnerChart').innerHTML = '<div class="ndo-muted">No open tickets.</div>'; return; }
     const max = Math.max(1, ...list.map(([, r]) => total(r)));
-    $('ndoOwnerChart').innerHTML = list.length ? list.map(([owner, r]) => `
-        <div class="ndo-owner-row${owner === 'Not set' ? ' is-unset' : ''}">
-            <div class="ndo-owner-name"><span>${escapeHtml(owner)}</span><b>${total(r)}</b></div>
-            <div class="ndo-owner-track"><div class="ndo-owner-bar" style="width:${(total(r) / max * 100).toFixed(1)}%">${OWNER_STATES.map(([k, label, color]) => r[k].length
-                ? `<span style="flex:${r[k].length};background:${color}" title="${escapeHtml(`${owner} · ${label} (${r[k].length}): ${r[k].join(', ')}`)}">${r[k].length}</span>` : '').join('')}</div></div>
-        </div>`).join('') : '<div class="ndo-muted">No open tickets.</div>';
+    const cell = (owner, label, keys) => `<td class="${keys.length ? '' : 'is-zero'}"${keys.length
+        ? ` title="${escapeHtml(`${owner} · ${label}: ${keys.join(', ')}`)}"` : ''}>${keys.length}</td>`;
+    $('ndoOwnerChart').innerHTML = `<table class="ndo-owner-table">
+        <thead><tr><th></th>${OWNER_STATES.map(([, label, color]) => `<th><i style="background:${color}"></i>${label}</th>`).join('')}<th>Total</th></tr></thead>
+        <tbody>${list.map(([owner, r]) => `<tr class="${owner === 'Not set' ? 'is-unset' : ''}">
+            <th scope="row"><span>${escapeHtml(owner)}</span>
+                <div class="ndo-owner-bar" style="width:${(total(r) / max * 100).toFixed(1)}%">${OWNER_STATES.map(([k, , color]) =>
+                    r[k].length ? `<i style="flex:${r[k].length};background:${color}"></i>` : '').join('')}</div></th>
+            ${OWNER_STATES.map(([k, label]) => cell(owner, label, r[k])).join('')}
+            <td class="ndo-owner-total">${total(r)}</td></tr>`).join('')}</tbody></table>`;
 }
 
 function ticketState(status) {

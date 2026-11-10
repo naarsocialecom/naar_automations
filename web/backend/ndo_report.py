@@ -18,7 +18,7 @@ ON_HOLD_STATUSES = {'on-hold', 'on hold', 'blocked'}
 # (label, upper limit in days; None = no limit)
 AGE_BUCKETS = [('Last 24 hours', 1), ('1–3 days', 3), ('3–7 days', 7), ('1–4 weeks', 30), ('Over a month', None)]
 
-RAG_LABELS = {'green': 'On Track', 'amber': 'Moderate', 'red': 'Critical'}
+RAG_LABELS = {'green': 'Green', 'amber': 'Amber', 'red': 'Red'}
 RAG_EMOJI = {'green': ':large_green_circle:', 'amber': ':large_orange_circle:', 'red': ':red_circle:'}
 # Overall status in the Slack message: a colour, not "Critical", so it isn't mistaken for a ticket priority
 RAG_STATUS = {'green': 'Green · on track', 'amber': 'Amber · keep an eye on it', 'red': 'Red · needs attention'}
@@ -152,35 +152,33 @@ def _is_critical(t: Dict) -> bool:
     return t['priority'] in CRITICAL_PRIORITIES
 
 
-def compute_rag(tickets: List[Dict], stale_days: int) -> Dict:
+def compute_rag(tickets: List[Dict], stale_days: int = None) -> Dict:
+    """
+    Overall RAG from open INCIDENTS' priority only (the manager follows up by priority):
+      Red   = a Critical-priority incident is open
+      Amber = a High-priority incident is open (no Critical)
+      Green = no Critical or High incident open
+    Operations tickets, assignees and idle time don't change the colour.
+    """
     incidents = [t for t in tickets if t['type'] == INCIDENT]
-    others = [t for t in tickets if t['type'] != INCIDENT]
-    critical_inc = [t for t in incidents if _is_critical(t)]
-    urgent_ops = [t for t in others if t['priority'] in URGENT_PRIORITIES]
-    unassigned_urgent = [t for t in tickets if not t['assignee']
-                         and (t['priority'] in URGENT_PRIORITIES or t['type'] == INCIDENT)]
-    stale = [t for t in tickets if (t['idle_days'] or 0) >= stale_days]
+    critical = [t for t in incidents if _is_critical(t)]
+    high = [t for t in incidents if t['priority'] in URGENT_PRIORITIES and not _is_critical(t)]
+    rest = len(incidents) - len(critical) - len(high)
 
-    red, amber = [], []
-    if critical_inc:
-        red.append(f"{_plural(len(critical_inc), 'Critical-priority incident')} open")
-    if len(critical_inc) == 0 and incidents:
-        high_inc = [t for t in incidents if t['priority'] in URGENT_PRIORITIES]
-        amber.append(f"{_plural(len(incidents), 'incident')} open, none Critical priority"
-                     + (f" ({len(high_inc)} High)" if high_inc else ''))
-    if urgent_ops:
-        amber.append(f"{_plural(len(urgent_ops), 'high-priority operations ticket')} open")
-    if unassigned_urgent:
-        amber.append(f"{_plural(len(unassigned_urgent), 'urgent ticket')} unassigned")
-    if stale and len(stale) >= max(5, len(tickets) // 4):
-        amber.append(f"{_plural(len(stale), 'ticket')} idle for {stale_days}+ days")
+    def listed(group, name):
+        keys = ', '.join(t['key'] for t in group[:4]) + (' …' if len(group) > 4 else '')
+        return f"{_plural(len(group), name)} open: {keys}"
 
-    if red:
-        level, reasons = 'red', red + amber
-    elif amber:
-        level, reasons = 'amber', amber
-    else:
-        level, reasons = 'green', ['No incidents or high-priority operations tickets open']
+    reasons = []
+    if critical:
+        reasons.append(listed(critical, 'Critical incident'))
+    if high:
+        reasons.append(listed(high, 'High incident'))
+    if not critical and not high:
+        reasons.append('No Critical or High incidents open')
+    if rest:
+        reasons.append(_plural(rest, 'Medium & below incident'))
+    level = 'red' if critical else 'amber' if high else 'green'
     return {'level': level, 'reasons': reasons}
 
 

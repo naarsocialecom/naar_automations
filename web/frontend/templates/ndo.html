@@ -72,17 +72,25 @@
                     <span class="ndo-rag-caption">Overall RAG</span>
                     <span class="ndo-rag-value" id="ndoRagLabel">–</span>
                 </div>
-                <ul class="ndo-rag-reasons" id="ndoRagReasons"></ul>
+                <div class="ndo-rag-main">
+                    <ul class="ndo-rag-reasons" id="ndoRagReasons"></ul>
+                    <!-- How the colour is chosen: incident priority only; today's rule is highlighted -->
+                    <div class="ndo-rag-rule" id="ndoRagRule">
+                        <span data-level="red"><i></i> Red: a Critical incident is open</span>
+                        <span data-level="amber"><i></i> Amber: a High incident is open</span>
+                        <span data-level="green"><i></i> Green: no Critical or High incident</span>
+                    </div>
+                </div>
                 <select id="ndoRagSelect" class="ndo-rag-select" title="Override today's RAG">
-                    <option value="">Auto</option>
-                    <option value="green">Green — On Track</option>
-                    <option value="amber">Amber — Moderate</option>
-                    <option value="red">Red — Critical</option>
+                    <option value="">Auto (by priority)</option>
+                    <option value="green">Green</option>
+                    <option value="amber">Amber</option>
+                    <option value="red">Red</option>
                 </select>
             </div>
 
             <div class="ndo-hl-grid">
-                <!-- Open tickets by age (since created): one stacked bar per age group, incidents + operations -->
+                <!-- Open tickets by age (since created): one stacked column per age group, operations + incidents -->
                 <section class="ndo-panel">
                     <header class="ndo-panel-head">
                         <span class="ndo-panel-title"><i class="fas fa-hourglass-half"></i> Open tickets by age</span>
@@ -100,11 +108,6 @@
                         <span class="ndo-panel-title"><i class="fas fa-user-tag"></i> By requirement owner</span>
                     </header>
                     <div class="ndo-panel-body">
-                        <div class="ndo-owner-legend">
-                            <span><i style="background:#0065ff"></i> In progress</span>
-                            <span><i style="background:#ff991f"></i> On hold</span>
-                            <span><i style="background:#97a0af"></i> To do</span>
-                        </div>
                         <div class="ndo-owner-chart" id="ndoOwnerChart"></div>
                     </div>
                 </section>

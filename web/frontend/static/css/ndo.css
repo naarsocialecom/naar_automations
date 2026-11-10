@@ -72,11 +72,21 @@
 .ndo-rag-head { display: flex; flex-direction: column; min-width: 130px; }
 .ndo-rag-caption { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.85; }
 .ndo-rag-value { font-size: 1.45rem; font-weight: 800; line-height: 1.15; }
-.ndo-rag-reasons {
-    flex: 1; list-style: none; display: flex; flex-wrap: wrap; gap: 0.4rem;
+.ndo-rag-main {
+    flex: 1; display: flex; flex-direction: column; gap: 0.5rem;
     border-left: 1.5px solid rgba(255,255,255,0.45); padding-left: 1.2rem;
 }
-.ndo-rag--amber .ndo-rag-reasons { border-left-color: rgba(23,43,77,0.25); }
+.ndo-rag--amber .ndo-rag-main { border-left-color: rgba(23,43,77,0.25); }
+.ndo-rag-reasons { list-style: none; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.ndo-rag-rule { display: flex; flex-wrap: wrap; gap: 0.3rem 1rem; font-size: 0.74rem; font-weight: 500; opacity: 0.75; }
+.ndo-rag-rule span { display: inline-flex; align-items: center; gap: 0.35rem; }
+.ndo-rag-rule i { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid #fff; }
+.ndo-rag-rule [data-level="red"] i { background: #de350b; }
+.ndo-rag-rule [data-level="amber"] i { background: #ffab00; }
+.ndo-rag-rule [data-level="green"] i { background: #36b37e; }
+.ndo-rag-rule .is-current { font-weight: 800; opacity: 1; text-decoration: underline; text-underline-offset: 3px; }
+.ndo-rag-rule:has(.is-current) { opacity: 1; }
+.ndo-rag-rule:has(.is-current) span:not(.is-current) { opacity: 0.7; }
 .ndo-rag-reasons li {
     background: rgba(255,255,255,0.22); border-radius: 999px; padding: 0.25rem 0.75rem;
     font-size: 0.84rem; font-weight: 600;
@@ -102,13 +112,8 @@
 .ndo-age-plot { flex: 1; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; }
 .ndo-age-group { display: flex; flex-direction: column; min-width: 0; }
 .ndo-age-bars { flex: 1; display: flex; justify-content: center; align-items: flex-end; gap: 2px; border-bottom: 1px solid #c1c7d0; }
-.ndo-age-col {
-    width: 34px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
-    cursor: default;
-}
 .ndo-age-val { font-size: 0.85rem; font-weight: 700; color: #172b4d; margin-bottom: 0.25rem; font-variant-numeric: tabular-nums; }
 .ndo-age-bar { width: 100%; border-radius: 4px 4px 0 0; transition: filter 0.15s; }
-.ndo-age-col:hover .ndo-age-bar { filter: brightness(1.12); }
 .ndo-age-col.is-zero .ndo-age-val { color: #c1c7d0; }
 .ndo-age-label { margin-top: 0.55rem; text-align: center; font-size: 0.74rem; font-weight: 600; color: #5e6c84; white-space: nowrap; }
 .ndo-panel {
@@ -401,7 +406,7 @@ body.ndo-modal-open { overflow: hidden; }
 @media (max-width: 900px) {
     .ndo-hl-grid { grid-template-columns: 1fr; }
     .ndo-rag-banner { flex-wrap: wrap; gap: 0.7rem; }
-    .ndo-rag-reasons { border-left: none; padding-left: 0; flex-basis: 100%; }
+    .ndo-rag-main { border-left: none; padding-left: 0; flex-basis: 100%; }
 }
 @media (max-width: 640px) {
     .ndo-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -424,19 +429,28 @@ body.ndo-snapshot .ndo-note-del { display: none !important; }
 body.ndo-snapshot .highlights-section { margin-bottom: 0; }
 body.ndo-snapshot .ndo-tile, body.ndo-snapshot .highlights-section { animation: none; }
 
-/* By requirement owner: one horizontal bar per owner, split by work state */
-.ndo-owner-legend { display: flex; flex-wrap: wrap; gap: 0.4rem 0.9rem; font-size: 0.74rem; font-weight: 600; color: #42526e; margin-bottom: 0.8rem; }
-.ndo-owner-legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
-.ndo-owner-legend i { width: 10px; height: 10px; border-radius: 3px; }
-.ndo-owner-chart { display: flex; flex-direction: column; gap: 0.75rem; }
-.ndo-owner-name { display: flex; justify-content: space-between; gap: 0.5rem; font-size: 0.8rem; font-weight: 600; color: #172b4d; margin-bottom: 0.3rem; }
-.ndo-owner-name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ndo-owner-name b { font-variant-numeric: tabular-nums; }
-.ndo-owner-row.is-unset .ndo-owner-name { color: #6b778c; font-style: italic; }
-.ndo-owner-track { height: 18px; }
-.ndo-owner-bar { display: flex; gap: 2px; height: 100%; min-width: 18px; }
-.ndo-owner-bar span {
-    min-width: 16px; border-radius: 4px; color: #fff; font-size: 0.68rem; font-weight: 700;
+/* By requirement owner: small table, a thin bar under each owner */
+.ndo-owner-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+.ndo-owner-table thead th {
+    font-size: 0.68rem; font-weight: 600; color: #6b778c; text-align: right; padding: 0 0 0.45rem 0.5rem; white-space: nowrap;
+}
+.ndo-owner-table thead th i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 0.3rem; }
+.ndo-owner-table tbody th { text-align: left; font-weight: 600; color: #172b4d; padding: 0.5rem 0.6rem 0.5rem 0; width: 46%; }
+.ndo-owner-table tbody th span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ndo-owner-table tbody tr + tr > * { border-top: 1px solid #f0f1f4; }
+.ndo-owner-table td { text-align: right; font-weight: 700; color: #172b4d; padding: 0.5rem 0 0.5rem 0.5rem; font-variant-numeric: tabular-nums; cursor: default; }
+.ndo-owner-table td.is-zero { color: #c1c7d0; font-weight: 500; }
+.ndo-owner-table td.ndo-owner-total { color: #42526e; }
+.ndo-owner-table tr.is-unset th { color: #6b778c; font-style: italic; }
+.ndo-owner-bar { display: flex; gap: 2px; height: 5px; margin-top: 0.35rem; min-width: 6px; }
+.ndo-owner-bar i { border-radius: 3px; min-width: 3px; }
+
+/* Open tickets by age: one stacked column per age group */
+.ndo-age-col { width: 46%; max-width: 64px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+.ndo-age-stack { width: 100%; display: flex; flex-direction: column-reverse; gap: 2px; }
+.ndo-age-stack .ndo-age-bar {
+    width: 100%; min-height: 14px; border-radius: 0; color: #fff; font-size: 0.68rem; font-weight: 700;
     display: flex; align-items: center; justify-content: center; font-variant-numeric: tabular-nums; cursor: default;
 }
-.ndo-owner-bar span:hover { filter: brightness(1.12); }
+.ndo-age-stack .ndo-age-bar:last-child { border-radius: 4px 4px 0 0; }
+.ndo-age-stack .ndo-age-bar:hover { filter: brightness(1.12); }
