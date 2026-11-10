@@ -52,7 +52,7 @@ def shell_context():
 
 def _render_sprint_dashboard():
     return render_template('index.html',
-                         active_nav='sprint',
+                         active_nav='scrum',
                          epic_page_size=Config.EPIC_TABLE_PAGE_SIZE,
                          platform_field=Config.JIRA_FIELD_PLATFORM,
                          highlights_ticket=Config.JIRA_HIGHLIGHTS_TICKET,
@@ -60,7 +60,7 @@ def _render_sprint_dashboard():
 
 @app.route('/')
 def index():
-    """Home: the Data & Operations page (the Sprint Dashboard stays at /dashboard, unlisted)"""
+    """Landing page: Incidents & Operations (same page as /ndo)"""
     return render_template('ndo.html', active_nav='ndo', snapshot='snapshot' in request.args)
 
 @app.route('/api/config', methods=['GET'])
