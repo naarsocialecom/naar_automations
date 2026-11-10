@@ -105,7 +105,7 @@ def render_snapshot(report: Dict) -> bytes:
 
     # RAG pill
     rag = report['rag']
-    pill = f"Incidents: {rag['label']}"
+    pill = f"Overall RAG: {rag['label']}"
     pw = d.textlength(pill, font=_font(13, 'bold')) / SCALE + 28
     d.rounded_rectangle(_s(32, 80, 32 + pw, 108), radius=14 * SCALE, fill=RAG_COLORS[rag['level']])
     d.text(_s(46, 86), pill, font=_font(13, 'bold'), fill='#ffffff' if rag['level'] != 'amber' else INK)

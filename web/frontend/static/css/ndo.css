@@ -60,26 +60,28 @@
 #highlightsBody { display: flex; flex-direction: column; gap: 1rem; background: #fafbfc; }
 #highlightsBody.collapsed { display: none; }
 
-/* Incident status banner: soft tint + accent stripe, colour set by incident priority */
+/* Overall RAG banner (colour from incident priority) */
 .ndo-rag-banner {
     display: flex; align-items: center; gap: 1.4rem;
-    border-radius: 14px; padding: 0.9rem 1.2rem; border: 1px solid transparent; border-left-width: 5px;
-    background: #f4f5f7; color: #172b4d;
+    border-radius: 14px; padding: 0.9rem 1.2rem;
+    background: #ebecf0; color: #172b4d;
 }
-.ndo-rag--green { background: #eefaf4; border-color: #c6ecd9; border-left-color: #57c79a; }
-.ndo-rag--amber { background: #fff7e8; border-color: #fde3b8; border-left-color: #f5b25b; }
-.ndo-rag--red   { background: #fff0ee; border-color: #fbd0c9; border-left-color: #f0806f; }
-.ndo-rag-head { display: flex; flex-direction: column; min-width: 210px; }
-.ndo-rag-caption { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #6b778c; }
-.ndo-rag-value { font-size: 1.15rem; font-weight: 700; line-height: 1.3; }
-.ndo-rag--green .ndo-rag-value { color: #216e4e; }
-.ndo-rag--amber .ndo-rag-value { color: #974f0c; }
-.ndo-rag--red   .ndo-rag-value { color: #b8432f; }
-.ndo-rag-reasons { flex: 1; list-style: none; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.ndo-rag--green { background: linear-gradient(135deg, #57d9a3, #36b37e); color: #fff; }
+.ndo-rag--amber { background: linear-gradient(135deg, #ffd166, #ffab00); color: #172b4d; }
+.ndo-rag--red   { background: linear-gradient(135deg, #ff7452, #de350b); color: #fff; }
+.ndo-rag-head { display: flex; flex-direction: column; min-width: 130px; }
+.ndo-rag-caption { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.85; }
+.ndo-rag-value { font-size: 1.45rem; font-weight: 800; line-height: 1.15; }
+.ndo-rag-reasons {
+    flex: 1; list-style: none; display: flex; flex-wrap: wrap; gap: 0.4rem;
+    border-left: 1.5px solid rgba(255,255,255,0.45); padding-left: 1.2rem;
+}
+.ndo-rag--amber .ndo-rag-reasons { border-left-color: rgba(23,43,77,0.25); }
 .ndo-rag-reasons li {
-    background: #fff; border: 1px solid rgba(9,30,66,0.08); border-radius: 999px;
-    padding: 0.25rem 0.75rem; font-size: 0.82rem; font-weight: 600; color: #42526e;
+    background: rgba(255,255,255,0.22); border-radius: 999px; padding: 0.25rem 0.75rem;
+    font-size: 0.84rem; font-weight: 600;
 }
+.ndo-rag--amber .ndo-rag-reasons li { background: rgba(255,255,255,0.5); }
 
 /* Panels */
 .ndo-hl-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; }
@@ -389,7 +391,7 @@ body.ndo-modal-open { overflow: hidden; }
 @media (max-width: 900px) {
     .ndo-hl-grid { grid-template-columns: 1fr; }
     .ndo-rag-banner { flex-wrap: wrap; gap: 0.7rem; }
-    .ndo-rag-reasons { flex-basis: 100%; }
+    .ndo-rag-reasons { border-left: none; padding-left: 0; flex-basis: 100%; }
 }
 @media (max-width: 640px) {
     .ndo-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -437,3 +439,32 @@ body.ndo-snapshot .ndo-tile, body.ndo-snapshot .highlights-section { animation: 
 }
 .ndo-age-stack .ndo-age-bar:last-child { border-radius: 4px 4px 0 0; }
 .ndo-age-stack .ndo-age-bar:hover { filter: brightness(1.12); }
+
+/* ── Daily Update panels: one consistent, quiet style ── */
+.ndo-hl-grid .ndo-panel { border-color: #e6e8ec; border-radius: 12px; box-shadow: 0 1px 2px rgba(9,30,66,0.04); }
+.ndo-hl-grid .ndo-panel-head { background: #fff; border-bottom: 1px solid #eef0f3; padding: 0.8rem 1.1rem; min-height: 48px; }
+.ndo-hl-grid .ndo-panel-title { font-size: 0.92rem; font-weight: 700; color: #172b4d; }
+.ndo-hl-grid .ndo-panel-title i { color: #8590a2; font-size: 0.85rem; }
+.ndo-hl-grid .ndo-panel-body { padding: 1rem 1.1rem 1.1rem; }
+.ndo-hl-grid .ndo-age-legend { margin-left: auto; font-size: 0.74rem; font-weight: 500; color: #5e6c84; gap: 0.9rem; }
+.ndo-hl-grid .ndo-age-legend b { font-weight: 700; }
+.ndo-hl-grid .ndo-age-key { width: 8px; height: 8px; border-radius: 50%; }
+
+/* Age chart: faint guide lines, slimmer columns, total on top */
+.ndo-age-chart { min-height: 210px; }
+.ndo-age-bars {
+    border-bottom: 1px solid #dfe1e6;
+    background-image: linear-gradient(to bottom, #f1f2f4 1px, transparent 1px);
+    background-size: 100% 25%;
+}
+.ndo-age-col { width: 42%; max-width: 44px; }
+.ndo-age-val { font-size: 0.8rem; color: #42526e; }
+.ndo-age-stack .ndo-age-bar { font-size: 0.64rem; font-weight: 600; min-height: 12px; }
+.ndo-age-stack .ndo-age-bar:last-child { border-radius: 3px 3px 0 0; }
+.ndo-age-label { font-size: 0.72rem; font-weight: 500; color: #6b778c; }
+
+/* Owner list: plain rows with a divider, total on the right */
+.ndo-owner-list { gap: 0; }
+.ndo-owner-list li { background: none; border-radius: 0; padding: 0.65rem 0; border-top: 1px solid #f1f2f4; }
+.ndo-owner-list li:first-child { border-top: 0; padding-top: 0.1rem; }
+.ndo-owner-total { font-size: 1.05rem; }

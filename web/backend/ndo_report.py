@@ -18,7 +18,7 @@ ON_HOLD_STATUSES = {'on-hold', 'on hold', 'blocked'}
 # (label, upper limit in days; None = no limit)
 AGE_BUCKETS = [('Last 24 hours', 1), ('1–3 days', 3), ('3–7 days', 7), ('1–4 weeks', 30), ('Over a month', None)]
 
-RAG_LABELS = {'green': 'No urgent incidents', 'amber': 'High-priority incident open', 'red': 'Critical incident open'}
+RAG_LABELS = {'green': 'On Track', 'amber': 'Moderate', 'red': 'Critical'}
 RAG_EMOJI = {'green': ':large_green_circle:', 'amber': ':large_orange_circle:', 'red': ':red_circle:'}
 # Overall status in the Slack message: a colour, not "Critical", so it isn't mistaken for a ticket priority
 RAG_STATUS = {'green': 'Green · on track', 'amber': 'Amber · keep an eye on it', 'red': 'Red · needs attention'}
@@ -165,14 +165,18 @@ def compute_rag(tickets: List[Dict], stale_days: int = None) -> Dict:
     high = [t for t in incidents if t['priority'] in URGENT_PRIORITIES and not _is_critical(t)]
     rest = len(incidents) - len(critical) - len(high)
 
+    # Each Critical / High incident with its summary (first 3; then "+N more")
     def listed(group, name):
-        return f"{name}: " + ', '.join(t['key'] for t in group[:4]) + (' …' if len(group) > 4 else '')
+        out = [f"{name} · {t['key']} — {_short(t['summary'], 55)}" for t in group[:3]]
+        if len(group) > 3:
+            out.append(f"+{len(group) - 3} more {name}")
+        return out
 
     reasons = []
     if critical:
-        reasons.append(listed(critical, 'Critical'))
+        reasons += listed(critical, 'Critical')
     if high:
-        reasons.append(listed(high, 'High'))
+        reasons += listed(high, 'High')
     if rest:
         reasons.append(f"Medium & below: {rest}")
     if not incidents:
