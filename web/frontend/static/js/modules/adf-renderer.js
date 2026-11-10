@@ -65,7 +65,7 @@ export function adfToHtml(raw) {
                         case 'em':              text = `<em>${text}</em>`; break;
                         case 'underline':       text = `<u>${text}</u>`; break;
                         case 'strike':          text = `<s>${text}</s>`; break;
-                        case 'code':            text = `<code style="background:#f4f5f7;border:1px solid #dfe1e6;border-radius:3px;padding:1px 4px;font-family:monospace;font-size:0.82em;">${text}</code>`; break;
+                        case 'code':            text = `<code style="background:#f4f5f7;border:1px solid #dfe1e6;border-radius:3px;padding:1px 4px;font-family:inherit;font-size:0.82em;">${text}</code>`; break;
                         case 'textColor':       text = `<span style="color:${mark.attrs?.color||'inherit'};">${text}</span>`; break;
                         case 'backgroundColor': text = `<span style="background-color:${mark.attrs?.color||'transparent'};">${text}</span>`; break;
                         case 'link':            text = `<a href="${escapeHtml(mark.attrs?.href||'#')}" target="_blank" rel="noopener" style="color:#0052cc;text-decoration:underline;">${text}</a>`; break;

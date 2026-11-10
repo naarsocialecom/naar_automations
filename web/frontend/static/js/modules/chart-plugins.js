@@ -3,13 +3,16 @@
 // Register once, used by all charts.
 // ============================================================
 
+// Same font stack as the page (style.css)
+const FONT = "Lufga, 'Plus Jakarta Sans', Inter, system-ui, sans-serif";
+
 const verticalBarLabelsPlugin = {
     id: 'verticalBarLabels',
     afterDatasetsDraw(chart) {
         if (chart.config.options?.indexAxis === 'y') return;
         const { ctx } = chart;
         ctx.save();
-        ctx.font = 'bold 13px Inter, system-ui, sans-serif';
+        ctx.font = `bold 13px ${FONT}`;
         ctx.fillStyle = '#1e2a3a';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
@@ -31,7 +34,7 @@ const horizontalBarLabelsPlugin = {
         if (chart.config.options?.indexAxis !== 'y') return;
         const { ctx } = chart;
         ctx.save();
-        ctx.font = 'bold 12px Inter, system-ui, sans-serif';
+        ctx.font = `bold 12px ${FONT}`;
         ctx.fillStyle = '#1e2a3a';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
@@ -63,12 +66,12 @@ const donutCenterPlugin = {
         ctx.fillStyle = '#ffffff';
         ctx.fill();
         const total = chart.data.datasets[0].data.reduce((a, b) => Number(a) + Number(b), 0);
-        ctx.font = 'bold 26px Inter, system-ui, sans-serif';
+        ctx.font = `bold 26px ${FONT}`;
         ctx.fillStyle = '#172b4d';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(String(total), cx, cy - 9);
-        ctx.font = '500 11px Inter, system-ui, sans-serif';
+        ctx.font = `500 11px ${FONT}`;
         ctx.fillStyle = '#5e6c84';
         ctx.fillText('Total', cx, cy + 13);
         ctx.restore();
@@ -76,5 +79,7 @@ const donutCenterPlugin = {
 };
 
 export function registerChartPlugins() {
+    // Chart text (axes, legends, tooltips) in the site font
+    Chart.defaults.font.family = FONT;
     Chart.register(verticalBarLabelsPlugin, horizontalBarLabelsPlugin, donutCenterPlugin);
 }
