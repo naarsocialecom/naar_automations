@@ -91,7 +91,8 @@ def _urgency(t: Dict) -> int:
     return _rank(t['priority'], PRIORITY_ORDER)
 
 
-def normalize_issue(issue: Dict, jira_domain: str, severity_field: str, now: datetime) -> Dict:
+def normalize_issue(issue: Dict, jira_domain: str, severity_field: str, now: datetime,
+                    owner_field: str = None) -> Dict:
     f = issue.get('fields', {})
     created = _parse_dt(f.get('created'))
     updated = _parse_dt(f.get('updated'))
@@ -106,6 +107,8 @@ def normalize_issue(issue: Dict, jira_domain: str, severity_field: str, now: dat
         'priority': (f.get('priority') or {}).get('name') or 'None',
         'severity': (_option_value(f.get(severity_field)) if severity_field else None) or 'Not set',
         'assignee': (f.get('assignee') or {}).get('displayName'),
+        # Requirement Owner: a ticket can have more than one
+        'owners': [v for v in (_option_value(o) for o in (f.get(owner_field) or [] if owner_field else [])) if v],
         'created': created.isoformat() if created else None,
         'updated': updated.isoformat() if updated else None,
         'age_days': (now - created).days if created else None,

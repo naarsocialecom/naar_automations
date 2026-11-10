@@ -94,6 +94,21 @@
                     <div class="ndo-panel-body"><div class="ndo-age-chart" id="ndoAgeChart"></div></div>
                 </section>
 
+                <!-- Open tickets by Requirement Owner (Jira field): one bar per owner, split by work state -->
+                <section class="ndo-panel">
+                    <header class="ndo-panel-head">
+                        <span class="ndo-panel-title"><i class="fas fa-user-tag"></i> By requirement owner</span>
+                    </header>
+                    <div class="ndo-panel-body">
+                        <div class="ndo-owner-legend">
+                            <span><i style="background:#0065ff"></i> In progress</span>
+                            <span><i style="background:#ff991f"></i> On hold</span>
+                            <span><i style="background:#97a0af"></i> To do</span>
+                        </div>
+                        <div class="ndo-owner-chart" id="ndoOwnerChart"></div>
+                    </div>
+                </section>
+
                 <!-- At a glance -->
                 <section class="ndo-panel">
                     <header class="ndo-panel-head">

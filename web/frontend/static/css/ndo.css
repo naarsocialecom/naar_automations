@@ -89,7 +89,7 @@
 }
 
 /* Panels */
-.ndo-hl-grid { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); gap: 1rem; }
+.ndo-hl-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; }
 
 /* Open tickets by age: clustered columns (incidents | operations per age group) */
 .ndo-age-legend { display: flex; gap: 1rem; font-size: 0.8rem; color: #42526e; font-weight: 600; }
@@ -391,6 +391,10 @@ body.ndo-modal-open { overflow: hidden; }
 .ndo-modal-loading .spinner { margin: 0; }
 
 /* ── Responsive ────────────────────────────────────────────── */
+@media (max-width: 1400px) {
+    .ndo-hl-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .ndo-hl-grid > :first-child { grid-column: 1 / -1; }
+}
 @media (max-width: 1200px) {
     .ndo-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
@@ -419,3 +423,20 @@ body.ndo-snapshot .ndo-icon-btn,
 body.ndo-snapshot .ndo-note-del { display: none !important; }
 body.ndo-snapshot .highlights-section { margin-bottom: 0; }
 body.ndo-snapshot .ndo-tile, body.ndo-snapshot .highlights-section { animation: none; }
+
+/* By requirement owner: one horizontal bar per owner, split by work state */
+.ndo-owner-legend { display: flex; flex-wrap: wrap; gap: 0.4rem 0.9rem; font-size: 0.74rem; font-weight: 600; color: #42526e; margin-bottom: 0.8rem; }
+.ndo-owner-legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+.ndo-owner-legend i { width: 10px; height: 10px; border-radius: 3px; }
+.ndo-owner-chart { display: flex; flex-direction: column; gap: 0.75rem; }
+.ndo-owner-name { display: flex; justify-content: space-between; gap: 0.5rem; font-size: 0.8rem; font-weight: 600; color: #172b4d; margin-bottom: 0.3rem; }
+.ndo-owner-name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ndo-owner-name b { font-variant-numeric: tabular-nums; }
+.ndo-owner-row.is-unset .ndo-owner-name { color: #6b778c; font-style: italic; }
+.ndo-owner-track { height: 18px; }
+.ndo-owner-bar { display: flex; gap: 2px; height: 100%; min-width: 18px; }
+.ndo-owner-bar span {
+    min-width: 16px; border-radius: 4px; color: #fff; font-size: 0.68rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; font-variant-numeric: tabular-nums; cursor: default;
+}
+.ndo-owner-bar span:hover { filter: brightness(1.12); }

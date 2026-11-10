@@ -79,6 +79,8 @@ class Config:
     NDO_ISSUE_TYPES = _list('NDO_ISSUE_TYPES', 'Incident,Operations')
     NDO_EXCLUDED_STATUSES = _list('NDO_EXCLUDED_STATUSES', 'Done,Rejected')
     JIRA_FIELD_SEVERITY = _get('JIRA_FIELD_SEVERITY')
+    # Jira "Requirement Owner" (multi-select: Account Management, Marketing, Operations, Product Owner)
+    JIRA_FIELD_REQUIREMENT_OWNER = _get('JIRA_FIELD_REQUIREMENT_OWNER', 'customfield_13759')
     NDO_STALE_DAYS = _int('NDO_STALE_DAYS', 14)
     # How far back a past day's summary can be viewed / re-synced (?day=YYYY-MM-DD, --day)
     NDO_HISTORY_DAYS = _int('NDO_HISTORY_DAYS', 31)

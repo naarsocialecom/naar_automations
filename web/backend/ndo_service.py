@@ -32,6 +32,12 @@ from slack_client import SlackClient, SlackError, is_user_id
 logger = logging.getLogger(__name__)
 
 TICKET_FIELDS = ['issuetype', 'status', 'priority', 'summary', 'assignee', 'created', 'updated']
+
+
+def _ticket_fields() -> List[str]:
+    return TICKET_FIELDS + [f for f in (Config.JIRA_FIELD_SEVERITY, Config.JIRA_FIELD_REQUIREMENT_OWNER) if f]
+
+
 CLOSED_TICKET_FIELDS = ['issuetype', 'status', 'summary', 'assignee', 'description', 'comment',
                         'issuelinks', 'subtasks', 'statuscategorychangedate']
 
@@ -116,10 +122,11 @@ class NdoService:
                      and self._cache['at'] > self._last_forced_refresh())
             if self._cache['tickets'] is not None and fresh and not refresh:
                 return self._cache['tickets']
-            fields = TICKET_FIELDS + ([Config.JIRA_FIELD_SEVERITY] if Config.JIRA_FIELD_SEVERITY else [])
+            fields = _ticket_fields()
             raw = self.jira.search_issues(self.jql, fields)
             now = self.now()
-            tickets = [normalize_issue(i, Config.JIRA_DOMAIN, Config.JIRA_FIELD_SEVERITY, now) for i in raw]
+            tickets = [normalize_issue(i, Config.JIRA_DOMAIN, Config.JIRA_FIELD_SEVERITY, now,
+                                   Config.JIRA_FIELD_REQUIREMENT_OWNER) for i in raw]
             self._cache = {'at': time.time(), 'tickets': tickets}
             return tickets
 
@@ -127,7 +134,7 @@ class NdoService:
         """Current status/summary for tickets mentioned in updates (incl. Done ones)."""
         if not keys:
             return {}
-        fields = TICKET_FIELDS + ([Config.JIRA_FIELD_SEVERITY] if Config.JIRA_FIELD_SEVERITY else [])
+        fields = _ticket_fields()
         try:
             issues = self.jira.search_issues(f"key in ({', '.join(sorted(set(keys)))})", fields)
         except Exception as e:
@@ -135,7 +142,8 @@ class NdoService:
             logger.info(f"Ticket lookup skipped: {e}")
             return {}
         now = self.now()
-        return {i['key']: normalize_issue(i, Config.JIRA_DOMAIN, Config.JIRA_FIELD_SEVERITY, now) for i in issues}
+        return {i['key']: normalize_issue(i, Config.JIRA_DOMAIN, Config.JIRA_FIELD_SEVERITY, now,
+                                   Config.JIRA_FIELD_REQUIREMENT_OWNER) for i in issues}
 
     # ── Report ───────────────────────────────────────────────
     def report(self, refresh: bool = False, day: str = None) -> Dict:

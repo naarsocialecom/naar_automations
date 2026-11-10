@@ -105,6 +105,7 @@ function render() {
     $('ndoRagReasons').innerHTML = rag.reasons.map(r => `<li>${escapeHtml(r)}</li>`).join('');
 
     renderAging();
+    renderOwners();
     renderBreakdowns();
     renderSlackStatus();
     renderTypeFilter();
@@ -169,6 +170,32 @@ function renderAging() {
             <span class="ndo-age-label">${escapeHtml(g.label)}</span>
         </div>`).join('')}</div>`;
 }
+// Open tickets per Requirement Owner, split into in progress / on hold / to do.
+// A ticket with two owners counts under both; tickets without one go under "Not set".
+const OWNER_STATES = [['active', 'In progress', '#0065ff'], ['hold', 'On hold', '#ff991f'], ['todo', 'To do', '#97a0af']];
+function renderOwners() {
+    const rows = new Map();
+    (report.tickets || []).forEach(t => {
+        const st = ticketState(t.status);
+        if (!OWNER_STATES.some(([k]) => k === st)) return;
+        (t.owners?.length ? t.owners : ['Not set']).forEach(owner => {
+            if (!rows.has(owner)) rows.set(owner, { active: [], hold: [], todo: [] });
+            rows.get(owner)[st].push(t.key);
+        });
+    });
+    const total = r => r.active.length + r.hold.length + r.todo.length;
+    // Most in progress first; "Not set" always last
+    const list = [...rows].sort(([a, x], [b, y]) => (a === 'Not set') - (b === 'Not set')
+        || y.active.length - x.active.length || total(y) - total(x) || a.localeCompare(b));
+    const max = Math.max(1, ...list.map(([, r]) => total(r)));
+    $('ndoOwnerChart').innerHTML = list.length ? list.map(([owner, r]) => `
+        <div class="ndo-owner-row${owner === 'Not set' ? ' is-unset' : ''}">
+            <div class="ndo-owner-name"><span>${escapeHtml(owner)}</span><b>${total(r)}</b></div>
+            <div class="ndo-owner-track"><div class="ndo-owner-bar" style="width:${(total(r) / max * 100).toFixed(1)}%">${OWNER_STATES.map(([k, label, color]) => r[k].length
+                ? `<span style="flex:${r[k].length};background:${color}" title="${escapeHtml(`${owner} · ${label} (${r[k].length}): ${r[k].join(', ')}`)}">${r[k].length}</span>` : '').join('')}</div></div>
+        </div>`).join('') : '<div class="ndo-muted">No open tickets.</div>';
+}
+
 function ticketState(status) {
     const cls = getStatusClass(status || '');
     if (!status) return 'none';
