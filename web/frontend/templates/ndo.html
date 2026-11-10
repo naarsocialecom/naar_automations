@@ -119,33 +119,15 @@
 
 </div><!-- /ndoSnapshotArea: everything above is what the Slack image shows -->
 
-    <!-- MANUAL UPDATE + SLACK -->
-    <div class="ndo-actions-row">
-        <div class="ndo-card">
-            <div class="ndo-card-title"><i class="fas fa-comment-dots"></i> Add a developer update</div>
-            <p class="ndo-card-hint">Updates posted in the Slack updates channel are picked up automatically. Use this only for updates that didn't come through Slack.</p>
-            <form id="ndoNoteForm" class="ndo-note-form">
-                <textarea id="ndoNoteText" rows="3" maxlength="2000" required
-                          placeholder="e.g. NDO-873 live stream fix deployed to staging, monitoring today"></textarea>
-                <div class="ndo-note-form-row">
-                    <input id="ndoNoteAuthor" type="text" maxlength="80" placeholder="Developer name (optional)">
-                    <button type="submit" class="ndo-btn ndo-btn--primary"><i class="fas fa-plus"></i> Add update</button>
-                </div>
-            </form>
-        </div>
-
-        <div class="ndo-card">
+    <!-- SLACK DAILY UPDATE -->
+    <div class="ndo-card ndo-slack-card">
+        <div>
             <div class="ndo-card-title"><i class="fab fa-slack"></i> Slack daily update</div>
             <div id="ndoSlackStatus" class="ndo-slack-status"></div>
-            <ol class="ndo-steps">
-                <li><button class="ndo-btn" id="ndoSlackSync" type="button"><i class="fas fa-download"></i> Fetch developer updates</button>
-                    <span class="ndo-muted">Reads today's messages and rephrases them.</span></li>
-                <li><button class="ndo-btn" id="ndoSlackRemind" type="button"><i class="fas fa-bell"></i> Send reminder now</button>
-                    <span class="ndo-muted">Runs automatically 1 hour before the post.</span></li>
-                <li><button class="ndo-btn ndo-btn--primary" id="ndoSlackPost" type="button"><i class="fas fa-paper-plane"></i> Post daily update</button>
-                    <span class="ndo-muted" id="ndoPostHint">Runs automatically every evening.</span></li>
-            </ol>
-            <button class="ndo-btn ndo-btn--ghost" id="ndoPreviewBtn" type="button"><i class="fas fa-image"></i> Preview Slack image</button>
+        </div>
+        <div class="ndo-slack-actions">
+            <button class="ndo-btn ndo-btn--ghost" id="ndoPreviewBtn" type="button"><i class="fas fa-image"></i> Preview</button>
+            <button class="ndo-btn ndo-btn--primary" id="ndoSlackPost" type="button"><i class="fas fa-paper-plane"></i> Post now</button>
         </div>
     </div>
 
@@ -183,6 +165,7 @@
                 </tbody>
             </table>
         </div>
+        <div class="ndo-pager" id="ndoPager"></div>
     </div>
 
     <footer id="ndoFooter">

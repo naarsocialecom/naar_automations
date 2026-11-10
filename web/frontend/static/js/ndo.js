@@ -10,6 +10,9 @@ const $ = id => document.getElementById(id);
 
 let report      = null;
 let typeFilter  = 'All';
+// Open Tickets table: rows per page and the page shown
+const PAGE_SIZE = 15;
+let ticketPage  = 1;
 // ?day=YYYY-MM-DD shows a past day's summary (read-only)
 const VIEW_DAY  = new URLSearchParams(location.search).get('day');
 
@@ -172,10 +175,7 @@ function renderBreakdowns() {
     const types = ['Incident', 'Operations'];
     const keys  = { done: {}, active: {}, hold: {} };
     types.forEach(ty => Object.keys(keys).forEach(st => { keys[st][ty] = []; }));
-    (report.dev_updates || []).filter(u => u.source === 'jira').forEach(u => {
-        const ref = (u.ticket_refs || [])[0];
-        if (ref && keys.done[ref.type]) keys.done[ref.type].push(ref.key);
-    });
+    (report.closed_today || []).forEach(t => { if (keys.done[t.type]) keys.done[t.type].push(t.key); });
     (report.tickets || []).forEach(t => {
         const st = ticketState(t.status);
         if (keys[st]?.[t.type]) keys[st][t.type].push(t.key);
@@ -206,35 +206,23 @@ function renderBreakdowns() {
         </div>`).join('');
 }
 
+// One line: posted today, or when it posts automatically
 function renderSlackStatus() {
     const s   = report.slack;
     const box = $('ndoSlackStatus');
-    const n   = (report.dev_updates || []).length;
     let cls = '', html;
     if (!s.enabled) {
         cls  = 'ndo-slack-status--off';
-        html = '<i class="fas fa-plug"></i> Slack not connected — set <code>SLACK_BOT_TOKEN</code>, <code>SLACK_CHANNEL_ID</code> and <code>SLACK_DEV_UPDATES_CHANNEL_ID</code> in <code>web/backend/.env</code>.';
+        html = '<i class="fas fa-plug"></i> Slack not connected — set <code>SLACK_BOT_TOKEN</code> and <code>SLACK_CHANNEL_ID</code> in <code>web/backend/.env</code>.';
     } else if (s.posted_at) {
         cls  = 'ndo-slack-status--done';
-        html = `<i class="fas fa-check-circle"></i> Today's update was posted at ${timeLabel(s.posted_at)}.`;
-    } else if (!n) {
-        cls  = 'ndo-slack-status--off';
-        html = `<i class="fas fa-hourglass-half"></i> No developer updates yet — ${s.post_without_updates
-            ? `the ${escapeHtml(s.post_time)} post will say <i>No updates from developers</i> unless some come in.`
-            : `the ${escapeHtml(s.post_time)} post will be skipped until updates come in.`}${s.reminder_sent ? ' Reminder sent.' : ''}`;
+        html = `<i class="fas fa-check-circle"></i> Posted today at ${timeLabel(s.posted_at)}.`;
     } else {
-        html = `<i class="fab fa-slack"></i> ${n} developer update${n === 1 ? '' : 's'} ready · posts at ${escapeHtml(s.post_time)}${s.reminder_sent ? ' · reminder sent' : ''}.`;
+        html = `<i class="fas fa-clock"></i> Posts automatically every day at ${escapeHtml(s.post_time)}.`;
     }
     box.className = `ndo-slack-status ${cls}`;
     box.innerHTML = html;
-    const devReady = s.enabled && !!s.dev_channel_id;
-    $('ndoSlackSync').disabled   = !devReady;
-    $('ndoSlackRemind').disabled = !s.enabled;
-    const blocked = n === 0 && !s.post_without_updates;
-    $('ndoSlackPost').disabled   = !s.enabled || blocked;
-    $('ndoPostHint').textContent = blocked
-        ? 'Disabled — add or fetch developer updates first.'
-        : `Runs automatically at ${s.post_time}.`;
+    $('ndoSlackPost').disabled = !s.enabled;
 }
 
 function renderTypeFilter() {
@@ -258,8 +246,12 @@ function renderTickets() {
         (!q || [t.key, t.summary, t.assignee || '', t.status].some(v => v.toLowerCase().includes(q)))
     ).sort(ticketOrder);
     $('ndoTicketCount').textContent = list.length;
-    $('ndoTicketBody').innerHTML = list.length
-        ? list.map(t => `<tr>
+    const pages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+    ticketPage = Math.min(Math.max(1, ticketPage), pages);
+    const rows = list.slice((ticketPage - 1) * PAGE_SIZE, ticketPage * PAGE_SIZE);
+    renderPager(list.length, pages);
+    $('ndoTicketBody').innerHTML = rows.length
+        ? rows.map(t => `<tr>
             <td>${keyLink(t)}</td>
             <td>${chip(t.type, 'type-')}</td>
             <td>${escapeHtml(t.summary)}</td>
@@ -270,6 +262,27 @@ function renderTickets() {
             <td>${t.age_days ?? '–'}d</td>
           </tr>`).join('')
         : '<tr><td colspan="8" class="ndo-empty">No tickets match</td></tr>';
+}
+
+// "Showing 16–30 of 58" · ‹ 1 2 3 4 › (page numbers around the current one)
+function renderPager(total, pages) {
+    const pager = $('ndoPager');
+    if (pages <= 1) { pager.innerHTML = total ? `<span class="ndo-pager-info">Showing all ${total}</span>` : ''; return; }
+    const from = (ticketPage - 1) * PAGE_SIZE + 1;
+    const to = Math.min(ticketPage * PAGE_SIZE, total);
+    const nums = [];
+    for (let p = 1; p <= pages; p++) {
+        if (p === 1 || p === pages || Math.abs(p - ticketPage) <= 1) nums.push(p);
+        else if (nums[nums.length - 1] !== '…') nums.push('…');
+    }
+    const btn = (p, label, disabled = false, active = false) =>
+        `<button type="button" data-page="${p}" class="${active ? 'active' : ''}"${disabled ? ' disabled' : ''}>${label}</button>`;
+    pager.innerHTML = `<span class="ndo-pager-info">Showing ${from}–${to} of ${total}</span>
+        <div class="ndo-pager-btns">
+            ${btn(ticketPage - 1, '<i class="fas fa-chevron-left"></i>', ticketPage === 1)}
+            ${nums.map(p => p === '…' ? '<span class="ndo-pager-gap">…</span>' : btn(p, p, false, p === ticketPage)).join('')}
+            ${btn(ticketPage + 1, '<i class="fas fa-chevron-right"></i>', ticketPage === pages)}
+        </div>`;
 }
 
 // ── Actions ──────────────────────────────────────────────────
@@ -320,37 +333,7 @@ function bindEvents() {
         } catch (err) { toast(err.message, true); }
     });
 
-    // Team notes
-    try { $('ndoNoteAuthor').value = localStorage.getItem('ndo_author') || ''; } catch (_) {}
-    $('ndoNoteForm').addEventListener('submit', async e => {
-        e.preventDefault();
-        const text   = $('ndoNoteText').value.trim();
-        const author = $('ndoNoteAuthor').value.trim();
-        if (!text) return;
-        const btn = e.submitter || e.target.querySelector('button[type=submit]');
-        await withBusy(btn, async () => {
-            await api('/notes', { method: 'POST', body: JSON.stringify({ text, author }) });
-            try { localStorage.setItem('ndo_author', author); } catch (_) {}
-            $('ndoNoteText').value = '';
-            await loadReport();
-            toast('Developer update added');
-        });
-    });
-
     // Slack
-    const syncUpdates = btn => withBusy(btn, async () => {
-        const { data } = await api('/slack/sync', { method: 'POST' });
-        await loadReport();
-        toast(`${data.total} developer update${data.total === 1 ? '' : 's'} today` +
-              (data.added ? ` · ${data.added} new` : '') + (data.changed ? ` · ${data.changed} edited` : ''));
-    });
-    $('ndoSlackSync').addEventListener('click', e => syncUpdates(e.currentTarget));
-    $('ndoSlackRemind').addEventListener('click', e => withBusy(e.currentTarget, async () => {
-        if (!confirm('Send the "1 hour left" reminder to Slack now?')) return;
-        await api('/slack/remind', { method: 'POST' });
-        await loadReport();
-        toast('Reminder sent to Slack');
-    }));
     $('ndoSlackPost').addEventListener('click', e => withBusy(e.currentTarget, async () => {
         const already = !!report?.slack?.posted_at;
         if (!confirm(already ? 'Today\'s update was already posted. Post it again?' : 'Post today\'s update to the Slack channel?')) return;
@@ -361,11 +344,18 @@ function bindEvents() {
     initPreviewModal();
 
     // Tickets table
-    $('ndoSearch').addEventListener('input', () => report && renderTickets());
+    $('ndoSearch').addEventListener('input', () => { ticketPage = 1; if (report) renderTickets(); });
+    $('ndoPager').addEventListener('click', e => {
+        const btn = e.target.closest('button[data-page]');
+        if (!btn || btn.disabled) return;
+        ticketPage = Number(btn.dataset.page);
+        renderTickets();
+    });
     $('ndoTypeFilter').addEventListener('click', e => {
         const btn = e.target.closest('button[data-type]');
         if (!btn) return;
         typeFilter = btn.dataset.type;
+        ticketPage = 1;
         renderTypeFilter();
         renderTickets();
     });

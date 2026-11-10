@@ -56,6 +56,7 @@ class NdoService:
         self._sync_lock = threading.Lock()
         self._shot_lock = threading.Lock()
         self._shot_cache: Dict = {'at': 0.0, 'png': None}
+        self._closed_cache: Dict = {}
 
     # ── Time ─────────────────────────────────────────────────
     def now(self) -> datetime:
@@ -159,6 +160,7 @@ class NdoService:
             ticket_prefixes=Config.TICKET_KEY_PREFIXES,
             ticket_info=self.ticket_info(sorted(mentioned - open_keys)),
         )
+        report['closed_today'] = self.closed_on(day)
         report['slack'] = self.slack_status(state)
         report['digest'] = self._digest(day, report['dev_updates'])
         report['is_today'] = not past
@@ -324,6 +326,32 @@ class NdoService:
             f" Follow-up: {', '.join(follow_ups)}." if follow_ups else '')
         return '\n'.join(lines), fallback
 
+    def closed_on(self, day: str) -> List[Dict]:
+        """Tickets closed (Done / Rejected) on a day: [{key, type}], cached like the open tickets."""
+        cached = self._closed_cache.get(day)
+        if cached and time.time() - cached['at'] < Config.NDO_CACHE_SECONDS and cached['at'] > self._last_forced_refresh():
+            return cached['tickets']
+        start, end = self.day_window(day)
+        hours_back = math.ceil((self.now() - start).total_seconds() / 3600) + 1
+        jql = ' AND '.join(filter(None, [
+            f'project = "{Config.NDO_PROJECT_KEY}"',
+            f'issuetype in ({_jql_list(Config.NDO_ISSUE_TYPES)})' if Config.NDO_ISSUE_TYPES else '',
+            f'status in ({_jql_list(Config.NDO_EXCLUDED_STATUSES)})',
+            f'updated >= -{hours_back}h',   # coarse pre-filter; the exact close time is checked below
+        ]))
+        try:
+            issues = self.jira.search_issues(jql, ['statuscategorychangedate', 'issuetype'])
+        except Exception as e:
+            logger.warning(f"Closed-ticket lookup failed: {e}")
+            return []
+        closed = []
+        for i in issues:
+            dt = _parse_dt(i['fields'].get('statuscategorychangedate'))
+            if dt and start <= dt < end:
+                closed.append({'key': i['key'], 'type': (i['fields'].get('issuetype') or {}).get('name', '')})
+        self._closed_cache[day] = {'at': time.time(), 'tickets': closed}
+        return closed
+
     def sync_closed_tickets(self, day: str = None) -> Dict:
         """Tickets closed (Done / Rejected) on a day (default today) → updates from the summary and that day's comments."""
         day = self.resolve_day(day)
@@ -372,6 +400,8 @@ class NdoService:
 
     def sync_all_updates(self, raise_errors: bool = False, day: str = None) -> Dict:
         """Slack messages + tickets closed on a day (default today). One source failing doesn't stop the other."""
+        if not Config.NDO_DEVELOPER_UPDATES:
+            return {'added': 0, 'changed': 0, 'removed': 0, 'total': 0, 'off': True}
         jobs = []
         if Config.slack_enabled() and Config.SLACK_DEV_UPDATES_CHANNEL_ID:
             jobs.append(self.sync_dev_updates)
@@ -396,6 +426,8 @@ class NdoService:
 
     def maybe_sync_dev_updates(self) -> None:
         """Throttled background-safe sync used when the dashboard is opened."""
+        if not Config.NDO_DEVELOPER_UPDATES:
+            return
         if Config.slack_enabled() and Config.SLACK_DEV_UPDATES_CHANNEL_ID and self._due('dev_synced_at'):
             try:
                 self.sync_dev_updates()
@@ -417,6 +449,7 @@ class NdoService:
             'ai_enabled': Config.ai_enabled(),
             'post_time': Config.NDO_POST_TIME_LABEL,
             'post_without_updates': Config.NDO_POST_WITHOUT_UPDATES,
+            'developer_updates': Config.NDO_DEVELOPER_UPDATES,
             'reminder_sent': bool(state.get('reminder_ts')),
             # Only a post to the current summary channel counts (not an earlier test post elsewhere)
             'posted_at': state.get('slack_posted_at')
@@ -432,6 +465,8 @@ class NdoService:
 
     def send_reminder(self) -> Dict:
         """One hour before the post: nudge the channel to add developer updates."""
+        if not Config.NDO_DEVELOPER_UPDATES:
+            return {'sent': False, 'reason': 'Developer updates are off (NDO_DEVELOPER_UPDATES), so there is no reminder.'}
         slack = self._slack()
         self.sync_all_updates()
         day = self.today()
@@ -464,7 +499,7 @@ class NdoService:
         day = self.resolve_day(day)
         self.sync_all_updates(day=day)
 
-        if not self.store.notes(day) and not Config.NDO_POST_WITHOUT_UPDATES:
+        if Config.NDO_DEVELOPER_UPDATES and not self.store.notes(day) and not Config.NDO_POST_WITHOUT_UPDATES:
             state = self.store.get_day(day)
             if not state.get('skip_notice_ts') and Config.SLACK_REMINDER_CHANNEL_ID:
                 link = f" Then use *Post daily update* on the <{Config.DASHBOARD_URL}/ndo|NDO dashboard>." \

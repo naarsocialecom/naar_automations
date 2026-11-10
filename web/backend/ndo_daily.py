@@ -65,7 +65,8 @@ def main(argv=None) -> int:
                 raise ValueError('copy needs --day YYYY-MM-DD (the day to copy from)')
             logger.info(f"Updates copied into today: {svc.copy_updates(args.day)}")
         elif args.command == 'remind':
-            logger.info(f"Reminder sent: {svc.send_reminder()}")
+            result = svc.send_reminder()
+            logger.info(result['reason'] if result.get('sent') is False else f"Reminder sent: {result}")
         elif args.command == 'post':
             result = svc.post_daily(force=args.force, day=args.day)
             logger.info(result.get('message') or 'Daily update posted')

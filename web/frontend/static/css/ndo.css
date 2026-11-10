@@ -249,7 +249,7 @@
 /* Past day (?day=): read-only */
 .ndo-today-link { display: none; }
 body.ndo-past .ndo-today-link { display: inline-flex; }
-body.ndo-past .ndo-actions-row, body.ndo-past .ndo-rag-select, body.ndo-past #ndoDevSyncBtn { display: none; }
+body.ndo-past .ndo-slack-card, body.ndo-past .ndo-rag-select { display: none; }
 
 /* Chips */
 .ndo-chip {
@@ -265,10 +265,28 @@ body.ndo-past .ndo-actions-row, body.ndo-past .ndo-rag-select, body.ndo-past #nd
 .ndo-chip--type-Operations { background: #deebff; color: #0747a6; }
 
 /* ── Manual update + Slack cards ───────────────────────────── */
-.ndo-actions-row {
-    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 1.4rem; margin-bottom: 1.8rem;
+/* Slack daily update: one compact row */
+.ndo-slack-card {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+    margin-bottom: 1.8rem;
 }
+.ndo-slack-card .ndo-card-title { margin-bottom: 0.35rem; }
+.ndo-slack-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+
+/* Open Tickets pagination */
+.ndo-pager {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+    padding: 0.9rem 0.2rem 0.2rem; font-size: 0.82rem; color: #5e6c84;
+}
+.ndo-pager-btns { display: flex; align-items: center; gap: 0.3rem; }
+.ndo-pager-btns button {
+    min-width: 34px; height: 34px; padding: 0 0.6rem; border-radius: 8px; border: 1px solid #dfe1e6;
+    background: #fff; color: #172b4d; font: inherit; font-weight: 600; cursor: pointer;
+}
+.ndo-pager-btns button:hover:not(:disabled) { background: #f4f5f7; }
+.ndo-pager-btns button.active { background: #0c66e4; border-color: #0c66e4; color: #fff; }
+.ndo-pager-btns button:disabled { opacity: 0.4; cursor: default; }
+.ndo-pager-gap { padding: 0 0.2rem; color: #97a0af; }
 .ndo-card {
     background: white; border-radius: 1.6rem; border: 1.5px solid #e9ecef;
     box-shadow: 0 4px 12px rgba(0,0,0,0.04); padding: 1.2rem 1.4rem;
@@ -371,7 +389,7 @@ body.ndo-modal-open { overflow: hidden; }
     .ndo-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (max-width: 900px) {
-    .ndo-hl-grid, .ndo-actions-row, .ndo-age-grid { grid-template-columns: 1fr; }
+    .ndo-hl-grid, .ndo-age-grid { grid-template-columns: 1fr; }
     .ndo-rag-banner { flex-wrap: wrap; gap: 0.7rem; }
     .ndo-rag-reasons { border-left: none; padding-left: 0; flex-basis: 100%; }
 }

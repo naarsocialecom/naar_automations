@@ -83,6 +83,9 @@ class Config:
     # How far back a past day's summary can be viewed / re-synced (?day=YYYY-MM-DD, --day)
     NDO_HISTORY_DAYS = _int('NDO_HISTORY_DAYS', 31)
     NDO_CACHE_SECONDS = _int('NDO_CACHE_SECONDS', 120)
+    # Developer updates: reading the Slack updates channel, AI notes on tickets closed that day,
+    # the 6 PM reminder and the updates in the 7 PM post. Off = the post is the ticket summary only.
+    NDO_DEVELOPER_UPDATES = _bool('NDO_DEVELOPER_UPDATES', False)
     # Tickets moved to an excluded status (Done / Rejected) today become developer updates,
     # written by the AI from the ticket summary and its comments
     NDO_CLOSED_TICKET_UPDATES = _bool('NDO_CLOSED_TICKET_UPDATES', True)
