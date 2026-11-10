@@ -142,22 +142,37 @@ const URGENT = new Set(['Critical', 'Highest', 'High']);
 // Priorities always shown for incidents; Low / Lowest (or any other) appear only when an incident has them
 const JIRA_PRIORITIES = ['Critical', 'High', 'Medium'];
 
-// Open tickets by age since created: one column chart per type, hover a column for its tickets
+// Open tickets by age since created: one horizontal stacked bar per age group
+// (incidents + operations), counts inside when they fit, total at the end, hover a part for its tickets
 function renderAging() {
     const aging = report.aging || {};
-    [['Incident', 'ndoAgeIncident', 'ndoAgeIncidentTotal'], ['Operations', 'ndoAgeOps', 'ndoAgeOpsTotal']].forEach(([ty, id, totalId]) => {
-        const buckets = aging[ty] || [];
-        const total = buckets.reduce((a, b) => a + b.keys.length, 0);
-        const max = Math.max(1, ...buckets.map(b => b.keys.length));
-        $(totalId).textContent = `${total} open`;
-        $(id).innerHTML = buckets.map(b => {
-            const n = b.keys.length;
-            return `<div class="ndo-age-col${n ? '' : ' is-zero'}"${n ? ` title="${escapeHtml(b.keys.join(', '))}"` : ''}>
-                <span class="ndo-age-val">${n}</span>
-                <div class="ndo-age-track"><div class="ndo-age-bar" style="height:${n ? Math.max(4, n / max * 100).toFixed(1) : 0}%"></div></div>
-                <span class="ndo-age-label">${escapeHtml(b.label)}</span>
-            </div>`;
+    const parts = [['Incident', 'incident', 'Incidents'], ['Operations', 'ops', 'Operations']];
+    const total = ty => (aging[ty] || []).reduce((a, b) => a + b.keys.length, 0);
+    $('ndoAgeIncidentTotal').textContent = total('Incident');
+    $('ndoAgeOpsTotal').textContent = total('Operations');
+    const labels = (aging.Incident || aging.Operations || []).map(b => b.label);
+    const rows = labels.map((label, i) => ({
+        label,
+        parts: parts.map(([ty, cls, name]) => ({ cls, name, keys: aging[ty]?.[i]?.keys || [] })),
+    }));
+    const max = Math.max(1, ...rows.map(r => r.parts.reduce((a, p) => a + p.keys.length, 0)));
+    $('ndoAgeChart').innerHTML = rows.map(r => {
+        const sum = r.parts.reduce((a, p) => a + p.keys.length, 0);
+        const segs = r.parts.filter(p => p.keys.length).map(p => {
+            const pct = p.keys.length / max * 100;
+            return `<div class="ndo-age-seg ndo-age-seg--${p.cls}" style="width:${pct.toFixed(2)}%"
+                         title="${escapeHtml(`${p.name} (${p.keys.length}): ${p.keys.join(', ')}`)}">
+                        <span>${p.keys.length}</span></div>`;
         }).join('');
+        return `<div class="ndo-age-row${sum ? '' : ' is-zero'}">
+            <span class="ndo-age-label">${escapeHtml(r.label)}</span>
+            <div class="ndo-age-track">${segs}</div>
+            <span class="ndo-age-sum">${sum}</span>
+        </div>`;
+    }).join('');
+    // A count is shown inside a part only when it fits
+    $('ndoAgeChart').querySelectorAll('.ndo-age-seg').forEach(seg => {
+        seg.classList.toggle('is-narrow', seg.offsetWidth < 26);
     });
 }
 function ticketState(status) {

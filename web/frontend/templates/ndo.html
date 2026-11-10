@@ -82,23 +82,17 @@
             </div>
 
             <div class="ndo-hl-grid">
-                <!-- Open tickets by age (since created), one chart per type -->
-                <div class="ndo-age-grid">
-                    <section class="ndo-panel">
-                        <header class="ndo-panel-head">
-                            <span class="ndo-panel-title"><i class="fas fa-fire-alt ndo-age-icon--incident"></i> Incidents · open by age</span>
-                            <span class="ndo-panel-meta ndo-age-total" id="ndoAgeIncidentTotal"></span>
-                        </header>
-                        <div class="ndo-panel-body"><div class="ndo-age-chart ndo-age--incident" id="ndoAgeIncident"></div></div>
-                    </section>
-                    <section class="ndo-panel">
-                        <header class="ndo-panel-head">
-                            <span class="ndo-panel-title"><i class="fas fa-cogs ndo-age-icon--ops"></i> Operations · open by age</span>
-                            <span class="ndo-panel-meta ndo-age-total" id="ndoAgeOpsTotal"></span>
-                        </header>
-                        <div class="ndo-panel-body"><div class="ndo-age-chart ndo-age--ops" id="ndoAgeOps"></div></div>
-                    </section>
-                </div>
+                <!-- Open tickets by age (since created): one stacked bar per age group, incidents + operations -->
+                <section class="ndo-panel">
+                    <header class="ndo-panel-head">
+                        <span class="ndo-panel-title"><i class="fas fa-hourglass-half"></i> Open tickets by age</span>
+                        <span class="ndo-age-legend">
+                            <span><i class="ndo-age-key ndo-age-key--incident"></i> Incidents <b id="ndoAgeIncidentTotal"></b></span>
+                            <span><i class="ndo-age-key ndo-age-key--ops"></i> Operations <b id="ndoAgeOpsTotal"></b></span>
+                        </span>
+                    </header>
+                    <div class="ndo-panel-body"><div class="ndo-age-chart" id="ndoAgeChart"></div></div>
+                </section>
 
                 <!-- At a glance -->
                 <section class="ndo-panel">
