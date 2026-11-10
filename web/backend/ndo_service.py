@@ -484,7 +484,7 @@ class NdoService:
             report = self.report(refresh=True, day=day)
             png = self.slack_image(report)
             filename = f"ndo-daily-{day}.png"
-            title = f"Naar Data Operations · {report['date_label']}"
+            title = f"Incidents & Operations · {report['date_label']}"
             posted = False
             if is_user_id(Config.SLACK_CHANNEL_ID):
                 # A person (DM): only chat.postMessage takes a user ID, the file-share call needs a channel

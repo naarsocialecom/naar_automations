@@ -101,7 +101,7 @@ def render_snapshot(report: Dict) -> bytes:
     d.rectangle(_s(12, 48, WIDTH - 12, 64), fill=HEADER_BG)
     d.line(_s(12, 64, WIDTH - 12, 64), fill=LINE, width=SCALE)
     d.rounded_rectangle(_s(12, 12, WIDTH - 12, HEIGHT - 12), radius=14 * SCALE, outline=LINE, width=SCALE)
-    d.text(_s(32, 26), 'Naar Data Operations', font=_font(19, 'bold'), fill=INK)
+    d.text(_s(32, 26), 'Incidents & Operations', font=_font(19, 'bold'), fill=INK)
     sub = f"Daily update · {report['date_label']}"
     d.text(_s(WIDTH - 32, 30), sub, font=_font(13), fill=MUTED, anchor='ra')
 

@@ -21,6 +21,8 @@ ON_HOLD_STATUSES = {'on-hold', 'on hold', 'blocked'}
 
 RAG_LABELS = {'green': 'On Track', 'amber': 'Moderate', 'red': 'Critical'}
 RAG_EMOJI = {'green': ':large_green_circle:', 'amber': ':large_orange_circle:', 'red': ':red_circle:'}
+# Overall status in the Slack message: a colour, not "Critical", so it isn't mistaken for a ticket priority
+RAG_STATUS = {'green': 'Green · on track', 'amber': 'Amber · keep an eye on it', 'red': 'Red · needs attention'}
 
 INCIDENT = 'Incident'
 
@@ -131,6 +133,20 @@ def _is_critical(t: Dict) -> bool:
     return t['priority'] in CRITICAL_PRIORITIES or t['severity'] in CRITICAL_SEVERITIES
 
 
+def _why_critical(t: Dict) -> str:
+    """'Sev-1' or 'Critical priority': what makes a ticket count as critical."""
+    return t['severity'] if t['severity'] in CRITICAL_SEVERITIES else f"{t['priority']} priority"
+
+
+def _critical_reason(incidents: List[Dict]) -> str:
+    """'1 Sev-1 incident and 1 Critical-priority incident open' — says exactly why, not just 'critical'."""
+    groups = Counter(t['severity'] if t['severity'] in CRITICAL_SEVERITIES else f"{t['priority']}-priority"
+                     for t in incidents)
+    parts = [f"{n} {label} incident{'' if n == 1 else 's'}"
+             for label, n in sorted(groups.items(), key=lambda kv: (_rank(kv[0], SEVERITY_ORDER), kv[0]))]
+    return ' and '.join(parts) + ' open'
+
+
 def compute_rag(tickets: List[Dict], stale_days: int) -> Dict:
     incidents = [t for t in tickets if t['type'] == INCIDENT]
     others = [t for t in tickets if t['type'] != INCIDENT]
@@ -142,7 +158,7 @@ def compute_rag(tickets: List[Dict], stale_days: int) -> Dict:
 
     red, amber = [], []
     if critical_inc:
-        red.append(f"{_plural(len(critical_inc), 'critical incident')} open")
+        red.append(_critical_reason(critical_inc))
     if len(critical_inc) == 0 and incidents:
         amber.append(f"{_plural(len(incidents), 'incident')} open, none critical")
     if urgent_ops:
@@ -336,29 +352,43 @@ def _slack_rich(text: str, report: Dict) -> str:
 
 
 def slack_text(report: Dict) -> str:
-    """Short Slack message posted with the dashboard screenshot — the image carries the detail."""
+    """
+    Short Slack message posted with the dashboard screenshot. Every number says what it counts:
+    the overall status is a colour with its reason, incidents and operations are listed apart,
+    and each "needs attention" ticket says its type and why it is urgent. No people's names.
+    """
     rag = report['rag']
     totals = report['totals']
-    counts = ' · '.join(f"*{n}* {ty}{'' if n == 1 or ty.endswith('s') else 's'}"
-                        for ty, n in totals['by_type'].items())
-    lines = [
-        f"*Naar Data Operations — {report['date_label']}*",
-        f"{RAG_EMOJI[rag['level']]} *{rag['label']}* · {counts} · *{totals['critical_high']}* high-priority incidents (Critical + High)"
-        f" · *{totals['unassigned']}* Unassigned",
-    ]
+    splits = totals.get('splits', {})
+    urgent = splits.get('critical_high', {})
+    unassigned = splits.get('unassigned', {})
 
-    lines += ['', '*Summary*'] + ([f"• {_slack_rich(line, report)}" for line in report['digest']]
-                                  if report.get('digest') else ['• _No updates from developers today._'])
+    lines = [
+        f"*Incidents & Operations · {report['date_label']}*",
+        f"{RAG_EMOJI[rag['level']]} Overall status: *{RAG_STATUS[rag['level']]}*",
+    ]
+    lines += [f"    _{_slack_escape(reason)}_" for reason in rag['reasons']]
+
+    lines += ['', '*Open tickets*']
+    for ty, n in totals['by_type'].items():
+        if ty == INCIDENT:
+            crit, high = len(urgent.get('Critical', [])), len(urgent.get('High', []))
+            lines.append(f"• Incidents: *{n}* open — {crit} Critical priority, {high} High priority")
+        else:
+            lines.append(f"• {ty}: *{n}* open")
+    if totals['unassigned']:
+        by_type = ', '.join(_plural(len(keys), 'incident' if ty == INCIDENT else f"{ty.lower()} ticket")
+                            for ty, keys in unassigned.items() if keys)
+        lines.append(f"• Unassigned: *{totals['unassigned']}* ({by_type})")
+
+    lines += ['', "*Today's updates*"] + ([f"• {_slack_rich(line, report)}" for line in report['digest']]
+                                         if report.get('digest') else ['• _No updates from developers today._'])
 
     critical = [t for t in report['key_tickets'] if _urgency(t) == 0]
     if critical:
-        lines += ['', '*Needs attention*']
+        lines += ['', '*Needs attention* _(Critical priority or Sev-0 / Sev-1)_']
         for t in critical[:3]:
-            details = ' · '.join(filter(None, [
-                t['status'],
-                t['severity'] if t['severity'] != 'Not set' else t['priority'],
-                t['assignee'] or 'Unassigned',
-            ]))
+            details = ' · '.join([t['type'], _why_critical(t), t['status']])
             lines.append(f"• <{t['url']}|{t['key']}> {_slack_escape(_short(t['summary'], 40))} — _{_slack_escape(details)}_")
         if len(critical) > 3:
             lines.append(f"_+{len(critical) - 3} more on the dashboard_")
