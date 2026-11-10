@@ -91,7 +91,7 @@ function render() {
         (report.tickets || []).filter(t => t.type === ty).forEach(t => out[ticketState(t.status)]?.push(t.key));
         return out;
     };
-    const STATE_PARTS = { active: ['Active', '#0065ff'], todo: ['To do', '#97a0af'], hold: ['On hold', '#ff991f'] };
+    const STATE_PARTS = { active: ['In progress', '#0065ff'], todo: ['To do', '#97a0af'], hold: ['On hold', '#ff991f'] };
     renderSplit('splitIncident', byState('Incident'),   STATE_PARTS);
     renderSplit('splitOps',      byState('Operations'), STATE_PARTS);
     renderSplit('splitCritical',   split.critical_high, { Critical: ['Critical', '#cd4425'], High: ['High', '#e2647a'] });
