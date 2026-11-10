@@ -101,7 +101,7 @@ function render() {
     $('ndoRagSelect').value = rag.overridden ? rag.level : '';
     $('ndoRagReasons').innerHTML = rag.reasons.map(r => `<li>${escapeHtml(r)}</li>`).join('');
 
-    renderDevUpdates();
+    renderAging();
     renderBreakdowns();
     renderSlackStatus();
     renderTypeFilter();
@@ -135,60 +135,28 @@ function renderSplit(id, keysBy = {}, parts) {
         </div>`;
 }
 
-function renderDevUpdates() {
-    const updates = report.dev_updates || [];
-    const s       = report.slack;
-    $('ndoDevCount').textContent = updates.length;
-
-    // Only problems are shown here; a healthy sync stays quiet
-    const meta = $('ndoDevMeta');
-    meta.textContent = s.dev_sync_error ? `Slack: ${s.dev_sync_error}`
-        : (!s.enabled || !s.dev_channel_id) ? 'Slack updates channel not connected' : '';
-    meta.className   = 'ndo-panel-meta ndo-panel-meta--warn';
-
-    $('ndoDevDetails').hidden = !updates.length;
-    if (!updates.length) {
-        $('ndoDigest').innerHTML = report.is_today
-            ? `<li class="ndo-dev-empty"><i class="fas fa-hourglass-half"></i>
-                <span><b>No updates from developers today.</b></span></li>`
-            : '<li class="ndo-dev-empty"><i class="fas fa-inbox"></i><span><b>No updates from developers on this day.</b></span></li>';
-        $('ndoDevUpdates').innerHTML = '';
-        return;
-    }
-    $('ndoDigest').innerHTML = (report.digest || []).map(line =>
-        `<li><i class="ndo-digest-dot" aria-hidden="true"></i><span>${linkify(line)}</span></li>`).join('');
-    // Compact timeline: time · status dot · one-line update · small ticket tags
-    $('ndoDevUpdates').innerHTML = updates.map(u => {
-        const refs  = u.ticket_refs || [];
-        const state = ticketState(refs[0]?.status);
-        const tags  = refs.map(r => {
-            // The team follows up by priority, so tags show the priority (when it's urgent)
-            const level = URGENT.has(r.priority) ? r.priority : '';
-            const tip   = r.summary ? `${r.key} — ${r.summary}` : `${r.key} — not found in Jira`;
-            return `<a class="ndo-tag ndo-tag--${ticketState(r.status)}" href="${escapeHtml(r.url)}" target="_blank"
-                       rel="noopener" title="${escapeHtml(tip)}"><b>${escapeHtml(r.key)}</b>${r.status ? ` · ${escapeHtml(r.status)}` : ''}${level ? ` · ${escapeHtml(level)}` : ''}</a>`;
-        }).join('');
-        // Jira briefs can hold customer details from the description, so only Slack/typed originals are shown
-        const original = u.rephrased && u.raw_text && u.source !== 'jira' ? ` title="Original: ${escapeHtml(u.raw_text)}"` : '';
-        return `<li class="ndo-tl ndo-tl--${state}">
-            <span class="ndo-tl-time">${timeLabel(u.created_at)}</span>
-            <span class="ndo-tl-dot" aria-hidden="true"></span>
-            <div class="ndo-tl-body">
-                <div class="ndo-dev-text"${original}>${linkify(u.text)}</div>
-                <div class="ndo-tl-tags">${tags}
-                    <span class="ndo-tl-src">${SOURCE_ICONS[u.source] || SOURCE_ICONS.dashboard}${u.rephrased ? '<span class="ndo-dev-ai" title="Rephrased by AI">AI</span>' : ''}</span>
-                </div>
-            </div>
-            ${u.source === 'slack' || u.source === 'jira' ? '' : `<button class="ndo-note-del" data-id="${escapeHtml(u.id)}" title="Remove update" aria-label="Remove update"><i class="fas fa-times"></i></button>`}
-        </li>`;
-    }).join('');
-}
-
 const URGENT = new Set(['Critical', 'Highest', 'High']);
 // Priorities always shown for incidents; Low / Lowest (or any other) appear only when an incident has them
 const JIRA_PRIORITIES = ['Critical', 'High', 'Medium'];
 
-// done / active / hold / todo — drives the timeline dot and tag colours
+// Open tickets by age since created: one column chart per type, hover a column for its tickets
+function renderAging() {
+    const aging = report.aging || {};
+    [['Incident', 'ndoAgeIncident', 'ndoAgeIncidentTotal'], ['Operations', 'ndoAgeOps', 'ndoAgeOpsTotal']].forEach(([ty, id, totalId]) => {
+        const buckets = aging[ty] || [];
+        const total = buckets.reduce((a, b) => a + b.keys.length, 0);
+        const max = Math.max(1, ...buckets.map(b => b.keys.length));
+        $(totalId).textContent = `${total} open`;
+        $(id).innerHTML = buckets.map(b => {
+            const n = b.keys.length;
+            return `<div class="ndo-age-col${n ? '' : ' is-zero'}"${n ? ` title="${escapeHtml(b.keys.join(', '))}"` : ''}>
+                <span class="ndo-age-val">${n}</span>
+                <div class="ndo-age-track"><div class="ndo-age-bar" style="height:${n ? Math.max(4, n / max * 100).toFixed(1) : 0}%"></div></div>
+                <span class="ndo-age-label">${escapeHtml(b.label)}</span>
+            </div>`;
+        }).join('');
+    });
+}
 function ticketState(status) {
     const cls = getStatusClass(status || '');
     if (!status) return 'none';
@@ -261,7 +229,6 @@ function renderSlackStatus() {
     box.innerHTML = html;
     const devReady = s.enabled && !!s.dev_channel_id;
     $('ndoSlackSync').disabled   = !devReady;
-    $('ndoDevSyncBtn').disabled  = !devReady;
     $('ndoSlackRemind').disabled = !s.enabled;
     const blocked = n === 0 && !s.post_without_updates;
     $('ndoSlackPost').disabled   = !s.enabled || blocked;
@@ -369,14 +336,6 @@ function bindEvents() {
             toast('Developer update added');
         });
     });
-    $('ndoDevUpdates').addEventListener('click', async e => {
-        const btn = e.target.closest('.ndo-note-del');
-        if (!btn || !confirm('Remove this update?')) return;
-        await withBusy(btn, async () => {
-            await api(`/notes/${encodeURIComponent(btn.dataset.id)}`, { method: 'DELETE' });
-            await loadReport();
-        });
-    });
 
     // Slack
     const syncUpdates = btn => withBusy(btn, async () => {
@@ -386,7 +345,6 @@ function bindEvents() {
               (data.added ? ` · ${data.added} new` : '') + (data.changed ? ` · ${data.changed} edited` : ''));
     });
     $('ndoSlackSync').addEventListener('click', e => syncUpdates(e.currentTarget));
-    $('ndoDevSyncBtn').addEventListener('click', e => { e.stopPropagation(); syncUpdates(e.currentTarget); });
     $('ndoSlackRemind').addEventListener('click', e => withBusy(e.currentTarget, async () => {
         if (!confirm('Send the "1 hour left" reminder to Slack now?')) return;
         await api('/slack/remind', { method: 'POST' });

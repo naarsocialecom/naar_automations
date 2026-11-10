@@ -14,6 +14,9 @@ PRIORITY_ORDER = ['Critical', 'Highest', 'High', 'Medium', 'Low', 'Lowest', 'Non
 URGENT_PRIORITIES = {'Critical', 'Highest', 'High'}
 CRITICAL_PRIORITIES = {'Critical', 'Highest'}
 ON_HOLD_STATUSES = {'on-hold', 'on hold', 'blocked'}
+# How long open tickets have been open (since created), for the two age charts:
+# (label, upper limit in days; None = no limit)
+AGE_BUCKETS = [('Last 24 hours', 1), ('1–3 days', 3), ('3–7 days', 7), ('1–4 weeks', 30), ('Over a month', None)]
 
 RAG_LABELS = {'green': 'On Track', 'amber': 'Moderate', 'red': 'Critical'}
 RAG_EMOJI = {'green': ':large_green_circle:', 'amber': ':large_orange_circle:', 'red': ':red_circle:'}
@@ -108,6 +111,28 @@ def normalize_issue(issue: Dict, jira_domain: str, severity_field: str, now: dat
         'age_days': (now - created).days if created else None,
         'idle_days': (now - updated).days if updated else None,
     }
+
+
+def _work_state(t: Dict) -> str:
+    """'to do' / 'in progress' / 'on hold' from the Jira status."""
+    if t['status'].lower() in ON_HOLD_STATUSES:
+        return 'on hold'
+    return 'to do' if t.get('status_category') == 'new' else 'in progress'
+
+
+def build_aging(tickets: List[Dict], types: List[str], now: datetime) -> Dict[str, List[Dict]]:
+    """Per ticket type: open tickets per age bucket, with their keys (for the hover list)."""
+    out = {}
+    for ty in types:
+        buckets = [{'label': label, 'keys': []} for label, _ in AGE_BUCKETS]
+        for t in tickets:
+            if t['type'] != ty or not t['created']:
+                continue
+            age = (now - datetime.fromisoformat(t['created'])).total_seconds() / 86400
+            i = next(i for i, (_, limit) in enumerate(AGE_BUCKETS) if limit is None or age < limit)
+            buckets[i]['keys'].append(t['key'])
+        out[ty] = buckets
+    return out
 
 
 def _ordered_counts(counter: Counter, order: List[str]) -> 'OrderedDict[str, int]':
@@ -305,6 +330,7 @@ def build_report(tickets: List[Dict], *, day: str, now: datetime, issue_types: L
             'priority': priority,
             'status': status,
         },
+        'aging': build_aging(tickets, types, now),
         'tickets': sorted(tickets, key=lambda t: (
             _urgency(t), 0 if t['type'] == INCIDENT else 1, t['created'] or '')),
     }
@@ -326,48 +352,31 @@ def _slack_rich(text: str, report: Dict) -> str:
 
 def slack_text(report: Dict) -> str:
     """
-    Short Slack message posted with the dashboard screenshot. Every number says what it counts:
-    the overall status is a colour with its reason, incidents and operations are listed apart,
-    and each "needs attention" ticket says its type and why it is urgent. No people's names.
+    Short Slack message posted with the dashboard screenshot: incidents by priority (Critical and
+    High listed by name), Medium and below as one count, and operations by work state.
     """
-    rag = report['rag']
-    totals = report['totals']
-    splits = totals.get('splits', {})
-    urgent = splits.get('critical_high', {})
-    unassigned = splits.get('unassigned', {})
+    incidents = [t for t in report['tickets'] if t['type'] == INCIDENT]
+    others = [t for t in report['tickets'] if t['type'] != INCIDENT]
+    critical = [t for t in incidents if t['priority'] in CRITICAL_PRIORITIES]
+    high = [t for t in incidents if t['priority'] in URGENT_PRIORITIES - CRITICAL_PRIORITIES]
+    rest = len(incidents) - len(critical) - len(high)
 
-    lines = [
-        f"*Incidents & Operations · {report['date_label']}*",
-        f"{RAG_EMOJI[rag['level']]} Overall status: *{RAG_STATUS[rag['level']]}*",
-    ]
-    lines += [f"    _{_slack_escape(reason)}_" for reason in rag['reasons']]
+    def listed(group):
+        return [f"      • <{t['url']}|{t['key']}> {_slack_escape(_short(t['summary'], 60))}" for t in group]
 
-    lines += ['', '*Open tickets*']
-    for ty, n in totals['by_type'].items():
+    lines = [f"*Incidents & Operations · {report['date_label']}*", '',
+             f"*Incidents: {len(incidents)} open*",
+             f":red_circle: Critical: *{len(critical)}*", *listed(critical),
+             f":large_orange_circle: High: *{len(high)}*", *listed(high),
+             f":white_circle: Medium & below: *{rest}*"]
+
+    for ty in report['issue_types']:
         if ty == INCIDENT:
-            crit, high = len(urgent.get('Critical', [])), len(urgent.get('High', []))
-            lines.append(f"• Incidents: *{n}* open — {crit} Critical priority, {high} High priority")
-        else:
-            lines.append(f"• {ty}: *{n}* open")
-    if totals['unassigned']:
-        by_type = ', '.join(_plural(len(keys), 'incident' if ty == INCIDENT else f"{ty.lower()} ticket")
-                            for ty, keys in unassigned.items() if keys)
-        lines.append(f"• Unassigned: *{totals['unassigned']}* ({by_type})")
-
-    lines += ['', "*Today's updates*"] + ([f"• {_slack_rich(line, report)}" for line in report['digest']]
-                                         if report.get('digest') else ['• _No updates from developers today._'])
-
-    # Incidents only (operations tickets are reviewed first): the same tickets as the
-    # dashboard's "High-Priority Incidents" tile, Critical first
-    urgent_inc = [t for t in report['key_tickets'] if t['type'] == INCIDENT and t['priority'] in URGENT_PRIORITIES]
-    lines += ['', '*High-priority incidents* _(Critical + High)_']
-    for t in urgent_inc[:5]:
-        details = f"{t['priority']} priority · {t['status']}"
-        lines.append(f"• <{t['url']}|{t['key']}> {_slack_escape(_short(t['summary'], 45))} — _{_slack_escape(details)}_")
-    if len(urgent_inc) > 5:
-        lines.append(f"_+{len(urgent_inc) - 5} more on the dashboard_")
-    if not urgent_inc:
-        lines.append('• _None: no open incident has Critical or High priority._')
+            continue
+        group = [t for t in others if t['type'] == ty]
+        states = Counter(_work_state(t) for t in group)
+        detail = ' · '.join(f"{states[s]} {s}" for s in ('to do', 'in progress', 'on hold') if states[s])
+        lines += ['', f"*{ty}: {len(group)} open*" + (f" — {detail}" if detail else '')]
 
     if report.get('dashboard_url'):
         lines += ['', f"<{report['dashboard_url']}/ndo|View full dashboard →>"]

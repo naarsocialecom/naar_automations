@@ -82,22 +82,23 @@
             </div>
 
             <div class="ndo-hl-grid">
-                <!-- Highlights = developer updates + ticket summary -->
-                <section class="ndo-panel">
-                    <header class="ndo-panel-head ndo-panel-head--hl">
-                        <span class="ndo-panel-title"><i class="fas fa-bullhorn"></i> Highlights</span>
-                        <span class="ndo-panel-meta" id="ndoDevMeta"></span>
-                        <button type="button" class="ndo-icon-btn" id="ndoDevSyncBtn" title="Fetch latest developer updates from Slack" aria-label="Fetch developer updates"><i class="fas fa-sync-alt"></i></button>
-                    </header>
-                    <div class="ndo-panel-body">
-                        <!-- The day in a few lines (AI); the full list stays one click away and out of the Slack image -->
-                        <ul id="ndoDigest" class="ndo-digest"></ul>
-                        <details class="ndo-dev-details" id="ndoDevDetails">
-                            <summary>All developer updates <span class="count-badge" id="ndoDevCount">0</span></summary>
-                            <ul id="ndoDevUpdates" class="ndo-dev-list"></ul>
-                        </details>
-                    </div>
-                </section>
+                <!-- Open tickets by age (since created), one chart per type -->
+                <div class="ndo-age-grid">
+                    <section class="ndo-panel">
+                        <header class="ndo-panel-head">
+                            <span class="ndo-panel-title"><i class="fas fa-fire-alt ndo-age-icon--incident"></i> Incidents · open by age</span>
+                            <span class="ndo-panel-meta ndo-age-total" id="ndoAgeIncidentTotal"></span>
+                        </header>
+                        <div class="ndo-panel-body"><div class="ndo-age-chart ndo-age--incident" id="ndoAgeIncident"></div></div>
+                    </section>
+                    <section class="ndo-panel">
+                        <header class="ndo-panel-head">
+                            <span class="ndo-panel-title"><i class="fas fa-cogs ndo-age-icon--ops"></i> Operations · open by age</span>
+                            <span class="ndo-panel-meta ndo-age-total" id="ndoAgeOpsTotal"></span>
+                        </header>
+                        <div class="ndo-panel-body"><div class="ndo-age-chart ndo-age--ops" id="ndoAgeOps"></div></div>
+                    </section>
+                </div>
 
                 <!-- At a glance -->
                 <section class="ndo-panel">
