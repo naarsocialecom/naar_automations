@@ -91,19 +91,17 @@ function render() {
         (report.tickets || []).filter(t => t.type === ty).forEach(t => out[ticketState(t.status)]?.push(t.key));
         return out;
     };
-    const STATE_PARTS = { active: ['In progress', '#0065ff'], todo: ['To do', '#97a0af'], hold: ['On hold', '#ff991f'] };
+    const STATE_PARTS = { active: ['In progress', '#4f8fea'], todo: ['To do', '#c1c7d0'], hold: ['On hold', '#f5b25b'] };
     renderSplit('splitIncident', byState('Incident'),   STATE_PARTS);
     renderSplit('splitOps',      byState('Operations'), STATE_PARTS);
-    renderSplit('splitCritical',   split.critical_high, { Critical: ['Critical', '#cd4425'], High: ['High', '#e2647a'] });
+    renderSplit('splitCritical',   split.critical_high, { Critical: ['Critical', '#f0806f'], High: ['High', '#f5a3b0'] });
     renderSplit('splitUnassigned', split.unassigned, TYPE_PARTS);
     renderSplit('splitNew',        split.new_24h,    TYPE_PARTS);
 
     // RAG banner
     $('ndoRagCell').className = `ndo-rag-banner ndo-rag--${rag.level}`;
-    $('ndoRagLabel').textContent = rag.overridden ? `${rag.label} · set manually` : rag.label;
-    $('ndoRagSelect').value = rag.overridden ? rag.level : '';
+    $('ndoRagLabel').textContent = rag.label;
     $('ndoRagReasons').innerHTML = rag.reasons.map(r => `<li>${escapeHtml(r)}</li>`).join('');
-    document.querySelectorAll('#ndoRagRule [data-level]').forEach(el => el.classList.toggle('is-current', el.dataset.level === rag.auto_level));
 
     renderAging();
     renderOwners();
@@ -113,7 +111,7 @@ function render() {
     renderTickets();
 }
 
-const TYPE_PARTS = { Incident: ['Incidents', '#de350b'], Operations: ['Operations', '#0052cc'] };
+const TYPE_PARTS = { Incident: ['Incidents', '#f0806f'], Operations: ['Operations', '#4f8fea'] };
 
 // Small donut + legend under a tile: how its number splits (e.g. incidents vs operations).
 // parts maps a key in `keysBy` to [label, colour]; hovering a legend item lists its tickets.
@@ -175,7 +173,7 @@ function renderAging() {
 
 // Open tickets per Requirement Owner, split into in progress / on hold / to do.
 // A ticket with two owners counts under both; tickets without one go under "Not set".
-const OWNER_STATES = [['active', 'In progress', '#0065ff'], ['hold', 'On hold', '#ff991f'], ['todo', 'To do', '#97a0af']];
+const OWNER_STATES = [['active', 'In progress', '#4f8fea'], ['hold', 'On hold', '#f5b25b'], ['todo', 'To do', '#c1c7d0']];
 function renderOwners() {
     const rows = new Map();
     (report.tickets || []).forEach(t => {
@@ -191,15 +189,12 @@ function renderOwners() {
     const list = [...rows].sort(([a, x], [b, y]) => (a === 'Not set') - (b === 'Not set')
         || y.active.length - x.active.length || total(y) - total(x) || a.localeCompare(b));
     if (!list.length) { $('ndoOwnerChart').innerHTML = '<div class="ndo-muted">No open tickets.</div>'; return; }
-    const max = Math.max(1, ...list.map(([, r]) => total(r)));
     const cell = (owner, label, keys) => `<td class="${keys.length ? '' : 'is-zero'}"${keys.length
         ? ` title="${escapeHtml(`${owner} · ${label}: ${keys.join(', ')}`)}"` : ''}>${keys.length}</td>`;
     $('ndoOwnerChart').innerHTML = `<table class="ndo-owner-table">
         <thead><tr><th></th>${OWNER_STATES.map(([, label, color]) => `<th><i style="background:${color}"></i>${label}</th>`).join('')}<th>Total</th></tr></thead>
         <tbody>${list.map(([owner, r]) => `<tr class="${owner === 'Not set' ? 'is-unset' : ''}">
-            <th scope="row"><span>${escapeHtml(owner)}</span>
-                <div class="ndo-owner-bar" style="width:${(total(r) / max * 100).toFixed(1)}%">${OWNER_STATES.map(([k, , color]) =>
-                    r[k].length ? `<i style="flex:${r[k].length};background:${color}"></i>` : '').join('')}</div></th>
+            <th scope="row"><span>${escapeHtml(owner)}</span></th>
             ${OWNER_STATES.map(([k, label]) => cell(owner, label, r[k])).join('')}
             <td class="ndo-owner-total">${total(r)}</td></tr>`).join('')}</tbody></table>`;
 }
@@ -369,13 +364,6 @@ function bindEvents() {
         finally { setTimeout(() => refreshBtn.classList.remove('spinning'), 500); }
     });
 
-    $('ndoRagSelect').addEventListener('change', async e => {
-        try {
-            await api('/rag', { method: 'POST', body: JSON.stringify({ level: e.target.value || null }) });
-            await loadReport();
-            toast(e.target.value ? 'RAG override saved for today' : 'RAG back to automatic');
-        } catch (err) { toast(err.message, true); }
-    });
 
     // Slack
     $('ndoSlackPost').addEventListener('click', e => withBusy(e.currentTarget, async () => {

@@ -69,24 +69,10 @@
             <!-- Overall RAG -->
             <div class="ndo-rag-banner" id="ndoRagCell">
                 <div class="ndo-rag-head">
-                    <span class="ndo-rag-caption">Overall RAG</span>
+                    <span class="ndo-rag-caption">Incident status</span>
                     <span class="ndo-rag-value" id="ndoRagLabel">–</span>
                 </div>
-                <div class="ndo-rag-main">
-                    <ul class="ndo-rag-reasons" id="ndoRagReasons"></ul>
-                    <!-- How the colour is chosen: incident priority only; today's rule is highlighted -->
-                    <div class="ndo-rag-rule" id="ndoRagRule">
-                        <span data-level="red"><i></i> Red: a Critical incident is open</span>
-                        <span data-level="amber"><i></i> Amber: a High incident is open</span>
-                        <span data-level="green"><i></i> Green: no Critical or High incident</span>
-                    </div>
-                </div>
-                <select id="ndoRagSelect" class="ndo-rag-select" title="Override today's RAG">
-                    <option value="">Auto (by priority)</option>
-                    <option value="green">Green</option>
-                    <option value="amber">Amber</option>
-                    <option value="red">Red</option>
-                </select>
+                <ul class="ndo-rag-reasons" id="ndoRagReasons"></ul>
             </div>
 
             <div class="ndo-hl-grid">

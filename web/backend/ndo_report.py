@@ -18,7 +18,7 @@ ON_HOLD_STATUSES = {'on-hold', 'on hold', 'blocked'}
 # (label, upper limit in days; None = no limit)
 AGE_BUCKETS = [('Last 24 hours', 1), ('1–3 days', 3), ('3–7 days', 7), ('1–4 weeks', 30), ('Over a month', None)]
 
-RAG_LABELS = {'green': 'Green', 'amber': 'Amber', 'red': 'Red'}
+RAG_LABELS = {'green': 'No urgent incidents', 'amber': 'High-priority incident open', 'red': 'Critical incident open'}
 RAG_EMOJI = {'green': ':large_green_circle:', 'amber': ':large_orange_circle:', 'red': ':red_circle:'}
 # Overall status in the Slack message: a colour, not "Critical", so it isn't mistaken for a ticket priority
 RAG_STATUS = {'green': 'Green · on track', 'amber': 'Amber · keep an eye on it', 'red': 'Red · needs attention'}
@@ -166,18 +166,17 @@ def compute_rag(tickets: List[Dict], stale_days: int = None) -> Dict:
     rest = len(incidents) - len(critical) - len(high)
 
     def listed(group, name):
-        keys = ', '.join(t['key'] for t in group[:4]) + (' …' if len(group) > 4 else '')
-        return f"{_plural(len(group), name)} open: {keys}"
+        return f"{name}: " + ', '.join(t['key'] for t in group[:4]) + (' …' if len(group) > 4 else '')
 
     reasons = []
     if critical:
-        reasons.append(listed(critical, 'Critical incident'))
+        reasons.append(listed(critical, 'Critical'))
     if high:
-        reasons.append(listed(high, 'High incident'))
-    if not critical and not high:
-        reasons.append('No Critical or High incidents open')
+        reasons.append(listed(high, 'High'))
     if rest:
-        reasons.append(_plural(rest, 'Medium & below incident'))
+        reasons.append(f"Medium & below: {rest}")
+    if not incidents:
+        reasons.append('No open incidents')
     level = 'red' if critical else 'amber' if high else 'green'
     return {'level': level, 'reasons': reasons}
 
@@ -296,7 +295,8 @@ def build_report(tickets: List[Dict], *, day: str, now: datetime, issue_types: L
     }
 
     auto_rag = compute_rag(tickets, stale_days)
-    level = rag_override or auto_rag['level']
+    # Always worked out from incident priority (no manual override)
+    level = auto_rag['level']
 
     return {
         'day': day,
@@ -320,7 +320,7 @@ def build_report(tickets: List[Dict], *, day: str, now: datetime, issue_types: L
             'level': level,
             'label': RAG_LABELS[level],
             'auto_level': auto_rag['level'],
-            'overridden': bool(rag_override),
+            'overridden': False,
             'reasons': auto_rag['reasons'],
         },
         'highlights': build_highlights(tickets, now, stale_days),
