@@ -14,11 +14,37 @@ The load balancer sends traffic straight to port 5005 (no Nginx). Everything liv
 
 ---
 
+## 0. Fresh Ubuntu server (t2.medium, Ubuntu 22.04/24.04) — one time
+
+```bash
+sudo -i                                             # everything runs as root
+apt update && apt upgrade -y
+apt install -y git curl python3-venv python3-pip
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt install -y nodejs
+npm install -g pm2
+# 2 GB swap: headroom for Chromium (7 PM picture) next to the website
+fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile
+echo '/swapfile none swap sw 0 0' >> /etc/fstab
+```
+
+Keep the server clock on UTC (the crontab times are UTC). In AWS: give the instance an
+Elastic IP (MongoDB Atlas allows it by IP), the same security group as the old server (load
+balancer → port 5005), and register it in the load balancer's target group.
+
+GitHub access (read-only deploy key, so no personal password sits on the server):
+
+```bash
+ssh-keygen -t ed25519 -f /root/.ssh/naar_automations -N "" -C "naar-automations-server"
+cat /root/.ssh/naar_automations.pub     # GitHub → repo → Settings → Deploy keys → Add (leave "write" off)
+printf 'Host github.com\n  IdentityFile /root/.ssh/naar_automations\n  IdentitiesOnly yes\n' >> /root/.ssh/config
+ssh -T git@github.com                   # "successfully authenticated"
+```
+
 ## 1. Get the code
 
 ```bash
 cd /root
-git clone https://github.com/naarsocialecom/naar_automations.git
+git clone git@github.com:naarsocialecom/naar_automations.git
 cd naar_automations
 ```
 
