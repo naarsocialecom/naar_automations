@@ -32,6 +32,7 @@ body.has-sidebar { padding-left: calc(var(--sidebar-w) + 2rem); }
 .app-nav-link:hover { background: #f4f5f7; color: #172b4d; }
 .app-nav-link.is-active { background: #e9f2ff; color: #0747a6; }
 .app-nav-link.is-active i { color: #0c66e4; }
+.app-sidebar-tools { display: flex; flex-direction: column; }
 .app-sidebar-foot { padding-top: 0.8rem; }
 
 /* Narrow screens: the sidebar becomes a top bar */
@@ -46,4 +47,5 @@ body.has-sidebar { padding-left: calc(var(--sidebar-w) + 2rem); }
     .app-nav-label { display: none; }
     .app-nav-link { width: auto; }
     .app-sidebar-foot { border: 0; padding: 0; }
+    .app-sidebar-tools { flex-direction: row; }
 }
