@@ -13,8 +13,8 @@
         <a class="app-nav-link{{ ' is-active' if active_nav == 'meta-stock' }}" href="/automations/meta-campaign-stock"><i class="fas fa-bullhorn"></i><span>Meta Campaign Stock</span></a>
     </nav>
     <!-- Bottom of the sidebar: the schedule of every job above -->
-    <nav class="app-sidebar-tools" aria-label="Schedules">
-        <a class="app-nav-link{{ ' is-active' if active_nav == 'schedules' }}" href="/automations"><i class="fas fa-clock"></i><span>Schedules</span></a>
+    <nav class="app-sidebar-tools" aria-label="Scheduler">
+        <a class="app-nav-link{{ ' is-active' if active_nav == 'schedules' }}" href="/scheduler"><i class="fas fa-clock"></i><span>Scheduler</span></a>
     </nav>
     {% if login_enabled %}
     <form class="app-sidebar-foot" method="post" action="/logout">

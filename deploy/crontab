@@ -1,5 +1,5 @@
 # The only crontab on the server. It starts the scheduler every minute; the scheduler runs each
-# dashboard / automation job once a day at the time set on the website (Automations → Schedules).
+# dashboard / automation job once a day at the time set on the website (Scheduler).
 # Install (replaces root's whole crontab):
 #   crontab /root/naar_automations/deploy/crontab
 SHELL=/bin/bash

@@ -11,7 +11,7 @@ MODULES = [
 ]
 
 # Scheduled jobs: each module exports `JOBS` (see web/scheduler.py). Their times are set on
-# the website (Automations → Schedules) and run by web/scheduler.py, started every minute by cron.
+# the website (Scheduler) and run by web/scheduler.py, started every minute by cron.
 JOB_MODULES = [
     'dashboards.incidents_operations.jobs',
     'automations.meta_campaign_stock.jobs',

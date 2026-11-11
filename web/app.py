@@ -47,7 +47,7 @@ if not app.debug:
 
 # Site login (DASHBOARD_PASSWORD) first, then every module's pages
 init_auth(app)
-app.register_blueprint(schedules_bp)     # Automations → Schedules (every job's time)
+app.register_blueprint(schedules_bp)     # Scheduler (every job's time)
 for module in MODULES:
     app.register_blueprint(importlib.import_module(module).blueprint)
 

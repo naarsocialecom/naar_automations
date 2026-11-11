@@ -37,7 +37,7 @@ WHATSAPP_PREVIEW = 'whatsapp-preview.json'
 # PDFs with a store's full list, attached when the list is too long for the message
 SELLER_PDFS = 'seller-pdfs'
 PDF_NAME = re.compile(r'^[A-Za-z0-9_-]{1,80}\.pdf$')
-# The scheduled job's id (automations/meta_campaign_stock/jobs.py): its time is set on the Schedules page
+# The scheduled job's id (automations/meta_campaign_stock/jobs.py): its time is set on the Scheduler page
 JOB_ID = 'meta-campaign-stock'
 
 

@@ -1,4 +1,4 @@
-"""Scheduled job of this automation (run by web/scheduler.py; time set on the Schedules page)."""
+"""Scheduled job of this automation (run by web/scheduler.py; time set on the Scheduler page)."""
 from web.config import Config
 from web.shared.system import find_node
 

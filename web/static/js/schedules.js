@@ -1,4 +1,4 @@
-// Automations → Schedules: list every scheduled job; change its time or switch it on/off.
+// Scheduler: list every scheduled job; change its time or switch it on/off.
 import { escapeHtml } from '/static/js/helpers.js';
 
 const $ = id => document.getElementById(id);

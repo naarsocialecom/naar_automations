@@ -18,5 +18,5 @@ Branch: `dashboard/<name>/init` (see `docs/BRANCHING.md`).
 4. Switch it on: add `'dashboards.<name>'` to `MODULES` in `web/modules.py`, and a link under
    DASHBOARDS in `web/templates/partials/sidebar.html`.
 5. A daily job (e.g. a Slack post)? Add a `jobs.py` (see `dashboards/incidents_operations/jobs.py`) and
-   `'dashboards.<name>.jobs'` to `JOB_MODULES`; its time is then set on Automations → Schedules.
+   `'dashboards.<name>.jobs'` to `JOB_MODULES`; its time is then set on Scheduler.
 6. New settings go in `web/config.py` with a default and in `web/.env.example` (never real values).

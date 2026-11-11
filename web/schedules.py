@@ -1,8 +1,8 @@
 """
-Automations → Schedules: every scheduled job of every dashboard and automation, with its time,
+Scheduler: every scheduled job of every dashboard and automation, with its time,
 on/off switch, last and next run. Saving here changes when web/scheduler.py runs it.
 """
-from flask import Blueprint, jsonify, render_template, request
+from flask import Blueprint, jsonify, redirect, render_template, request
 
 from web import scheduler
 
@@ -10,6 +10,12 @@ schedules_bp = Blueprint('schedules', __name__)
 
 
 @schedules_bp.route('/automations')
+def old_address():
+    # Earlier address of this page
+    return redirect('/scheduler', code=301)
+
+
+@schedules_bp.route('/scheduler')
 def schedules_page():
     return render_template('schedules.html', active_nav='schedules')
 

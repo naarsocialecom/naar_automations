@@ -1,4 +1,4 @@
-"""Scheduled job of this dashboard (run by web/scheduler.py; time set on the Schedules page)."""
+"""Scheduled job of this dashboard (run by web/scheduler.py; time set on the Scheduler page)."""
 import sys
 
 from web.config import ROOT_DIR

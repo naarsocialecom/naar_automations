@@ -7,7 +7,7 @@ straight to port 5005 (no Nginx).
 | Part | How it runs | File |
 |---|---|---|
 | Website, port 5005 (every page) | PM2 → gunicorn, 4 workers | `deploy/ecosystem.config.js` |
-| Every scheduled job (7 PM Slack summary, 11 AM Meta report, …) | cron starts `web/scheduler.py` every minute; times are set on the website (**Automations → Schedules**) | `deploy/crontab` |
+| Every scheduled job (7 PM Slack summary, 11 AM Meta report, …) | cron starts `web/scheduler.py` every minute; times are set on the website (**Scheduler**) | `deploy/crontab` |
 | Slack app permissions | Slack app manifest | `deploy/slack-app-manifest.yaml` |
 
 ---
@@ -104,7 +104,7 @@ crontab /root/naar_automations/deploy/crontab  # one line: the scheduler, every 
 venv/bin/python -m web.scheduler list          # jobs, times, next runs (after a minute: "running")
 ```
 
-Times and on/off are changed on the website: **Automations → Schedules** (defaults: Incidents &
+Times and on/off are changed on the website: **Scheduler** (defaults: Incidents &
 Operations 19:00, Meta Campaign Stock 11:00 IST). Each job runs once a day. Don't add jobs to
 cron, PM2 or systemd as well, or they run twice.
 
@@ -117,8 +117,8 @@ cron, PM2 or systemd as well, or they run twice.
 | Deploy new code (after a merge into `main`) | `cd /root/naar_automations && git pull && pm2 restart naar-automations` |
 | …if an automation's `job/` changed | also `cd automations/<name>/job && npm ci --omit=dev` |
 | Website status / logs | `pm2 status` · `pm2 logs naar-automations` · `tail -50 logs/website.log` |
-| Scheduled jobs: times, last runs | website → Automations → Schedules · `venv/bin/python -m web.scheduler list` |
-| A job's output | `tail -50 logs/jobs/<job id>.log` (also "Last output" on the Schedules page) · scheduler: `logs/scheduler.log` |
+| Scheduled jobs: times, last runs | website → Scheduler · `venv/bin/python -m web.scheduler list` |
+| A job's output | `tail -50 logs/jobs/<job id>.log` (also "Last output" on the Scheduler page) · scheduler: `logs/scheduler.log` |
 | Run a job once now (posts!) | `venv/bin/python -m web.scheduler run <job id>` |
 
 ## Troubleshooting
@@ -127,5 +127,5 @@ cron, PM2 or systemd as well, or they run twice.
   it's missing from `web/.env`.
 - **Slack picture is the plain drawn card:** Chromium is missing — rerun the Playwright install above.
 - **Report fails with a MongoDB timeout:** the server IP isn't in Atlas → Network Access.
-- **"The scheduler isn't running" on the Schedules page:** `crontab -l` should show the `web.scheduler` line (section 5).
+- **"The scheduler isn't running" on the Scheduler page:** `crontab -l` should show the `web.scheduler` line (section 5).
 - **Charts empty / Jira errors:** the `JIRA_API_TOKEN` in `web/.env` expired.

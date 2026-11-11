@@ -6,7 +6,7 @@ Page: `/automations/meta-campaign-stock` · Branch prefix: `automation/meta-camp
 |---|---|
 | `job/` | The Node.js job (own `.env`, `package.json`); its files and run history go to `job/exports/` |
 | `page/` | Its page on the website: status, latest picture and Excel, **Test run** / **Send to Slack**, WhatsApp preview |
-| `jobs.py` | Its scheduled job (default 11:00 IST; change it on Automations → Schedules) |
+| `jobs.py` | Its scheduled job (default 11:00 IST; change it on Scheduler) |
 
 The job runs once a day:
 
@@ -44,7 +44,7 @@ still recognises older posts.
 
 The daily run is the job `meta-campaign-stock` in `jobs.py`, run by `web/scheduler.py`
 (cron starts it every minute on the server). Change the time or switch it off on the website:
-**Automations → Schedules**. Don't also add it to cron, PM2 or systemd, or the report posts twice.
+**Scheduler**. Don't also add it to cron, PM2 or systemd, or the report posts twice.
 
 ## WhatsApp (preview only)
 

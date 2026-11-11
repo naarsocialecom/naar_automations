@@ -67,7 +67,7 @@ function render(data) {
 
     // Next run
     $('autoNextRun').textContent = data.next_run ? when(data.next_run) : 'Off';
-    $('autoNextRunNote').innerHTML = data.next_run ? `${fromNow(data.next_run)} · <a href="/automations">change</a>` : 'Switched off on the <a href="/automations">Schedules</a> page';
+    $('autoNextRunNote').innerHTML = data.next_run ? `${fromNow(data.next_run)} · <a href="/scheduler">change</a>` : 'Switched off on the <a href="/scheduler">Scheduler</a> page';
 
     // Posted to
     lastPostedChannels = lastPosted ? lastPosted.posts.map(p => p.channel).join(', ') : '';

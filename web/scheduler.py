@@ -2,7 +2,7 @@
 The one scheduler for every dashboard and automation job.
 
 Each module lists its jobs in a `jobs.py` (registered in web/modules.py: JOB_MODULES). The time
-and on/off of each job are set on the website (Automations → Schedules) and saved in
+and on/off of each job are set on the website (Scheduler) and saved in
 data/schedules.json. On the server, cron starts this every minute (deploy/crontab):
 
     python -m web.scheduler              # check: start every job whose time has come (once a day)
@@ -140,7 +140,7 @@ def time_label(hhmm: str) -> str:
 
 
 def status() -> Dict:
-    """Everything the Schedules page shows."""
+    """Everything the Scheduler page shows."""
     at = now()
     runs = _read(RUNS_FILE)
     beat = runs.get('heartbeat')

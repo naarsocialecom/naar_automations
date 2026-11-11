@@ -15,7 +15,7 @@ automations/<name>/
 
 1. Build and test the job with its dry run first; real sends go to a test channel / number.
 2. Add `'automations.<name>.jobs'` to `JOB_MODULES` in `web/modules.py`: it then shows on
-   **Automations → Schedules**, where its time is set and it can be switched off.
+   **Scheduler**, where its time is set and it can be switched off.
 3. If it has a page: add `'automations.<name>.page'` to `MODULES` in `web/modules.py` and a link under
    AUTOMATIONS in `web/templates/partials/sidebar.html`.
 4. On the server: `npm ci --omit=dev` (Node) in `job/` and create `job/.env`. No cron or timer of

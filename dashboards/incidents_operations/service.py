@@ -43,7 +43,7 @@ CLOSED_TICKET_FIELDS = ['issuetype', 'status', 'summary', 'assignee', 'descripti
 
 
 def _post_time_label() -> str:
-    """'7:00 PM IST', or 'off', from the Schedules page (dashboards/incidents_operations/jobs.py)."""
+    """'7:00 PM IST', or 'off', from the Scheduler page (dashboards/incidents_operations/jobs.py)."""
     from web import scheduler
     job = scheduler.job('incidents-operations-slack')
     plan = scheduler.settings(job)
