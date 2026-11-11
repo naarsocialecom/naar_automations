@@ -1,4 +1,4 @@
-# ── Secrets — never commit. Config lives in web/backend/.env and automations/*/.env (templates: .env.example)
+# ── Secrets — never commit. Settings live in web/.env and automations/*/job/.env (templates: .env.example)
 .env
 .env.*
 !.env.example
@@ -6,8 +6,7 @@
 *.key
 
 # ── Runtime data, logs, generated images
-web/backend/data/
-web/backend/logs/
+/data/
 logs/
 *.log
 ndo-snapshot.png

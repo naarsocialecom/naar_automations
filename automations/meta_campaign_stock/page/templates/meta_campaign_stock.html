@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meta Campaign Stock · Naar Automations</title>
+    <link rel="icon" href="https://gargashjirabackup.blob.core.windows.net/logos/naar/favicon.svg">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app-shell.css') }}">
+    <link rel="stylesheet" href="{{ url_for('meta_campaign_stock.static', filename='meta-campaign-stock.css') }}">
+</head>
+<body class="has-sidebar">
+{% include 'partials/sidebar.html' %}
+<div class="dashboard-container">
+
+    <div class="header">
+        <div class="logo-area">
+            <div class="logo-text">
+                <h1>Meta Campaign Stock</h1>
+                <p class="auto-subtitle">Active Meta campaigns, their stores, and every product below the stock limit, posted to Slack once a day.</p>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="badge-sprint"><i class="fas fa-clock"></i> <span id="autoSchedule">Daily</span></div>
+            <button id="autoRefresh" class="refresh-btn" title="Reload status"><i class="fas fa-sync-alt"></i></button>
+        </div>
+    </div>
+
+    <div id="autoError" class="auto-error" role="alert" hidden></div>
+
+    <!-- Run now -->
+    <section class="auto-run">
+        <div class="auto-run-text">
+            <div class="auto-run-title"><i class="fas fa-play-circle"></i> Run now</div>
+            <p>A <b>test run</b> builds the picture and Excel file and sends nothing. <b>Send to Slack</b> posts them to the
+                report's Slack channel and removes the previous report post. Takes about a minute.</p>
+        </div>
+        <div class="auto-run-actions">
+            <button type="button" class="auto-btn auto-btn--ghost" id="autoRunDry"><i class="fas fa-flask"></i> Test run</button>
+            <button type="button" class="auto-btn" id="autoRunSend"><i class="fab fa-slack"></i> Send to Slack</button>
+        </div>
+        <div class="auto-run-status" id="autoRunStatus" hidden>
+            <div class="auto-run-state" id="autoRunState"></div>
+            <details class="auto-run-output" id="autoRunOutput">
+                <summary>Show output</summary>
+                <pre class="auto-run-log" id="autoRunLog"></pre>
+            </details>
+        </div>
+    </section>
+
+    <!-- Status cards -->
+    <div class="auto-cards">
+        <div class="auto-card">
+            <div class="auto-card-label">Last run</div>
+            <div class="auto-card-value" id="autoLastRun">–</div>
+            <div class="auto-card-note" id="autoLastRunNote"></div>
+        </div>
+        <div class="auto-card">
+            <div class="auto-card-label">Next run</div>
+            <div class="auto-card-value" id="autoNextRun">–</div>
+            <div class="auto-card-note" id="autoNextRunNote"></div>
+        </div>
+        <div class="auto-card">
+            <div class="auto-card-label">Posted to Slack</div>
+            <div class="auto-card-value" id="autoPosted">–</div>
+            <div class="auto-card-note" id="autoPostedNote"></div>
+        </div>
+        <div class="auto-card">
+            <div class="auto-card-label">Latest numbers</div>
+            <div class="auto-stats" id="autoStats">–</div>
+        </div>
+    </div>
+
+    <div class="auto-grid">
+        <!-- Latest dashboard picture (what Slack received) -->
+        <section class="auto-panel">
+            <header class="auto-panel-head">
+                <span><i class="fas fa-image"></i> Latest report</span>
+                <span class="auto-muted" id="autoImageMeta"></span>
+            </header>
+            <div class="auto-panel-body" id="autoImageBox">
+                <div class="auto-empty">Loading…</div>
+            </div>
+        </section>
+
+        <div class="auto-side">
+            <section class="auto-panel">
+                <header class="auto-panel-head"><span><i class="fas fa-file-excel"></i> Excel file</span></header>
+                <div class="auto-panel-body">
+                    <p class="auto-muted" id="autoExcelMeta">–</p>
+                    <a class="auto-btn" id="autoExcelBtn" href="/api/automations/meta-campaign-stock/report.xlsx" hidden>
+                        <i class="fas fa-download"></i> Download Excel
+                    </a>
+                    <p class="auto-hint">Tabs: Meta campaigns · Below the limit in campaign stores · All campaign store products.</p>
+                </div>
+            </section>
+
+            <section class="auto-panel">
+                <header class="auto-panel-head"><span><i class="fas fa-history"></i> Recent runs</span></header>
+                <div class="auto-panel-body auto-panel-body--flush">
+                    <table class="auto-runs">
+                        <thead><tr><th>When</th><th>Result</th><th title="Active Meta campaigns">Campaigns</th><th title="Products below the stock limit">Below</th><th title="Out of stock">Out</th></tr></thead>
+                        <tbody id="autoRuns"><tr><td colspan="5" class="auto-empty">Loading…</td></tr></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- WhatsApp to sellers: preview only -->
+    <section class="auto-panel auto-wa">
+        <header class="auto-panel-head">
+            <span><i class="fab fa-whatsapp"></i> WhatsApp to sellers</span>
+            <span class="auto-chip auto-chip--test" title="No WhatsApp messages are sent yet"><i class="fas fa-eye"></i> Preview only · nothing is sent</span>
+        </header>
+        <div class="auto-panel-body">
+            <p class="auto-muted" id="autoWaMeta">–</p>
+            <div class="auto-wa-list" id="autoWaList"></div>
+        </div>
+    </section>
+
+    <footer class="auto-footer">
+        <i class="fas fa-info-circle"></i>
+        Runs on the server every day (timer: <code>meta-campaign-stock.timer</code>). Only one run can happen at a time, so a button run and the daily run never overlap.
+    </footer>
+</div>
+<script type="module" src="{{ url_for('meta_campaign_stock.static', filename='meta-campaign-stock.js') }}"></script>
+</body>
+</html>

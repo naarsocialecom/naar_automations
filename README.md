@@ -1,39 +1,59 @@
 # Naar Automations
 
-One website and the scheduled jobs behind it.
+One website (with a login) and the scheduled jobs behind it. Every dashboard and every
+automation has its own folder with everything it needs.
 
-| Part | What it does | Runs |
+| Part | Page | Runs |
 |---|---|---|
-| **Data & Operations** (`/`, `/ndo`) | NDO incidents and operations, daily summary to Slack | Website + 6 PM reminder and 7 PM post |
-| **Meta Campaign Stock** (`/automations/meta-campaign-stock`) | Active Meta campaigns and their stores' low stock, posted to Slack | 11 AM IST timer, or the page's **Test run** / **Send to Slack** buttons |
-| Sprint Dashboard (`/dashboard`) | Jira sprint progress, highlights, charts (not in the menu) | Website |
+| **Incidents & Operations** | `/` and `/ndo` | Website + 7 PM IST summary to Slack |
+| **Naar Scrum Dashboard** | `/dashboard` | Website |
+| **Meta Campaign Stock** | `/automations/meta-campaign-stock` | 11 AM IST timer, or the page's **Test run** / **Send to Slack** buttons |
 
 ## Folders
 
 ```
 naar_automations/
-├── web/                         the website (Flask + gunicorn, port 5005)
-│   ├── backend/                 Python: pages, APIs, Jira, Slack, login; settings in backend/.env
-│   ├── frontend/                templates, CSS, JS
-│   └── requirements.txt
-├── automations/
-│   └── meta-campaign-stock/     Node.js job: MongoDB (read only) + Meta → Slack; settings in its .env
-├── deploy/                      how the server runs it: PM2, cron, systemd timer, Slack app, setup guide
-└── docs/                        MODULE_MAP.md (which frontend file does what)
+├── web/                          the website frame: login, sidebar, shared parts
+│   ├── app.py                    switches every dashboard / automation on (MODULES list)
+│   ├── auth.py  config.py        login · every setting (from web/.env)
+│   ├── shared/                   Jira, Slack, page screenshots (used by several modules)
+│   ├── templates/  static/       login page, sidebar, base CSS, helpers.js
+│   └── .env.example
+├── dashboards/                   one folder per dashboard
+│   ├── incidents_operations/     routes, logic, page, its 7 PM crontab, README
+│   ├── scrum/                    routes, page, charts, README + MODULE_MAP
+│   └── _template/                how to add a dashboard
+├── automations/                  one folder per automation
+│   ├── meta_campaign_stock/
+│   │   ├── job/                  the Node.js job (own .env)
+│   │   ├── page/                 its page on the website
+│   │   └── deploy/               its systemd service + timer
+│   └── _template/                how to add an automation
+├── deploy/                       server-wide: pm2 file, SERVER_SETUP.md, Slack app manifest
+├── docs/BRANCHING.md             how we branch, review and deploy
+├── requirements.txt              Python packages for the website
+├── data/  logs/                  created at runtime (not in git)
 ```
 
-Each part keeps its own `.env` (never in git; copy from `.env.example`).
+Settings with passwords live in `web/.env` and `automations/<name>/job/.env`: never in git
+(copy from `.env.example`).
 
 ## Run on a laptop
 
 ```bash
-cd web/backend
-python3 -m venv venv && venv/bin/pip install -r ../requirements.txt
-cp .env.example .env            # fill in Jira, Slack, AI; DASHBOARD_PASSWORD can stay blank locally
-venv/bin/python app.py          # http://localhost:5005
+python3 -m venv venv && venv/bin/pip install -r requirements.txt
+venv/bin/python -m playwright install chromium        # for the Slack picture
+cp web/.env.example web/.env                           # fill in Jira, Slack; DASHBOARD_PASSWORD may stay blank locally
+venv/bin/python -m web.app                             # http://localhost:5005 (run from the repo root)
 ```
 
-The report job: see `automations/meta-campaign-stock/README.md`.
+Incidents & Operations without posting: `venv/bin/python -m dashboards.incidents_operations.daily preview /tmp/ndo.png`.
+The Meta job: see `automations/meta_campaign_stock/README.md`.
+
+## Adding a dashboard or automation
+
+Copy the steps in `dashboards/_template/README.md` or `automations/_template/README.md`.
+Work on a branch named after it (see `docs/BRANCHING.md`).
 
 ## Server
 
