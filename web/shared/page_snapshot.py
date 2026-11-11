@@ -31,8 +31,9 @@ def capture_dashboard(day: str = None, timeout_ms: int = 45000) -> bytes:
                 launch['channel'] = Config.SNAPSHOT_BROWSER_CHANNEL
             browser = p.chromium.launch(**launch)
             try:
+                # Always light: the Slack picture never follows a dark OS setting
                 page = browser.new_page(viewport={'width': Config.SNAPSHOT_WIDTH, 'height': 1000},
-                                        device_scale_factor=2)
+                                        device_scale_factor=2, color_scheme='light')
                 # The internal header lets the screenshot past the site login. Only requests to this
                 # app get it: never the CDNs (fonts, icons), which would also reject the extra header.
                 token = internal_token()
@@ -68,12 +69,12 @@ def capture_page(path: str, width: int = 1440, height: int = 900, timeout_ms: in
                 launch['channel'] = Config.SNAPSHOT_BROWSER_CHANNEL
             browser = p.chromium.launch(**launch)
             try:
-                page = browser.new_page(viewport={'width': width, 'height': height})
+                page = browser.new_page(viewport={'width': width, 'height': height}, color_scheme='light')
                 token = internal_token()
                 page.route(f"{Config.SNAPSHOT_BASE_URL}/**",
                            lambda route: route.continue_(headers={**route.request.headers, INTERNAL_HEADER: token}))
                 page.goto(url, wait_until='networkidle', timeout=timeout_ms)
-                page.add_style_tag(content='.app-sidebar{display:none!important}'
+                page.add_style_tag(content='.app-sidebar,.app-theme-toggle{display:none!important}'
                                            'body.has-sidebar{padding-left:2rem!important}')
                 page.wait_for_timeout(2500)          # charts finish drawing
                 page.evaluate('document.fonts.ready.then(() => true)')

@@ -23,7 +23,7 @@ export async function loadHighlights() {
 
         const highlights = data.highlights;
         if (!highlights) {
-            body.innerHTML = `<div style="color:#5e6c84;font-size:0.88rem;padding:0.5rem 0;">No highlights content found for ${escapeHtml(data.key)}.</div>`;
+            body.innerHTML = `<div class="highlights-empty">No highlights content found for ${escapeHtml(data.key)}.</div>`;
             return;
         }
         body.innerHTML = `<div class="adf-content">${adfToHtml(highlights)}</div>`;

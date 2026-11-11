@@ -5,7 +5,8 @@
 //   Tab 3: Colors   (chart colors + status colors — clean)
 // ============================================================
 
-import { Settings, saveSettingsToStorage } from './state.js';
+import { Settings, saveSettingsToStorage, ISSUE_TYPE_LABELS } from './state.js';
+import { chartTheme } from '/static/js/theme-colors.js';
 
 // ── Only 2 optional columns (removed Assignee, Priority, Sprint) ─
 export const EPIC_EXTRA_COLUMNS = [
@@ -26,25 +27,64 @@ export function saveEpicColumnsToStorage() {
 }
 
 // ── Status color definitions ─────────────────────────────────
+// Default colours come from the CSS tokens (style.css, light + dark). A <style> override is injected
+// only for statuses the user changed in Settings.
 export const STATUS_COLOR_DEFS = [
-    { key: 'status-backlog',     label: 'Product Backlog',  bg: '#e4e5e7', text: '#42526e' },
-    { key: 'status-research',    label: 'In Research',      bg: '#fff8cc', text: '#7d6100' },
-    { key: 'status-design',      label: 'In Design',        bg: '#fff8cc', text: '#7d6100' },
-    { key: 'status-readyfordev', label: 'Ready for Dev.',   bg: '#f0e6ff', text: '#5e00cc' },
-    { key: 'status-development', label: 'In Development',   bg: '#fff8cc', text: '#7d6100' },
-    { key: 'status-onhold',      label: 'On-hold',          bg: '#fff0db', text: '#a05000' },
-    { key: 'status-cancelled',   label: 'Cancelled',        bg: '#ffe8e5', text: '#9e2a14' },
-    { key: 'status-done',        label: 'Done',             bg: '#e3fcef', text: '#006644' },
-    { key: 'status-inprogress',  label: 'In Progress',      bg: '#deebff', text: '#0052cc' },
-    { key: 'status-todo',        label: 'To Do / Other',    bg: '#f4f5f7', text: '#42526e' },
+    { key: 'status-backlog',     label: 'Product Backlog' },
+    { key: 'status-research',    label: 'In Research' },
+    { key: 'status-design',      label: 'In Design' },
+    { key: 'status-readyfordev', label: 'Ready for Dev.' },
+    { key: 'status-development', label: 'In Development' },
+    { key: 'status-onhold',      label: 'On-hold' },
+    { key: 'status-cancelled',   label: 'Cancelled' },
+    { key: 'status-done',        label: 'Done' },
+    { key: 'status-inprogress',  label: 'In Progress' },
+    { key: 'status-todo',        label: 'To Do / Other' },
 ];
+// Former hard-coded defaults: saved values equal to these are dropped (they were never a user choice)
+const LEGACY_STATUS_DEFAULTS = {
+    'status-backlog':     ['#e4e5e7', '#42526e'], 'status-research':    ['#fff8cc', '#7d6100'],
+    'status-design':      ['#fff8cc', '#7d6100'], 'status-readyfordev': ['#f0e6ff', '#5e00cc'],
+    'status-development': ['#fff8cc', '#7d6100'], 'status-onhold':      ['#fff0db', '#a05000'],
+    'status-cancelled':   ['#ffe8e5', '#9e2a14'], 'status-done':        ['#e3fcef', '#006644'],
+    'status-inprogress':  ['#deebff', '#0052cc'], 'status-todo':        ['#f4f5f7', '#42526e'],
+};
 export const StatusColors = {};
+
+const toHex = c => {
+    const m = String(c).match(/\d+(\.\d+)?/g);
+    if (String(c).startsWith('#')) return c.length === 4 ? '#' + [...c.slice(1)].map(x => x + x).join('') : c.toLowerCase();
+    return m ? '#' + m.slice(0, 3).map(n => Math.round(+n).toString(16).padStart(2, '0')).join('') : '#000000';
+};
+
+// The theme's colours for a status (overrides switched off while measuring)
+function themeStatusColor(key) {
+    const overrides = [...document.querySelectorAll('style[id^="sc-"]')];
+    overrides.forEach(el => { el.disabled = true; });
+    const probe = document.createElement('span');
+    probe.className = `status-pill ${key}`;
+    probe.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none';
+    document.body.appendChild(probe);
+    const cs = getComputedStyle(probe);
+    const out = { bg: toHex(cs.backgroundColor), text: toHex(cs.color) };
+    probe.remove();
+    overrides.forEach(el => { el.disabled = false; });
+    return out;
+}
 
 export function loadStatusColorsFromStorage() {
     try {
         const raw = localStorage.getItem('naar_status_colors');
         if (raw) Object.assign(StatusColors, JSON.parse(raw));
     } catch (_) {}
+    // Drop the old defaults that were saved along with every Apply
+    Object.entries(StatusColors).forEach(([key, ov]) => {
+        const legacy = LEGACY_STATUS_DEFAULTS[key] || [];
+        if (ov?.bg?.toLowerCase() === legacy[0]) delete ov.bg;
+        if (ov?.text?.toLowerCase() === legacy[1]) delete ov.text;
+        if (!ov || (!ov.bg && !ov.text)) delete StatusColors[key];
+    });
+    saveStatusColorsToStorage();
     applyStatusColorsToDOM();
 }
 export function saveStatusColorsToStorage() {
@@ -52,12 +92,11 @@ export function saveStatusColorsToStorage() {
 }
 export function applyStatusColorsToDOM() {
     STATUS_COLOR_DEFS.forEach(def => {
-        const ov   = StatusColors[def.key] || {};
-        const bg   = ov.bg   || def.bg;
-        const text = ov.text || def.text;
+        const ov = StatusColors[def.key];
         let el = document.getElementById(`sc-${def.key}`);
+        if (!ov || (!ov.bg && !ov.text)) { el?.remove(); return; }
         if (!el) { el = document.createElement('style'); el.id = `sc-${def.key}`; document.head.appendChild(el); }
-        el.textContent = `.${def.key}{background:${bg}!important;color:${text}!important;}`;
+        el.textContent = `.${def.key}{${ov.bg ? `background:${ov.bg}!important;` : ''}${ov.text ? `color:${ov.text}!important;` : ''}}`;
     });
 }
 
@@ -68,7 +107,7 @@ function buildPanelHTML() {
     <div id="settingsPanel" class="settings-panel" role="dialog" aria-label="Dashboard Settings">
         <div class="settings-header">
             <div class="settings-title"><i class="fas fa-sliders-h"></i> Dashboard Settings</div>
-            <button id="settingsCloseBtn" class="settings-close-btn" title="Close"><i class="fas fa-times"></i></button>
+            <button id="settingsCloseBtn" type="button" class="icon-btn icon-btn--ghost settings-close-btn" title="Close" aria-label="Close settings"><i class="fas fa-times"></i></button>
         </div>
         <div class="settings-tabs">
             <button class="settings-tab active" data-tab="display"><i class="fas fa-desktop"></i> Display</button>
@@ -105,7 +144,7 @@ function buildPanelHTML() {
                 </div>
             </div>
             <div class="settings-section settings-section-reset">
-                <button id="settingsResetBtn" class="settings-reset-btn"><i class="fas fa-undo-alt"></i> Reset Display</button>
+                <button id="settingsResetBtn" type="button" class="btn btn--secondary btn--sm settings-reset-btn"><i class="fas fa-undo-alt"></i> Reset Display</button>
             </div>
         </div>
 
@@ -117,7 +156,7 @@ function buildPanelHTML() {
                 <div class="column-toggle-list" id="epicColumnToggles"></div>
             </div>
             <div class="settings-section settings-section-reset">
-                <button id="columnsResetBtn" class="settings-reset-btn"><i class="fas fa-undo-alt"></i> Reset Columns</button>
+                <button id="columnsResetBtn" type="button" class="btn btn--secondary btn--sm settings-reset-btn"><i class="fas fa-undo-alt"></i> Reset Columns</button>
             </div>
         </div>
 
@@ -143,25 +182,25 @@ function buildPanelHTML() {
                 <div class="status-pill-grid" id="statusColorList"></div>
             </div>
             <div class="settings-section settings-section-reset">
-                <button id="colorsResetBtn" class="settings-reset-btn"><i class="fas fa-undo-alt"></i> Reset Colors</button>
+                <button id="colorsResetBtn" type="button" class="btn btn--secondary btn--sm settings-reset-btn"><i class="fas fa-undo-alt"></i> Reset Colors</button>
             </div>
         </div>
 
         <div class="settings-footer">
-            <button id="settingsApplyBtn" class="settings-apply-btn"><i class="fas fa-check"></i> Apply Settings</button>
+            <button id="settingsApplyBtn" type="button" class="btn btn--primary settings-apply-btn"><i class="fas fa-check"></i> Apply Settings</button>
         </div>
     </div>`;
 }
 
-// ── Defaults ─────────────────────────────────────────────────
-const DEFAULT_COLORS = {
-    issueType:    ['#16ecac', '#25d6ee', '#d63a0a', '#ffaa00', '#4d4d4d', '#0755ae'],
-    component:    ['#d03100', '#e07d03', '#00aac0', '#00b17c', '#484848', '#0563cf'],
-    heatBug:      '#d03100',
-    heatIncident: '#e07d03',
-};
-const ISSUE_TYPE_LABELS = ['Story', 'Improvement', 'Bug', 'Incident', 'Type 5', 'Type 6'];
-const COMPONENT_LABELS  = ['Comp 1', 'Comp 2', 'Comp 3', 'Comp 4', 'Comp 5', 'Comp 6'];
+// ── Defaults: the theme colours (tokens.css) ───────────────────
+const COMPONENT_LABELS = ['Comp 1', 'Comp 2', 'Comp 3', 'Comp 4', 'Comp 5', 'Comp 6'];
+const themeIssueTypeColors = (t = chartTheme()) => ISSUE_TYPE_LABELS.map(l => t.type[l]);
+const themeComponentColors = (t = chartTheme()) => COMPONENT_LABELS.map((_, i) => t.palette[i % t.palette.length]);
+const themeHeatColors      = (t = chartTheme()) => ({ heatBug: t.type.Bug, heatIncident: t.type.Incident });
+// What the picker shows: the user's colour, else the theme's
+const shown = (overrides, defaults) => defaults.map((d, i) => overrides[i] || d);
+// What gets saved: only a colour that differs from the theme's
+const changed = (value, def) => (value && value.toLowerCase() !== String(def).toLowerCase() ? value : null);
 
 // ── Color grid (chart colors) ─────────────────────────────────
 function wireColorPair(native, hex) {
@@ -197,8 +236,9 @@ function buildHeatColorGrid() {
     const grid = document.getElementById('heatColorGrid');
     if (!grid) return;
     grid.innerHTML = '';
-    [{ label:'Bug', key:'heatBug', color: Settings.barColors.heat.Bug },
-     { label:'Incident', key:'heatIncident', color: Settings.barColors.heat.Incident }]
+    const def = themeHeatColors();
+    [{ label:'Bug', key:'heatBug', color: Settings.barColors.heat.Bug || def.heatBug },
+     { label:'Incident', key:'heatIncident', color: Settings.barColors.heat.Incident || def.heatIncident }]
     .forEach(({ label, key, color }) => {
         const item = document.createElement('div');
         item.className = 'color-grid-item';
@@ -221,8 +261,9 @@ function buildStatusColorList() {
 
     STATUS_COLOR_DEFS.forEach(def => {
         const ov   = StatusColors[def.key] || {};
-        const bg   = ov.bg   || def.bg;
-        const text = ov.text || def.text;
+        const base = themeStatusColor(def.key);
+        const bg   = ov.bg   || base.bg;
+        const text = ov.text || base.text;
 
         const wrap = document.createElement('div');
         wrap.className = 'status-pill-edit-wrap';
@@ -287,12 +328,16 @@ function buildStatusColorList() {
 }
 
 function collectStatusColors() {
+    const base = {};
     document.querySelectorAll('#statusColorList input[type=color]').forEach(native => {
         const key  = native.dataset.statusKey;
         const type = native.dataset.type;
         if (!key || !type) return;
-        if (!StatusColors[key]) StatusColors[key] = {};
-        StatusColors[key][type] = native.value;
+        base[key] = base[key] || themeStatusColor(key);
+        const value = changed(native.value, base[key][type]);
+        if (value) (StatusColors[key] = StatusColors[key] || {})[type] = value;
+        else if (StatusColors[key]) delete StatusColors[key][type];
+        if (StatusColors[key] && !StatusColors[key].bg && !StatusColors[key].text) delete StatusColors[key];
     });
 }
 
@@ -335,15 +380,17 @@ function collectAndApply() {
     const legR = document.querySelector('input[name="legendStyle"]:checked');
     if (legR) Settings.legendStyle = legR.value;
 
+    const t = chartTheme();
+    const typeDefaults = themeIssueTypeColors(t), compDefaults = themeComponentColors(t), heatDefaults = themeHeatColors(t);
     document.querySelectorAll('#issueTypeColorGrid .color-picker-native').forEach(inp => {
-        Settings.barColors.issueType[+inp.dataset.index] = inp.value;
+        Settings.barColors.issueType[+inp.dataset.index] = changed(inp.value, typeDefaults[+inp.dataset.index]);
     });
     document.querySelectorAll('#componentColorGrid .color-picker-native').forEach(inp => {
-        Settings.barColors.component[+inp.dataset.index] = inp.value;
+        Settings.barColors.component[+inp.dataset.index] = changed(inp.value, compDefaults[+inp.dataset.index]);
     });
     document.querySelectorAll('#heatColorGrid .color-picker-native').forEach(inp => {
-        if (inp.dataset.heatKey === 'heatBug')      Settings.barColors.heat.Bug      = inp.value;
-        if (inp.dataset.heatKey === 'heatIncident') Settings.barColors.heat.Incident = inp.value;
+        if (inp.dataset.heatKey === 'heatBug')      Settings.barColors.heat.Bug      = changed(inp.value, heatDefaults.heatBug);
+        if (inp.dataset.heatKey === 'heatIncident') Settings.barColors.heat.Incident = changed(inp.value, heatDefaults.heatIncident);
     });
 
     EpicColumns.visible.clear();
@@ -369,8 +416,8 @@ function syncDisplayForm() {
 
 function syncFormToSettings() {
     syncDisplayForm();
-    buildColorGrid('issueTypeColorGrid', Settings.barColors.issueType, ISSUE_TYPE_LABELS);
-    buildColorGrid('componentColorGrid',  Settings.barColors.component,  COMPONENT_LABELS);
+    buildColorGrid('issueTypeColorGrid', shown(Settings.barColors.issueType, themeIssueTypeColors()), ISSUE_TYPE_LABELS);
+    buildColorGrid('componentColorGrid',  shown(Settings.barColors.component, themeComponentColors()), COMPONENT_LABELS);
     buildHeatColorGrid();
     buildColumnToggles();
     buildStatusColorList();
@@ -398,8 +445,9 @@ export function initSettingsPanel() {
     const headerRight = document.querySelector('.header-right');
     if (headerRight) {
         const btn = document.createElement('button');
-        btn.id = 'settingsTriggerBtn'; btn.className = 'settings-trigger-btn';
-        btn.title = 'Dashboard Settings'; btn.innerHTML = `<i class="fas fa-sliders-h"></i>`;
+        btn.id = 'settingsTriggerBtn'; btn.type = 'button'; btn.className = 'icon-btn settings-trigger-btn';
+        btn.title = 'Dashboard Settings'; btn.setAttribute('aria-label', 'Dashboard settings');
+        btn.innerHTML = `<i class="fas fa-sliders-h"></i>`;
         btn.addEventListener('click', openPanel);
         headerRight.appendChild(btn);
     }
@@ -411,12 +459,13 @@ export function initSettingsPanel() {
         Settings.sortOrder = 'high-to-low'; Settings.legendStyle = 'pills'; syncDisplayForm();
     });
     document.getElementById('colorsResetBtn')?.addEventListener('click', () => {
-        Settings.barColors.issueType     = [...DEFAULT_COLORS.issueType];
-        Settings.barColors.component     = [...DEFAULT_COLORS.component];
-        Settings.barColors.heat.Bug      = DEFAULT_COLORS.heatBug;
-        Settings.barColors.heat.Incident = DEFAULT_COLORS.heatIncident;
-        buildColorGrid('issueTypeColorGrid', Settings.barColors.issueType, ISSUE_TYPE_LABELS);
-        buildColorGrid('componentColorGrid',  Settings.barColors.component, COMPONENT_LABELS);
+        // Back to the theme colours
+        Settings.barColors.issueType     = Settings.barColors.issueType.map(() => null);
+        Settings.barColors.component     = Settings.barColors.component.map(() => null);
+        Settings.barColors.heat.Bug      = null;
+        Settings.barColors.heat.Incident = null;
+        buildColorGrid('issueTypeColorGrid', themeIssueTypeColors(), ISSUE_TYPE_LABELS);
+        buildColorGrid('componentColorGrid',  themeComponentColors(), COMPONENT_LABELS);
         buildHeatColorGrid();
         // Reset status colors
         Object.keys(StatusColors).forEach(k => delete StatusColors[k]);

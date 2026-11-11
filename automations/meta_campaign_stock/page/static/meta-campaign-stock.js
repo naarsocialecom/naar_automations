@@ -156,8 +156,8 @@ function renderRun(data) {
         const failed = log.lines.some(l => l.includes('Export failed'));
         const busy = log.lines.some(l => l.includes('already in progress'));
         $('autoRunState').innerHTML = busy ? '<i class="fas fa-hourglass-half"></i> Another run was in progress, so this one did not start.'
-            : failed ? '<i class="fas fa-times-circle" style="color:#ae2a19"></i> Last button run failed — see the output below.'
-            : `<i class="fas fa-check-circle" style="color:#216e4e"></i> Last button run finished · ${when(log.updated_at)}`;
+            : failed ? '<i class="fas fa-times-circle auto-icon--fail"></i> Last button run failed — see the output below.'
+            : `<i class="fas fa-check-circle auto-icon--ok"></i> Last button run finished · ${when(log.updated_at)}`;
     }
     if (log) {
         const box = $('autoRunLog');

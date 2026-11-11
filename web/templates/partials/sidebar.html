@@ -12,13 +12,19 @@
         <div class="app-nav-label">Automations</div>
         <a class="app-nav-link{{ ' is-active' if active_nav == 'meta-stock' }}" href="/automations/meta-campaign-stock"><i class="fas fa-bullhorn"></i><span>Meta Campaign Stock</span></a>
     </nav>
-    <!-- Bottom of the sidebar: the schedule of every job above -->
-    <nav class="app-sidebar-tools" aria-label="Scheduler">
-        <a class="app-nav-link{{ ' is-active' if active_nav == 'schedules' }}" href="/scheduler"><i class="fas fa-clock"></i><span>Scheduler</span></a>
-    </nav>
+    <!-- Bottom of the sidebar: the schedule of every job above, and the light / dark switch -->
+    <div class="app-sidebar-tools">
+        <nav aria-label="Scheduler" style="display:contents">
+            <a class="app-nav-link{{ ' is-active' if active_nav == 'schedules' }}" href="/scheduler" title="Scheduler"><i class="fas fa-clock"></i><span>Scheduler</span></a>
+        </nav>
+        <button type="button" class="icon-btn icon-btn--ghost app-theme-toggle" id="themeToggle"
+                aria-label="Switch to dark mode" title="Switch to dark mode" aria-pressed="false">
+            <i class="fas fa-moon" aria-hidden="true"></i><i class="fas fa-sun" aria-hidden="true"></i>
+        </button>
+    </div>
     {% if login_enabled %}
     <form class="app-sidebar-foot" method="post" action="/logout">
-        <button type="submit" class="app-nav-link"><i class="fas fa-sign-out-alt"></i><span>Sign out</span></button>
+        <button type="submit" class="app-nav-link" title="Sign out"><i class="fas fa-sign-out-alt"></i><span>Sign out</span></button>
     </form>
     {% endif %}
 </aside>

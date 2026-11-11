@@ -3,7 +3,11 @@
 // ============================================================
 
 import { loadSettingsFromStorage } from './modules/state.js';
-import { registerChartPlugins }    from './modules/chart-plugins.js';
+import { registerChartPlugins, applyChartDefaults } from './modules/chart-plugins.js';
+import { rerenderIssueBarChart }      from './charts/chart-issue-type.js';
+import { rerenderPriorityDonutChart } from './charts/chart-priority.js';
+import { rerenderComponentBarChart }  from './charts/chart-component.js';
+import { rerenderHeatClusteredChart } from './charts/chart-heat.js';
 import { initSettingsPanel }       from './modules/settings-panel.js';
 import { setupHighlightsToggle, loadHighlights } from './modules/highlights.js';
 import { fetchSprints, setupDropdowns, setupSprintEventListeners, loadIssuesForSprints } from './modules/sprints.js';
@@ -39,6 +43,15 @@ async function initDashboard() {
     initEpicStatusFilter();
 
     document.addEventListener('naar:settingsChanged', () => refreshAllChartsAndMetrics());
+
+    // Light / dark switch: redraw the charts in the new theme colours (legends are rebuilt with them)
+    window.addEventListener('themechange', () => {
+        applyChartDefaults();
+        rerenderIssueBarChart();
+        rerenderPriorityDonutChart();
+        rerenderComponentBarChart();
+        rerenderHeatClusteredChart();
+    });
 
     // ── Refresh button ──────────────────────────────────────
     const refreshBtn = document.getElementById('refreshBtn');
@@ -97,7 +110,7 @@ async function exportDashboard(format) {
             scale:           2,
             useCORS:         true,
             allowTaint:      true,
-            backgroundColor: '#f4f5f7',
+            backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--bg').trim(),
             logging:         false,
             // Capture full scrollable height
             height:          container.scrollHeight,

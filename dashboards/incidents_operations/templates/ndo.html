@@ -1,7 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+{# The Slack picture (?snapshot=1) is always light, whatever the viewer's theme #}
+<html lang="en"{% if snapshot %} data-theme="light" data-theme-locked{% endif %}>
 <head>
     <meta charset="UTF-8">
+    {% include 'partials/theme_head.html' %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Incidents &amp; Operations · Naar Automations &amp; Dashboard</title>
     <link rel="icon" href="https://gargashjirabackup.blob.core.windows.net/logos/naar/favicon.svg">
@@ -24,18 +26,18 @@
             <div class="logo-text"><h1>Incidents &amp; Operations</h1></div>
         </div>
         <div class="header-right">
-            <a class="ndo-nav-link ndo-today-link" href="/ndo"><i class="fas fa-arrow-left"></i> Back to today</a>
+            <a class="btn btn--secondary ndo-nav-link ndo-today-link" href="/ndo"><i class="fas fa-arrow-left"></i> Back to today</a>
             <div class="badge-sprint">
                 <i class="fas fa-clock"></i>
                 <span id="ndoUpdatedLabel">Loading…</span>
             </div>
-            <button id="refreshBtn" class="refresh-btn" title="Refresh from Jira">
+            <button id="refreshBtn" class="icon-btn refresh-btn" title="Refresh from Jira" aria-label="Refresh from Jira">
                 <i class="fas fa-sync-alt"></i>
             </button>
         </div>
     </div>
 
-    <div id="ndoError" class="highlights-error ndo-hidden" role="alert"></div>
+    <div id="ndoError" class="banner ndo-hidden" role="alert"></div>
 
     <!-- TILES -->
     <div class="ndo-tiles" id="ndoTiles">
@@ -63,7 +65,7 @@
                 <i class="fas fa-star"></i>
                 <span id="ndoTitleCell">Daily Update</span>
             </div>
-            <button class="highlights-toggle-btn" id="highlightsToggleBtn" aria-label="Collapse daily update"><i class="fas fa-chevron-up"></i></button>
+            <button type="button" class="highlights-toggle-btn" id="highlightsToggleBtn" aria-label="Collapse daily update"><i class="fas fa-chevron-up"></i></button>
         </div>
         <div class="highlights-body" id="highlightsBody">
 
@@ -125,8 +127,8 @@
             <div id="ndoSlackStatus" class="ndo-slack-status"></div>
         </div>
         <div class="ndo-slack-actions">
-            <button class="ndo-btn ndo-btn--ghost" id="ndoPreviewBtn" type="button"><i class="fas fa-image"></i> Preview</button>
-            <button class="ndo-btn ndo-btn--primary" id="ndoSlackPost" type="button"><i class="fas fa-paper-plane"></i> Post now</button>
+            <button class="btn btn--secondary ndo-btn" id="ndoPreviewBtn" type="button"><i class="fas fa-image"></i> Preview</button>
+            <button class="btn btn--primary ndo-btn" id="ndoSlackPost" type="button"><i class="fas fa-paper-plane"></i> Post now</button>
         </div>
     </div>
 
@@ -146,7 +148,7 @@
             </div>
         </div>
         <div class="epic-table-wrapper">
-            <table class="epic-table">
+            <table class="epic-table ndo-ticket-table">
                 <thead>
                     <tr>
                         <th style="width:100px;">Key</th>
@@ -180,9 +182,9 @@
         <div class="ndo-modal-head">
             <span id="ndoModalTitle"><i class="fab fa-slack"></i> Slack image preview</span>
             <div class="ndo-modal-actions">
-                <button type="button" class="ndo-btn" id="ndoModalZoom"><i class="fas fa-search-plus"></i> Actual size</button>
-                <a class="ndo-btn" id="ndoModalOpen" href="#" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> Open in new tab</a>
-                <button type="button" class="ndo-modal-close" id="ndoModalClose" aria-label="Close preview"><i class="fas fa-times"></i></button>
+                <button type="button" class="btn btn--secondary btn--sm ndo-btn" id="ndoModalZoom"><i class="fas fa-search-plus"></i> Actual size</button>
+                <a class="btn btn--secondary btn--sm ndo-btn" id="ndoModalOpen" href="#" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> Open in new tab</a>
+                <button type="button" class="icon-btn icon-btn--ghost ndo-modal-close" id="ndoModalClose" aria-label="Close preview"><i class="fas fa-times"></i></button>
             </div>
         </div>
         <div class="ndo-modal-body" id="ndoModalBody">

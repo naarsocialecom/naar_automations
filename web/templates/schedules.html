@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    {% include 'partials/theme_head.html' %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scheduler · Naar Automations &amp; Dashboard</title>
     <link rel="icon" href="https://gargashjirabackup.blob.core.windows.net/logos/naar/favicon.svg">
@@ -18,17 +19,17 @@
         <div class="logo-area">
             <div class="logo-text">
                 <h1>Scheduler</h1>
-                <p class="sch-subtitle">Every automatic job of the dashboards and automations. Change a time or switch a job off here; it applies from the next run.</p>
+                <p class="page-subtitle">Every automatic job of the dashboards and automations. Change a time or switch a job off here; it applies from the next run.</p>
             </div>
         </div>
         <div class="header-right">
             <div class="badge-sprint"><i class="fas fa-globe-asia"></i> <span id="schTz">IST</span></div>
-            <button id="schRefresh" class="refresh-btn" title="Reload"><i class="fas fa-sync-alt"></i></button>
+            <button id="schRefresh" class="icon-btn refresh-btn" title="Reload" aria-label="Reload"><i class="fas fa-sync-alt"></i></button>
         </div>
     </div>
 
-    <div id="schError" class="sch-banner sch-banner--error" role="alert" hidden></div>
-    <div id="schOff" class="sch-banner sch-banner--warn" hidden>
+    <div id="schError" class="banner sch-banner sch-banner--error" role="alert" hidden></div>
+    <div id="schOff" class="banner sch-banner sch-banner--warn" hidden>
         <i class="fas fa-exclamation-triangle"></i>
         <span>The scheduler isn't running on this machine, so nothing runs automatically here. On the server, cron starts it every minute (<code>deploy/crontab</code>).</span>
     </div>

@@ -159,10 +159,8 @@ function syncTableHeader() {
         const th = document.createElement('th');
         th.setAttribute('data-extra-col', col.key);
         th.setAttribute('draggable', 'true');
-        th.style.whiteSpace  = 'nowrap';
-        th.style.cursor      = 'grab';
-        th.style.userSelect  = 'none';
-        th.innerHTML = `${col.label} <i class="fas fa-grip-vertical" style="font-size:0.6rem;opacity:0.4;margin-left:4px;"></i>`;
+        th.className = 'th-drag';
+        th.innerHTML = `${col.label} <i class="fas fa-grip-vertical"></i>`;
         attachDragToTh(th, col.key);
         thead.appendChild(th);
     });
@@ -225,7 +223,7 @@ export function renderEpicTable() {
     tbody.innerHTML = '';
 
     if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="${totalCols}" style="text-align:center;color:#5e6c84;padding:28px 0;">
+        tbody.innerHTML = `<tr><td colspan="${totalCols}" class="table-empty">
             ${State.currentIssues.length === 0 ? 'Select a sprint to load Epic data' : 'No epics found'}
         </td></tr>`;
         renderEpicPagination(0, 1, 1);
@@ -246,9 +244,9 @@ export function renderEpicTable() {
                 const d   = new Date(val);
                 const fmt = isNaN(d.getTime()) ? val : d.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
                 const isOverdue = new Date(val) < new Date();
-                cells += `<td style="white-space:nowrap;font-size:0.8rem;${isOverdue ? 'color:#bf2600;font-weight:600;' : ''}">${fmt}${isOverdue ? ' ⚠' : ''}</td>`;
+                cells += `<td class="cell-nowrap${isOverdue ? ' cell-overdue' : ''}">${fmt}${isOverdue ? ' ⚠' : ''}</td>`;
             } else {
-                cells += `<td style="font-size:0.8rem;color:#44546f;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escapeHtml(String(val))}">${escapeHtml(String(val))}</td>`;
+                cells += `<td class="cell-muted" title="${escapeHtml(String(val))}">${escapeHtml(String(val))}</td>`;
             }
         });
         tr.innerHTML = cells;
@@ -270,11 +268,11 @@ function renderEpicPagination(total, currentPage, totalPages) {
             ${total > 0 ? `Showing <strong>${start}–${end}</strong> of <strong>${total}</strong> epics` : ''}
         </div>
         <div class="pagination-controls">
-            <button class="page-btn${currentPage <= 1 ? ' disabled' : ''}" id="epicPrevBtn" ${currentPage <= 1 ? 'disabled' : ''}>
+            <button type="button" class="btn btn--secondary btn--sm page-btn${currentPage <= 1 ? ' disabled' : ''}" id="epicPrevBtn" ${currentPage <= 1 ? 'disabled' : ''}>
                 <i class="fas fa-chevron-left"></i> Prev
             </button>
             <span class="page-indicator">${currentPage} / ${totalPages}</span>
-            <button class="page-btn${currentPage >= totalPages ? ' disabled' : ''}" id="epicNextBtn" ${currentPage >= totalPages ? 'disabled' : ''}>
+            <button type="button" class="btn btn--secondary btn--sm page-btn${currentPage >= totalPages ? ' disabled' : ''}" id="epicNextBtn" ${currentPage >= totalPages ? 'disabled' : ''}>
                 Next <i class="fas fa-chevron-right"></i>
             </button>
         </div>

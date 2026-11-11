@@ -1,0 +1,18 @@
+{# Theme: first thing in every <head> (after <meta charset>). Sets data-theme before the page paints, so there is no flash.
+   The Slack picture (?snapshot=1) and the Playwright thumbnails are always light. #}
+<script>
+(function () {
+  var d = document.documentElement, t = null;
+  try {
+    if (/[?&]snapshot=1\b/.test(location.search) || navigator.webdriver || d.hasAttribute('data-theme-locked')) {
+      d.setAttribute('data-theme', 'light'); d.setAttribute('data-theme-locked', ''); d.style.colorScheme = 'light';
+      return;
+    }
+    t = localStorage.getItem('naar-theme');
+  } catch (e) {}
+  if (t !== 'light' && t !== 'dark') t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  d.setAttribute('data-theme', t); d.style.colorScheme = t;
+})();
+</script>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}">
+<script src="{{ url_for('static', filename='js/theme.js') }}" defer></script>

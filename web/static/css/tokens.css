@@ -1,0 +1,66 @@
+/* ============================================================
+   TOKENS.CSS — the only place colours are defined.
+   Light is the default; [data-theme="dark"] is set on <html> by
+   partials/theme_head.html (saved choice, else the OS setting).
+   ============================================================ */
+:root, [data-theme="light"] {
+  color-scheme: light;
+  --bg:#f6f7f9; --surface:#fff; --surface-2:#f8f9fb; --surface-hover:#f2f4f7; --surface-active:#eaedf1;
+  --surface-inverse:#172b4d; --text-inverse:#fff;
+  --border:#e6e8ec; --border-subtle:#eef0f3; --border-strong:#d5d9e0;
+  --text:#172b4d; --text-2:#44546f; --text-3:#626f86; --text-disabled:#a5adba;
+  --overlay:rgba(9,30,66,.54); --code-bg:#0f1b2d; --code-text:#d6e2f5; --inline-code-bg:#f1f2f4;
+  --accent:#0c66e4; --accent-hover:#0055cc; --accent-fg:#fff; --accent-soft:#e9f2ff; --accent-text:#0747a6; --focus:#388bff;
+  --title-gradient:linear-gradient(135deg,#172b4d 0%,#0052cc 100%);
+  --success-bg:#dcfff1; --success-fg:#216e4e; --success-solid:#1f845a;
+  --danger-bg:#ffebe6;  --danger-fg:#ae2a19;
+  --warning-bg:#fff7d6; --warning-fg:#7f5f01;
+  --orange-bg:#fff3eb;  --orange-fg:#a54800;
+  --info-bg:#e9f2ff;    --info-fg:#0747a6;
+  --discovery-bg:#f3f0ff; --discovery-fg:#5e4db2;
+  --neutral-bg:#f1f2f4; --neutral-fg:#44546f;
+  --series-1:#6b9ff0; --series-2:#f0806f; --series-3:#4fc3a1; --series-4:#f5b25b;
+  --series-5:#a194ea; --series-6:#5fc6dc; --series-7:#e891b8; --series-8:#98a2b3;
+  --series-label:#172b4d; --chart-tick:#626f86; --chart-grid:#eef0f3; --chart-axis:#dfe1e6; --chart-track:#eef0f3;
+  --prio-critical:#e5604f; --prio-high:#f08a4b; --prio-medium:#f5b25b; --prio-low:#4fc3a1; --prio-lowest:#a3dcc9; --prio-none:#a5adba;
+  --tint-blue:#e9f2ff; --tint-coral:#ffece8; --tint-amber:#fff4e0; --tint-violet:#f3f0ff; --tint-cyan:#e3f7fb; --tint-green:#e3f8f1;
+  --icon-blue:#2f6fd6; --icon-coral:#d0543f; --icon-amber:#b7791f; --icon-violet:#6e5dc6; --icon-cyan:#1d8fa6; --icon-green:#1f8a6a;
+  --wa-bubble:#e7fbe9;
+  --shadow-xs:0 1px 2px rgba(16,24,40,.05);
+  --shadow-sm:0 1px 3px rgba(16,24,40,.07),0 1px 2px rgba(16,24,40,.04);
+  --shadow-md:0 6px 16px rgba(16,24,40,.08);
+  --shadow-lg:0 16px 40px rgba(16,24,40,.16);
+  --logo-filter:none;
+  /* non-colour tokens (same in both themes) */
+  --r-xs:4px; --r-sm:6px; --r-md:8px; --r-lg:12px; --r-xl:16px; --r-full:999px;
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:20px; --sp-6:24px; --sp-8:32px; --sp-10:40px;
+  --fs-overline:11px; --fs-xs:12px; --fs-sm:13px; --fs-md:14px; --fs-lg:15px; --fs-xl:20px; --fs-2xl:24px; --fs-kpi:28px;
+  --ease:cubic-bezier(.2,0,0,1); --dur:150ms;
+  --sidebar-w:240px; --control-h:36px; --control-h-sm:32px;
+}
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg:#121417; --surface:#1b1e23; --surface-2:#20242a; --surface-hover:#262a31; --surface-active:#2c313a;
+  --surface-inverse:#e6e9ef; --text-inverse:#121417;
+  --border:#2c313a; --border-subtle:#262a31; --border-strong:#3b414c;
+  --text:#e6e9ef; --text-2:#b6bdc9; --text-3:#96a0ae; --text-disabled:#5d6573;
+  --overlay:rgba(0,0,0,.6); --code-bg:#0b0d10; --code-text:#d6e2f5; --inline-code-bg:#2c313a;
+  --accent:#579dff; --accent-hover:#85b8ff; --accent-fg:#101214; --accent-soft:#1c2b41; --accent-text:#85b8ff; --focus:#85b8ff;
+  --title-gradient:linear-gradient(135deg,#e6e9ef 0%,#85b8ff 100%);
+  --success-bg:#1c3329; --success-fg:#7ee2b8; --success-solid:#2abb7f;
+  --danger-bg:#42221f;  --danger-fg:#fd9891;
+  --warning-bg:#3d3214; --warning-fg:#f5cd47;
+  --orange-bg:#3e2a1b;  --orange-fg:#fea362;
+  --info-bg:#1c2b41;    --info-fg:#85b8ff;
+  --discovery-bg:#2b273f; --discovery-fg:#b8acf6;
+  --neutral-bg:#2c313a; --neutral-fg:#b6bdc9;
+  --series-1:#6fa5f0; --series-2:#f38a7a; --series-3:#5fd0ae; --series-4:#f7c072;
+  --series-5:#a497ea; --series-6:#63c7e0; --series-7:#eb9fc3; --series-8:#7d8696;
+  --series-label:#101214; --chart-tick:#96a0ae; --chart-grid:#262a31; --chart-axis:#3b414c; --chart-track:#2c313a;
+  --prio-critical:#f87168; --prio-high:#fea362; --prio-medium:#f5cd47; --prio-low:#5fd0ae; --prio-lowest:#3f8f78; --prio-none:#5d6573;
+  --tint-blue:#1c2b41; --tint-coral:#3d2421; --tint-amber:#3b2f1a; --tint-violet:#2b273f; --tint-cyan:#183238; --tint-green:#18332b;
+  --icon-blue:#85b8ff; --icon-coral:#f38a7a; --icon-amber:#f7c072; --icon-violet:#b8acf6; --icon-cyan:#63c7e0; --icon-green:#5fd0ae;
+  --wa-bubble:#1f3a2a;
+  --shadow-xs:none; --shadow-sm:0 1px 2px rgba(0,0,0,.4); --shadow-md:0 6px 16px rgba(0,0,0,.45); --shadow-lg:0 16px 40px rgba(0,0,0,.6);
+  --logo-filter:invert(1) hue-rotate(180deg) saturate(1.6) brightness(1.25);
+}

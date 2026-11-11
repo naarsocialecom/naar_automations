@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    {% include 'partials/theme_head.html' %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meta Campaign Stock · Naar Automations &amp; Dashboard</title>
     <link rel="icon" href="https://gargashjirabackup.blob.core.windows.net/logos/naar/favicon.svg">
@@ -18,16 +19,16 @@
         <div class="logo-area">
             <div class="logo-text">
                 <h1>Meta Campaign Stock</h1>
-                <p class="auto-subtitle">Active Meta campaigns, their stores, and every product below the stock limit, posted to Slack once a day.</p>
+                <p class="page-subtitle">Active Meta campaigns, their stores, and every product below the stock limit, posted to Slack once a day.</p>
             </div>
         </div>
         <div class="header-right">
             <div class="badge-sprint"><i class="fas fa-clock"></i> <span id="autoSchedule">Daily</span></div>
-            <button id="autoRefresh" class="refresh-btn" title="Reload status"><i class="fas fa-sync-alt"></i></button>
+            <button id="autoRefresh" class="icon-btn refresh-btn" title="Reload status" aria-label="Reload status"><i class="fas fa-sync-alt"></i></button>
         </div>
     </div>
 
-    <div id="autoError" class="auto-error" role="alert" hidden></div>
+    <div id="autoError" class="banner auto-error" role="alert" hidden></div>
 
     <!-- Run now -->
     <section class="auto-run">
@@ -37,8 +38,8 @@
                 report's Slack channel and removes the previous report post. Takes about a minute.</p>
         </div>
         <div class="auto-run-actions">
-            <button type="button" class="auto-btn auto-btn--ghost" id="autoRunDry"><i class="fas fa-flask"></i> Test run</button>
-            <button type="button" class="auto-btn" id="autoRunSend"><i class="fab fa-slack"></i> Send to Slack</button>
+            <button type="button" class="btn btn--secondary auto-btn auto-btn--ghost" id="autoRunDry"><i class="fas fa-flask"></i> Test run</button>
+            <button type="button" class="btn btn--primary auto-btn" id="autoRunSend"><i class="fab fa-slack"></i> Send to Slack</button>
         </div>
         <div class="auto-run-status" id="autoRunStatus" hidden>
             <div class="auto-run-state" id="autoRunState"></div>
@@ -89,7 +90,7 @@
                 <header class="auto-panel-head"><span><i class="fas fa-file-excel"></i> Excel file</span></header>
                 <div class="auto-panel-body">
                     <p class="auto-muted" id="autoExcelMeta">–</p>
-                    <a class="auto-btn" id="autoExcelBtn" href="/api/automations/meta-campaign-stock/report.xlsx" hidden>
+                    <a class="btn btn--primary auto-btn" id="autoExcelBtn" href="/api/automations/meta-campaign-stock/report.xlsx" hidden>
                         <i class="fas fa-download"></i> Download Excel
                     </a>
                     <p class="auto-hint">Tabs: Meta campaigns · Below the limit in campaign stores · All campaign store products.</p>
@@ -122,7 +123,7 @@
 
     <footer class="auto-footer">
         <i class="fas fa-info-circle"></i>
-        Runs on the server every day (timer: <code>meta-campaign-stock.timer</code>). Only one run can happen at a time, so a button run and the daily run never overlap.
+        Runs on the server every day at the time set in the <a href="/scheduler">Scheduler</a>. Only one run can happen at a time, so a button run and the daily run never overlap.
     </footer>
 </div>
 <script type="module" src="{{ url_for('meta_campaign_stock.static', filename='meta-campaign-stock.js') }}"></script>

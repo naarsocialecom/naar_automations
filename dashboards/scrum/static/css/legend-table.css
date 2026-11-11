@@ -1,102 +1,35 @@
 /* ============================================================
-   LEGEND-TABLE.CSS — Table-style legend (S.No | Title | Count)
-   Edit ONLY this file to change legend table appearance.
+   LEGEND-TABLE.CSS — chart legends (pills by default, or a table)
+   Edit ONLY this file to change legend appearance. Tokens only.
    ============================================================ */
 
-/* Container when table mode is active */
-.compact-legend.legend-table-mode {
-    background: transparent;
-    border-radius: 0;
-    padding: 0;
-    width: 100%;
-    margin-top: 0.8rem;
+/* ── Pill mode (default): a quiet wrapped row, no background slab ── */
+.compact-legend:not(.legend-table-mode) {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px;
+    margin-top: 12px; padding: 0; background: transparent; flex-shrink: 0;
+    font-size: var(--fs-xs); color: var(--text-2);
 }
+.legend-item { display: inline-flex; align-items: center; gap: 6px; cursor: default; white-space: nowrap; }
+.legend-item-label { color: var(--text-2); font-size: var(--fs-xs); font-weight: 500; }
+.legend-item-label b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+.legend-dot--round { border-radius: 50%; }
 
-/* The table itself */
+/* ── Table mode ── */
+.compact-legend.legend-table-mode { width: 100%; margin-top: 12px; overflow: auto; flex-shrink: 1; min-height: 0; }
 .legend-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.78rem;
-    border-radius: 10px;
-    overflow: hidden;
-    border: 1px solid #e9ecef;
-}
-
-.legend-table thead tr {
-    background: #f4f5f7;
+    width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--fs-xs);
+    border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden;
 }
 .legend-table thead th {
-    padding: 0.45rem 0.8rem;
-    text-align: left;
-    font-weight: 700;
-    font-size: 0.7rem;
-    color: #5e6c84;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    border-bottom: 1.5px solid #e9ecef;
-    white-space: nowrap;
+    height: 28px; padding: 0 10px; text-align: left; white-space: nowrap; background: var(--surface-2);
+    font-size: var(--fs-overline); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-3);
+    border-bottom: 1px solid var(--border);
 }
-
-.legend-table tbody tr {
-    border-bottom: 1px solid #f0f2f5;
-    transition: background 0.12s;
-}
-.legend-table tbody tr:hover { background: #f8f9ff; }
-
 .legend-table tbody td {
-    padding: 0.4rem 0.8rem;
-    color: #172b4d;
-    vertical-align: middle;
-    font-weight: 500;
+    padding: 6px 10px; color: var(--text); vertical-align: middle; font-weight: 500;
+    border-bottom: 1px solid var(--border-subtle); font-variant-numeric: tabular-nums;
 }
-
-/* Swatch inside the title column */
-.legend-swatch {
-    display: inline-block;
-    width: 11px;
-    height: 11px;
-    border-radius: 3px;
-    margin-right: 6px;
-    vertical-align: middle;
-    flex-shrink: 0;
-}
-
-/* Total row */
-.legend-total-row {
-    background: #f0f4ff !important;
-    border-top: 2px solid #dce8ff;
-}
-.legend-total-row td {
-    padding: 0.45rem 0.8rem !important;
-    font-weight: 700 !important;
-    color: #0052cc !important;
-}
-
-/* ── Pill mode (original, keep working) ───────────────────── */
-.compact-legend:not(.legend-table-mode) {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.8rem;
-    margin-top: 1rem;
-    margin-bottom: 4px;
-    padding: 0.55rem 0.9rem;
-    background: #f8f9fa;
-    border-radius: 40px;
-    width: fit-content;
-    margin-left: auto;
-    margin-right: auto;
-}
-.compact-legend:not(.legend-table-mode) div {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.72rem;
-    font-weight: 500;
-    color: #5e6c84;
-    cursor: default;
-    padding: 3px 6px;
-    border-radius: 20px;
-    transition: background 0.2s;
-}
-.compact-legend:not(.legend-table-mode) div:hover { background: #eef3ff; }
+.legend-table tbody tr:hover td { background: var(--surface-hover); }
+.legend-swatch { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+.legend-total-row td { background: var(--surface-2); font-weight: 600; color: var(--text); border-bottom: 0; }

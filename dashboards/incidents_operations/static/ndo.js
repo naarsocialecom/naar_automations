@@ -91,10 +91,10 @@ function render() {
         (report.tickets || []).filter(t => t.type === ty).forEach(t => out[ticketState(t.status)]?.push(t.key));
         return out;
     };
-    const STATE_PARTS = { active: ['In progress', '#4f8fea'], todo: ['To do', '#c1c7d0'], hold: ['On hold', '#f5b25b'] };
+    const STATE_PARTS = { active: ['In progress', 'var(--series-1)'], todo: ['To do', 'var(--series-8)'], hold: ['On hold', 'var(--series-4)'] };
     renderSplit('splitIncident', byState('Incident'),   STATE_PARTS);
     renderSplit('splitOps',      byState('Operations'), STATE_PARTS);
-    renderSplit('splitCritical',   split.critical_high, { Critical: ['Critical', '#f0806f'], High: ['High', '#f5a3b0'] });
+    renderSplit('splitCritical',   split.critical_high, { Critical: ['Critical', 'var(--prio-critical)'], High: ['High', 'var(--prio-high)'] });
     renderSplit('splitUnassigned', split.unassigned, TYPE_PARTS);
     renderSplit('splitNew',        split.new_24h,    TYPE_PARTS);
 
@@ -111,7 +111,8 @@ function render() {
     renderTickets();
 }
 
-const TYPE_PARTS = { Incident: ['Incidents', '#f0806f'], Operations: ['Operations', '#4f8fea'] };
+// Colours are CSS variables: they end up in style="…" and follow the light / dark theme
+const TYPE_PARTS = { Incident: ['Incidents', 'var(--series-2)'], Operations: ['Operations', 'var(--series-1)'] };
 
 // Small donut + legend under a tile: how its number splits (e.g. incidents vs operations).
 // parts maps a key in `keysBy` to [label, colour]; hovering a legend item lists its tickets.
@@ -122,14 +123,15 @@ function renderSplit(id, keysBy = {}, parts) {
     let offset = 0;
     const arcs = total ? items.filter(it => it.keys.length).map(it => {
         const len = it.keys.length / total * C;
-        const arc = `<circle r="15" cx="20" cy="20" fill="none" stroke="${it.color}" stroke-width="7"
+        // style="stroke:…" (not the stroke attribute): presentation attributes don't resolve var()
+        const arc = `<circle r="15" cx="20" cy="20" fill="none" style="stroke:${it.color}" stroke-width="7"
             stroke-dasharray="${len.toFixed(2)} ${(C - len).toFixed(2)}" stroke-dashoffset="${(-offset).toFixed(2)}"/>`;
         offset += len;
         return arc;
     }).join('') : '';
     $(id).innerHTML = `
         <svg class="ndo-donut" viewBox="0 0 40 40" aria-hidden="true">
-            <circle r="15" cx="20" cy="20" fill="none" stroke="#ebecf0" stroke-width="7"/>
+            <circle r="15" cx="20" cy="20" fill="none" style="stroke:var(--chart-track)" stroke-width="7"/>
             <g transform="rotate(-90 20 20)">${arcs}</g>
         </svg>
         <div class="ndo-split-legend">${items.map(it => `
@@ -164,7 +166,7 @@ function renderAging() {
                     <span class="ndo-age-val">${g.n}</span>
                     <div class="ndo-age-stack" style="height:${g.n ? Math.max(4, g.n / max * 100).toFixed(1) : 0}%">${g.segs.filter(x => x.keys.length).map(x =>
                         `<div class="ndo-age-bar ndo-age-bar--${x.cls}" style="flex:${x.keys.length}"
-                            title="${escapeHtml(`${x.name} · ${g.label} (${x.keys.length}): ${x.keys.join(', ')}`)}">${x.keys.length}</div>`).join('')}</div>
+                            title="${escapeHtml(`${x.name} · ${g.label} (${x.keys.length}): ${x.keys.join(', ')}`)}">${x.keys.length / max >= 0.12 ? x.keys.length : ''}</div>`).join('')}</div>
                 </div>
             </div>
             <span class="ndo-age-label">${escapeHtml(g.label)}</span>
@@ -173,7 +175,7 @@ function renderAging() {
 
 // Open tickets per Requirement Owner: total, with the incidents / operations split under the name.
 // A ticket with two owners counts under both; tickets without one go under "Not set".
-const OWNER_TYPES = [['Incident', 'Incident', 'Incidents', '#f0806f'], ['Operations', 'Operation', 'Operations', '#4f8fea']];
+const OWNER_TYPES = [['Incident', 'Incident', 'Incidents', 'var(--series-2)'], ['Operations', 'Operation', 'Operations', 'var(--series-1)']];
 function renderOwners() {
     const rows = new Map();
     (report.tickets || []).forEach(t => {

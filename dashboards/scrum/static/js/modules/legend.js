@@ -40,7 +40,7 @@ function renderTableLegend(container, labels, colors, data, isDonut = false) {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${i + 1}</td>
-            <td><span class="legend-swatch" style="background:${colors[i]};border-radius:${isDonut?'50%':'3px'}"></span>${label}</td>
+            <td><span class="legend-swatch${isDonut ? ' legend-dot--round' : ''}" style="background:${colors[i]}"></span>${label}</td>
             <td><strong>${data[i]}</strong></td>
             ${isDonut ? `<td>${pct}%</td>` : ''}
         `;
@@ -50,7 +50,7 @@ function renderTableLegend(container, labels, colors, data, isDonut = false) {
     const tfootTr = document.createElement('tr');
     tfootTr.className = 'legend-total-row';
     tfootTr.innerHTML = `
-        <td colspan="${isDonut ? 2 : 2}" style="font-weight:700;">Total</td>
+        <td colspan="2">Total</td>
         <td><strong>${total}</strong></td>
         ${isDonut ? '<td>100%</td>' : ''}
     `;
@@ -65,9 +65,10 @@ function renderPillLegend(container, labels, colors, data, isDonut = false) {
     labels.forEach((label, i) => {
         const item = document.createElement('div');
         const pct  = isDonut && total > 0 ? ` – ${((data[i]/total)*100).toFixed(1)}%` : '';
+        item.className = 'legend-item';
         item.innerHTML = `
-            <span style="background-color:${colors[i]};width:12px;height:12px;display:inline-block;border-radius:${isDonut?'50%':'3px'};"></span>
-            <span style="font-size:11px;font-weight:500;color:#5e6c84;">${label} (${data[i]}${pct})</span>
+            <span class="legend-dot${isDonut ? ' legend-dot--round' : ''}" style="background:${colors[i]}"></span>
+            <span class="legend-item-label">${label} <b>${data[i]}</b>${pct}</span>
         `;
         container.appendChild(item);
     });

@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    {% include 'partials/theme_head.html' %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboards &amp; Automations · Naar</title>
     <link rel="icon" href="https://gargashjirabackup.blob.core.windows.net/logos/naar/favicon.svg">
@@ -14,12 +15,16 @@
 {% include 'partials/sidebar.html' %}
 <div class="dashboard-container">
 
-    <header class="home-head">
-        <h1>Dashboards &amp; Automations</h1>
-        <p>Everything the team runs in one place. Open a card to go to its page.</p>
-    </header>
+    <div class="header">
+        <div class="logo-area">
+            <div class="logo-text">
+                <h1>Dashboards &amp; Automations</h1>
+                <p class="page-subtitle">Everything the team runs in one place. Open a card to go to its page.</p>
+            </div>
+        </div>
+    </div>
 
-    <div id="homeError" class="home-error" role="alert" hidden></div>
+    <div id="homeError" class="banner home-error" role="alert" hidden></div>
 
     <section class="home-section">
         <h2><i class="fas fa-chart-bar"></i> Dashboards</h2>

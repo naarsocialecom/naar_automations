@@ -1,0 +1,21 @@
+/* Sign-in page (follows the saved theme or the OS; no toggle here) */
+body.login-page { min-height: 100vh; display: grid; place-items: center; padding: 16px; background: var(--bg); }
+.login-card {
+    width: 100%; max-width: 380px; padding: 32px 28px 28px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-xl); box-shadow: var(--shadow-md);
+}
+.login-brand { margin-bottom: 24px; }
+.brand-logo { height: 32px; width: auto; display: block; filter: var(--logo-filter); }
+.login-card h1 { font-size: var(--fs-xl); line-height: 28px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
+.login-card p { margin: 4px 0 20px; font-size: var(--fs-sm); color: var(--text-3); }
+.login-error { margin-bottom: 16px; align-items: center; }
+.login-card label { display: block; margin-bottom: 6px; font-size: var(--fs-sm); font-weight: 600; color: var(--text-2); }
+.login-card input[type="password"] {
+    width: 100%; height: 40px; padding: 0 12px; border: 1px solid var(--border-strong); border-radius: var(--r-md);
+    background: var(--surface); color: var(--text); font-size: var(--fs-md);
+    transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.login-card input[type="password"]:focus {
+    outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.login-card .btn { width: 100%; height: 40px; margin-top: 16px; }

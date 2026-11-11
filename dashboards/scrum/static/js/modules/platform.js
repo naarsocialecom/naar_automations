@@ -87,7 +87,7 @@ export function updatePlatformBreakdown() {
     });
 
     if (sortedPlatforms.length === 0) {
-        grid.innerHTML = `<div style="color:#5e6c84;font-size:0.88rem;padding:0.5rem;grid-column:1/-1;">
+        grid.innerHTML = `<div class="platform-empty">
             No platform data found${activeStatusFilter ? ` for status "${activeStatusFilter}"` : ''}.
         </div>`;
     }
@@ -158,7 +158,7 @@ function updateFilterBtnLabel() {
     const btn = document.getElementById('epicStatusFilterBtn');
     if (!btn) return;
     if (activeStatusFilter) {
-        btn.innerHTML = `<i class="fas fa-filter"></i> ${escapeHtml(activeStatusFilter)} <i class="fas fa-times" id="clearStatusFilter" style="margin-left:4px;opacity:0.6;"></i>`;
+        btn.innerHTML = `<i class="fas fa-filter"></i> ${escapeHtml(activeStatusFilter)} <i class="fas fa-times" id="clearStatusFilter"></i>`;
         btn.classList.add('filter-active');
         btn.querySelector('#clearStatusFilter')?.addEventListener('click', e => {
             e.stopPropagation();

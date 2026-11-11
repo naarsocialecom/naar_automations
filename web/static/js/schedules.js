@@ -26,7 +26,7 @@ const RESULT = {
 function lastRun(run) {
     if (!run?.started_at) return '<span class="sch-muted">Not run yet</span>';
     const [cls, icon, label] = RESULT[run.status] || ['muted', 'question-circle', run.status || '–'];
-    return `<div>${when(run.started_at)}</div><span class="sch-chip sch-chip--${cls}"><i class="fas fa-${icon}"></i> ${label}</span>`;
+    return `<div class="sch-when">${when(run.started_at)}</div><span class="sch-chip sch-chip--${cls}"><i class="fas fa-${icon}"></i> ${label}</span>`;
 }
 
 function render(data) {
@@ -36,24 +36,24 @@ function render(data) {
     $('schOff').hidden = data.scheduler_running;
     $('schRows').innerHTML = data.jobs.map(j => `
         <tr data-id="${escapeHtml(j.id)}" class="${j.enabled ? '' : 'is-off'}">
-            <td class="sch-job">
+            <td class="sch-job" data-label="Job">
                 <span class="sch-kind sch-kind--${j.kind.toLowerCase()}">${escapeHtml(j.kind)}</span>
                 <a class="sch-name" href="${escapeHtml(j.page)}">${escapeHtml(j.name)}</a>
                 <div class="sch-desc">${escapeHtml(j.description)}</div>
                 ${j.log.length ? `<details class="sch-log"><summary>Last output</summary><pre>${escapeHtml(j.log.join('\n'))}</pre></details>` : ''}
             </td>
-            <td>
+            <td data-label="Runs daily at">
                 <div class="sch-time">
                     <input type="time" value="${escapeHtml(j.time)}" aria-label="Time for ${escapeHtml(j.name)}">
-                    <button type="button" class="sch-save" hidden>Save</button>
+                    <button type="button" class="btn btn--primary btn--sm sch-save" hidden>Save</button>
                 </div>
                 <div class="sch-muted">${j.time === j.default_time ? 'Default' : `Default ${escapeHtml(j.default_time)}`}</div>
             </td>
-            <td><label class="sch-switch" title="${j.enabled ? 'On: runs every day' : 'Off: does not run'}">
+            <td data-label="On"><label class="sch-switch" title="${j.enabled ? 'On: runs every day' : 'Off: does not run'}">
                 <input type="checkbox" ${j.enabled ? 'checked' : ''}><span></span></label></td>
-            <td>${j.enabled ? `<b>${when(j.next_run)}</b>` : '<span class="sch-chip sch-chip--muted"><i class="fas fa-pause"></i> Off</span>'}</td>
-            <td>${lastRun(j.last_run)}</td>
-            <td><a class="sch-open" href="${escapeHtml(j.page)}" title="Open its page"><i class="fas fa-arrow-right"></i></a></td>
+            <td data-label="Next run">${j.enabled ? `<b class="sch-when">${when(j.next_run)}</b>` : '<span class="sch-chip sch-chip--muted"><i class="fas fa-pause"></i> Off</span>'}</td>
+            <td data-label="Last run">${lastRun(j.last_run)}</td>
+            <td class="sch-open-cell"><a class="icon-btn icon-btn--ghost icon-btn--sm sch-open" href="${escapeHtml(j.page)}" title="Open its page" aria-label="Open page"><i class="fas fa-arrow-right"></i></a></td>
         </tr>`).join('');
 
     document.querySelectorAll('#schRows tr[data-id]').forEach(row => {

@@ -10,24 +10,40 @@ export const State = {
     sprintDetailsMap:  new Map(),
 };
 
-// Settings managed separately — see settings-panel.js
+// Issue types that get a colour picker in Settings (same order as Settings.barColors.issueType)
+export const ISSUE_TYPE_LABELS = ['Story', 'Improvement', 'Bug', 'Incident', 'Task', 'Epic'];
+
+// Chart colours: null = use the theme colour (tokens.css). Only colours the user changed in Settings are set.
 export const Settings = {
     sortOrder: 'high-to-low',      // 'high-to-low' | 'low-to-high'
     barColors: {
-        issueType:  ['#16ecac', '#25d6ee', '#d63a0a', '#ffaa00', '#4d4d4d', '#0755ae'],
-        component:  ['#d03100', '#e07d03', '#00aac0', '#00b17c', '#484848', '#0563cf'],
-        heat:       { Bug: '#d03100', Incident: '#e07d03' },
+        issueType:  [null, null, null, null, null, null],   // by ISSUE_TYPE_LABELS
+        component:  [null, null, null, null, null, null],   // by bar position
+        heat:       { Bug: null, Incident: null },
     },
     legendStyle: 'pills',          // 'pills' | 'table'
 };
 
+// The colours that used to be the defaults. Saved settings that still hold them are dropped,
+// so the soft theme colours apply (and follow light / dark).
+const LEGACY_DEFAULTS = {
+    issueType:    ['#16ecac', '#25d6ee', '#d63a0a', '#ffaa00', '#4d4d4d', '#0755ae'],
+    component:    ['#d03100', '#e07d03', '#00aac0', '#00b17c', '#484848', '#0563cf'],
+    heatBug:      '#d03100',
+    heatIncident: '#e07d03',
+};
+const isColor = v => typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v);
+const keep = (v, legacy) => (isColor(v) && v.toLowerCase() !== legacy ? v : null);
+
 export function applySettings(incoming) {
     if (incoming.sortOrder) Settings.sortOrder = incoming.sortOrder;
-    if (incoming.barColors) {
-        Object.assign(Settings.barColors.issueType, incoming.barColors.issueType || []);
-        Object.assign(Settings.barColors.component, incoming.barColors.component || []);
-        if (incoming.barColors.heatBug)      Settings.barColors.heat.Bug      = incoming.barColors.heatBug;
-        if (incoming.barColors.heatIncident) Settings.barColors.heat.Incident = incoming.barColors.heatIncident;
+    const bc = incoming.barColors;
+    if (bc) {
+        ['issueType', 'component'].forEach(k => {
+            if (Array.isArray(bc[k])) Settings.barColors[k] = Settings.barColors[k].map((_, i) => keep(bc[k][i], LEGACY_DEFAULTS[k][i]));
+        });
+        Settings.barColors.heat.Bug      = keep(bc.heatBug, LEGACY_DEFAULTS.heatBug);
+        Settings.barColors.heat.Incident = keep(bc.heatIncident, LEGACY_DEFAULTS.heatIncident);
     }
 }
 
