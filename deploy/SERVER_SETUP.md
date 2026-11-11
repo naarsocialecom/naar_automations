@@ -1,6 +1,6 @@
 # Naar Automations — Server Setup
 
-How production runs (EC2, ap-south-2, behind the AWS load balancer for https://sprint-status.naar.io).
+How production runs (EC2, ap-south-2, behind the AWS load balancer for https://automations.naar.io; the old https://sprint-status.naar.io redirects there).
 Everything lives in `/root/naar_automations` and runs as root. The load balancer sends traffic
 straight to port 5005 (no Nginx).
 
@@ -58,7 +58,7 @@ cp web/.env.example web/.env && chmod 600 web/.env && nano web/.env
 
 In `web/.env` for production: `APP_ENV=production`, `DEBUG=false`, a fresh `SECRET_KEY`,
 `DASHBOARD_PASSWORD` (the team password; the site won't start without it),
-`DASHBOARD_URL=https://sprint-status.naar.io`, `CORS_ORIGINS` = that URL,
+`DASHBOARD_URL=https://automations.naar.io`, `CORS_ORIGINS` = that URL,
 `SNAPSHOT_BASE_URL` and `SNAPSHOT_BROWSER_CHANNEL` blank, `NDO_DEVELOPER_UPDATES=false`,
 plus the Jira and Slack values.
 
