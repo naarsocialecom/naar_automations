@@ -46,7 +46,7 @@ def _thumb_path(card_id: str) -> Path:
 
 
 def _make_thumbnail(card: Dict) -> None:
-    """Screenshot the card's page and save a small JPEG. One at a time per card (file lock)."""
+    """Screenshot the card's page and save a small JPEG. One browser at a time (file locks)."""
     from PIL import Image
     from web.shared.page_snapshot import SnapshotError, capture_page
     THUMB_DIR.mkdir(parents=True, exist_ok=True)
@@ -58,11 +58,14 @@ def _make_thumbnail(card: Dict) -> None:
         path = _thumb_path(card['id'])
         if path.exists() and time.time() - path.stat().st_mtime < THUMB_MAX_AGE:
             return
-        try:
-            png = capture_page(card['url'])
-        except SnapshotError as e:
-            logger.warning(f"Thumbnail for {card['id']}: {e}")
-            return
+        # One browser at a time on the whole server (all cards, all workers): small servers have little memory
+        with open(THUMB_DIR / '.browser.lock', 'w') as browser:
+            fcntl.flock(browser, fcntl.LOCK_EX)
+            try:
+                png = capture_page(card['url'])
+            except SnapshotError as e:
+                logger.warning(f"Thumbnail for {card['id']}: {e}")
+                return
         img = Image.open(io.BytesIO(png)).convert('RGB')
         img.thumbnail((THUMB_WIDTH, THUMB_WIDTH))
         tmp = path.with_suffix('.tmp')

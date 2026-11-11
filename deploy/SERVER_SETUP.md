@@ -6,7 +6,7 @@ straight to port 5005 (no Nginx).
 
 | Part | How it runs | File |
 |---|---|---|
-| Website, port 5005 (every page) | PM2 → gunicorn, 4 workers | `deploy/ecosystem.config.js` |
+| Website, port 5005 (every page) | PM2 → gunicorn, 2 workers | `deploy/ecosystem.config.js` |
 | Every scheduled job (7 PM Slack summary, 11 AM Meta report, …) | cron starts `web/scheduler.py` every minute; times are set on the website (**Scheduler**) | `deploy/crontab` |
 | Slack app permissions | Slack app manifest | `deploy/slack-app-manifest.yaml` |
 

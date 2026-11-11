@@ -9,7 +9,8 @@ module.exports = {
       name: "naar-automations",
       cwd: ROOT,
       script: `${ROOT}/venv/bin/gunicorn`,
-      args: "--workers 4 --bind 0.0.0.0:5005 --timeout 120 web.app:app",
+      // 2 workers: enough for the team and fits a 1 GB server (Chromium for the Slack picture needs room)
+      args: "--workers 2 --bind 0.0.0.0:5005 --timeout 120 web.app:app",
       interpreter: "none",
       autorestart: true,
       out_file: `${ROOT}/logs/pm2-out.log`,
