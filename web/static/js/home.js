@@ -7,19 +7,16 @@ let retry = null;
 function card(c) {
     const thumb = c.thumbnail
         ? `<img src="${escapeHtml(c.thumbnail)}" alt="" loading="lazy">`
-        : `<div class="home-thumb-wait"><i class="fas ${escapeHtml(c.icon)}"></i><span>Preparing preview…</span></div>`;
+        : `<div class="home-thumb-wait"><i class="fas ${escapeHtml(c.icon)}"></i></div>`;
     const sched = c.schedule
         ? (c.schedule.enabled
-            ? `<span class="home-chip"><i class="fas fa-clock"></i> Daily ${escapeHtml(c.schedule.time_label)}</span>`
+            ? `<span class="home-chip"><i class="fas fa-clock"></i> ${escapeHtml(c.schedule.time_label)}</span>`
             : '<span class="home-chip home-chip--off"><i class="fas fa-pause"></i> Schedule off</span>')
         : '';
-    return `<a class="home-card" href="${escapeHtml(c.url)}">
+    return `<a class="home-card" href="${escapeHtml(c.url)}" title="${escapeHtml(c.description)}">
         <div class="home-thumb">${thumb}</div>
-        <div class="home-body">
-            <div class="home-title"><span class="home-icon home-icon--${escapeHtml(c.kind)}"><i class="fas ${escapeHtml(c.icon)}"></i></span>${escapeHtml(c.title)}</div>
-            <p>${escapeHtml(c.description)}</p>
-            <div class="home-foot">${sched}<span class="home-open">Open <i class="fas fa-arrow-right"></i></span></div>
-        </div>
+        <div class="home-title"><span class="home-icon home-icon--${escapeHtml(c.kind)}"><i class="fas ${escapeHtml(c.icon)}"></i></span><span>${escapeHtml(c.title)}</span></div>
+        ${sched}
     </a>`;
 }
 
