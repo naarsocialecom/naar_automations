@@ -5,7 +5,8 @@ automation has its own folder with everything it needs.
 
 | Part | Page | Runs |
 |---|---|---|
-| **Incidents & Operations** | `/` and `/ndo` | Website + daily Slack summary (19:00 IST) |
+| **Home** | `/` | A card with a live thumbnail for every dashboard and automation |
+| **Incidents & Operations** | `/ndo` | Website + daily Slack summary (19:00 IST) |
 | **Naar Scrum Dashboard** | `/dashboard` | Website |
 | **Scheduler** | `/scheduler` | Every scheduled job: change its time or switch it off |
 | **Meta Campaign Stock** | `/automations/meta-campaign-stock` | Daily Slack report (11:00 IST), or the page's **Test run** / **Send to Slack** buttons |
@@ -17,6 +18,7 @@ naar_automations/
 ├── web/                          the website frame: login, sidebar, shared parts
 │   ├── app.py  modules.py        the website · which dashboards/automations and jobs are on
 │   ├── scheduler.py  schedules.py  runs every job at its time · the Scheduler page
+│   ├── home.py                   the home page (cards from each module's CARD)
 │   ├── auth.py  config.py        login · every setting (from web/.env)
 │   ├── shared/                   Jira, Slack, page screenshots (used by several modules)
 │   ├── templates/  static/       login page, sidebar, base CSS, helpers.js

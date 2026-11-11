@@ -8,7 +8,8 @@ automations/<name>/
 ├── job/             the job itself (Node.js or Python) with its own .env.example; never sends
 │                    anything in its dry run (DRY_RUN=true)
 ├── page/            optional: its page on the website (same layout as a dashboard:
-│                    __init__.py exporting `blueprint`, routes.py, templates/, static/)
+│                    __init__.py exporting `blueprint` and `CARD` (kind: 'automation'), routes.py,
+│                    templates/, static/)
 └── jobs.py          its schedule: JOBS = [{id, name, description, kind, page, default_time,
                      command, cwd, env}] (see automations/meta_campaign_stock/jobs.py)
 ```

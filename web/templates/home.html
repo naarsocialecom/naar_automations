@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboards &amp; Automations · Naar</title>
+    <link rel="icon" href="https://gargashjirabackup.blob.core.windows.net/logos/naar/favicon.svg">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app-shell.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+</head>
+<body class="has-sidebar">
+{% include 'partials/sidebar.html' %}
+<div class="dashboard-container">
+
+    <header class="home-head">
+        <h1>Dashboards &amp; Automations</h1>
+        <p>Everything the team runs in one place. Open a card to go to its page.</p>
+    </header>
+
+    <div id="homeError" class="home-error" role="alert" hidden></div>
+
+    <section class="home-section">
+        <h2><i class="fas fa-chart-bar"></i> Dashboards</h2>
+        <div class="home-grid" id="homeDashboards"></div>
+    </section>
+
+    <section class="home-section">
+        <h2><i class="fas fa-robot"></i> Automations</h2>
+        <div class="home-grid" id="homeAutomations"></div>
+    </section>
+</div>
+<script type="module" src="{{ url_for('static', filename='js/home.js') }}"></script>
+</body>
+</html>

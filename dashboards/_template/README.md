@@ -5,6 +5,7 @@ Branch: `dashboard/<name>/init` (see `docs/BRANCHING.md`).
 1. Create `dashboards/<name>/` (lowercase, underscores) with:
    ```
    __init__.py        from dashboards.<name>.routes import <name>_bp as blueprint
+                      CARD = {id, kind: 'dashboard', title, url, icon, description, job?}  (its home-page card)
    routes.py          <name>_bp = Blueprint('<name>', __name__, template_folder='templates',
                                             static_folder='static', static_url_path='/static/<name-with-dashes>')
    templates/<name>.html

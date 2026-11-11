@@ -23,6 +23,7 @@ from flask_cors import CORS
 from web.auth import init_auth
 from web.config import config, Config
 from web.modules import MODULES
+from web.home import home_bp
 from web.schedules import schedules_bp
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
@@ -47,6 +48,7 @@ if not app.debug:
 
 # Site login (DASHBOARD_PASSWORD) first, then every module's pages
 init_auth(app)
+app.register_blueprint(home_bp)         # Home: a card per dashboard / automation
 app.register_blueprint(schedules_bp)     # Scheduler (every job's time)
 for module in MODULES:
     app.register_blueprint(importlib.import_module(module).blueprint)

@@ -1,5 +1,5 @@
 """
-Incidents & Operations dashboard: the page (/ and /ndo) and its API (/api/ndo/*).
+Incidents & Operations dashboard: the page (/ndo) and its API (/api/ndo/*).
 Its template and JS/CSS live next to this file (templates/, static/).
 """
 import logging
@@ -58,10 +58,8 @@ def _jira_error(e):
     return _error(f"Jira request failed{f' ({status})' if status else ''}{hint}", 502)
 
 
-@ndo_bp.route('/')
 @ndo_bp.route('/ndo')
 def ndo_page():
-    # Landing page of the site
     return render_template('ndo.html', active_nav='ndo', snapshot='snapshot' in request.args)
 
 
