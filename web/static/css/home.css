@@ -2,13 +2,7 @@
 .home-error { margin-bottom: 20px; }
 .home-error[hidden] { display: none; }
 
-.home-section { margin-bottom: 32px; }
-.home-section h2 {
-    display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
-    font-size: var(--fs-overline); line-height: 16px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-3);
-}
-.home-section h2 i { font-size: 12px; color: var(--text-3); }
-.home-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 220px)); gap: 16px; }
+.home-grid { margin-top: 8px; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 220px)); gap: 16px; }
 
 /* Small square card: thumbnail, name, schedule */
 .home-card {
@@ -37,8 +31,7 @@
     width: 24px; height: 24px; border-radius: var(--r-sm); flex-shrink: 0;
     display: inline-flex; align-items: center; justify-content: center; font-size: 11px;
 }
-.home-icon--dashboard  { background: var(--info-bg); color: var(--info-fg); }
-.home-icon--automation { background: var(--discovery-bg); color: var(--discovery-fg); }
+.home-icon--dashboard, .home-icon--automation { background: var(--info-bg); color: var(--info-fg); }   /* one style: everything is an automation */
 .home-chip { align-self: flex-start; margin-left: 4px; background: var(--success-bg); color: var(--success-fg); }
 .home-chip--off { background: var(--neutral-bg); color: var(--neutral-fg); }
 

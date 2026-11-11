@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     {% include 'partials/theme_head.html' %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboards &amp; Automations · Naar</title>
+    <title>Automations · Naar</title>
     <link rel="icon" href="https://gargashjirabackup.blob.core.windows.net/logos/naar/favicon.svg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
@@ -18,7 +18,7 @@
     <div class="header">
         <div class="logo-area">
             <div class="logo-text">
-                <h1>Dashboards &amp; Automations</h1>
+                <h1>Automations</h1>
                 <p class="page-subtitle">Everything the team runs in one place. Open a card to go to its page.</p>
             </div>
         </div>
@@ -26,15 +26,8 @@
 
     <div id="homeError" class="banner home-error" role="alert" hidden></div>
 
-    <section class="home-section">
-        <h2><i class="fas fa-chart-bar"></i> Dashboards</h2>
-        <div class="home-grid" id="homeDashboards"></div>
-    </section>
-
-    <section class="home-section">
-        <h2><i class="fas fa-robot"></i> Automations</h2>
-        <div class="home-grid" id="homeAutomations"></div>
-    </section>
+    <!-- One list: every dashboard and automation is an automation -->
+    <div class="home-grid" id="homeCards"></div>
 </div>
 <script type="module" src="{{ url_for('static', filename='js/home.js') }}"></script>
 </body>

@@ -25,8 +25,7 @@ async function load() {
         const res = await fetch('/api/home', { cache: 'no-store' });
         if (!res.ok) throw new Error(res.status === 401 ? 'Your session ended — reload the page to sign in again.' : `Could not load (${res.status})`);
         const { cards } = await res.json();
-        $('homeDashboards').innerHTML = cards.filter(c => c.kind === 'dashboard').map(card).join('');
-        $('homeAutomations').innerHTML = cards.filter(c => c.kind === 'automation').map(card).join('');
+        $('homeCards').innerHTML = cards.map(card).join('');
         $('homeError').hidden = true;
         // Previews are made in the background the first time; look again shortly
         clearTimeout(retry);
