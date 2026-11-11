@@ -28,7 +28,7 @@ a { color: var(--accent); }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 ::placeholder { color: var(--text-3); opacity: 1; }
 
-.dashboard-container { max-width: 1440px; margin: 0 auto; }
+.dashboard-container { max-width: 1920px; margin: 0 auto; }   /* full width like before; only very wide screens get a limit */
 
 /* Theme switch: no colour transitions while the theme flips */
 html.theme-switching *, html.theme-switching *::before, html.theme-switching *::after { transition: none !important; }
