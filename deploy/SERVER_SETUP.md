@@ -1,5 +1,7 @@
 # Naar Automations — Server Setup
 
+> Quick path: `deploy/INSTALL.md` (two scripts: `deploy/install.sh`, `deploy/start.sh`). This page has the details.
+
 How production runs (EC2, ap-south-2, behind the AWS load balancer for https://automations.naar.io; the old https://sprint-status.naar.io redirects there).
 Everything lives in `/root/naar_automations` and runs as root. The load balancer sends traffic
 straight to port 5005 (no Nginx).
@@ -114,7 +116,7 @@ cron, PM2 or systemd as well, or they run twice.
 
 | Task | Command |
 |---|---|
-| Deploy new code (after a merge into `main`) | `cd /root/naar_automations && git pull && pm2 restart naar-automations` |
+| Deploy new code (after a merge into `main`) | `cd /root/naar_automations && git pull && bash deploy/install.sh && bash deploy/start.sh` |
 | …if an automation's `job/` changed | also `cd automations/<name>/job && npm ci --omit=dev` |
 | Website status / logs | `pm2 status` · `pm2 logs naar-automations` · `tail -50 logs/website.log` |
 | Scheduled jobs: times, last runs | website → Scheduler · `venv/bin/python -m web.scheduler list` |

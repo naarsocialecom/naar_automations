@@ -62,4 +62,4 @@ Work on a branch named after it (see `docs/BRANCHING.md`).
 
 ## Server
 
-See `deploy/SERVER_SETUP.md`.
+Fresh install: `deploy/INSTALL.md` (`deploy/install.sh`, then `deploy/start.sh`). Details: `deploy/SERVER_SETUP.md`.
