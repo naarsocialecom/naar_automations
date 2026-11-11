@@ -110,7 +110,6 @@ class Config:
     SLACK_REMINDER_CHANNEL_ID = _get('SLACK_REMINDER_CHANNEL_ID') or SLACK_DEV_UPDATES_CHANNEL_ID or SLACK_CHANNEL_ID
     SLACK_REMINDER_MENTION = _get('SLACK_REMINDER_MENTION') or _get('SLACK_PROMPT_MENTION')
     # Shown in the reminder text only — the schedule itself lives in cron / systemd timers
-    NDO_POST_TIME_LABEL = _get('NDO_POST_TIME_LABEL', '7:00 PM IST')
     # true: the daily post always goes out, saying "No updates from developers" on a quiet day.
     # false: a day without developer updates is skipped (and you get a note saying so).
     NDO_POST_WITHOUT_UPDATES = _bool('NDO_POST_WITHOUT_UPDATES', True)
@@ -151,8 +150,6 @@ class Config:
     # Node.js for the "Run now" buttons (blank = found on PATH)
     NODE_BIN = _get('NODE_BIN')
     META_STOCK_FILE_PREFIX = _get('META_STOCK_FILE_PREFIX', 'product-export')
-    # Shown on the page; the schedule itself is automations/meta_campaign_stock/deploy/meta-campaign-stock.timer
-    META_STOCK_RUN_TIME = _get('META_STOCK_RUN_TIME', '11:00')
 
     # Storage / logs
     DATA_DIR = Path(_get('DATA_DIR') or ROOT_DIR / 'data')

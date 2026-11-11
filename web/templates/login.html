@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex">
-    <title>Sign in · Naar Automations</title>
+    <title>Sign in · Naar Automations &amp; Dashboard</title>
     <link rel="icon" href="https://gargashjirabackup.blob.core.windows.net/logos/naar/favicon.svg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
@@ -16,7 +16,8 @@
         }
         .login-brand { display: flex; align-items: center; gap: 0.55rem; margin-bottom: 1.6rem; }
         .login-brand img { height: 34px; }
-        .login-brand span { font-size: 1.2rem; font-weight: 700; color: #0747a6; }
+        .login-brand span { font-size: 1.2rem; font-weight: 700; color: #0747a6; line-height: 1.1; }
+        .login-brand small { display: block; font-size: 0.8rem; font-weight: 600; color: #5e6c84; }
         .login-card h1 { font-size: 1.1rem; margin-bottom: 0.3rem; }
         .login-card p { font-size: 0.85rem; color: #5e6c84; margin-bottom: 1.3rem; }
         .login-card label { display: block; font-size: 0.78rem; font-weight: 600; color: #42526e; margin-bottom: 0.35rem; }
@@ -40,7 +41,7 @@
     <form class="login-card" method="post" action="/login">
         <div class="login-brand">
             <img src="https://gargashjirabackup.blob.core.windows.net/logos/naar/Naar%20logo.png" alt="Naar">
-            <span>Automations</span>
+            <span>Automations<small>&amp; Dashboard</small></span>
         </div>
         <h1>Sign in</h1>
         <p>Enter the team password to open the dashboards.</p>

@@ -48,7 +48,7 @@ const chip = r => `<span class="auto-chip auto-chip--${r.cls}" title="${escapeHt
 
 function render(data) {
     TZ = data.timezone || TZ;
-    $('autoSchedule').textContent = `Daily · ${data.run_time_label}`;
+    $('autoSchedule').textContent = data.next_run ? `Daily · ${data.run_time_label}` : 'Schedule off';
     const runs = data.runs || [];
     const last = runs[0];
     // Real (non-test) runs say where it was posted; a test run in between doesn't change that
@@ -66,8 +66,8 @@ function render(data) {
     }
 
     // Next run
-    $('autoNextRun').textContent = when(data.next_run);
-    $('autoNextRunNote').textContent = fromNow(data.next_run);
+    $('autoNextRun').textContent = data.next_run ? when(data.next_run) : 'Off';
+    $('autoNextRunNote').innerHTML = data.next_run ? `${fromNow(data.next_run)} · <a href="/automations">change</a>` : 'Switched off on the <a href="/automations">Schedules</a> page';
 
     // Posted to
     lastPostedChannels = lastPosted ? lastPosted.posts.map(p => p.channel).join(', ') : '';

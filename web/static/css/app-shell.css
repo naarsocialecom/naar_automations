@@ -13,7 +13,8 @@ body.has-sidebar { padding-left: calc(var(--sidebar-w) + 2rem); }
     text-decoration: none;
 }
 .app-brand img { height: 30px; width: auto; }
-.app-brand span { font-size: 1.05rem; font-weight: 700; color: #0747a6; letter-spacing: -0.01em; }
+.app-brand span { font-size: 1.05rem; font-weight: 700; color: #0747a6; letter-spacing: -0.01em; line-height: 1.1; }
+.app-brand small { display: block; font-size: 0.72rem; font-weight: 600; color: #5e6c84; letter-spacing: 0; }
 
 .app-nav { display: flex; flex-direction: column; gap: 0.15rem; flex: 1; overflow-y: auto; }
 .app-nav-label {

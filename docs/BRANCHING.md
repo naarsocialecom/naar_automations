@@ -28,8 +28,8 @@ git push -u origin dashboard/incidents-operations/owner-chart
 2. Someone reviews it; merge with **Squash and merge** (one clean commit on `main`).
 3. Deploy on the server (see "Everyday commands" in `deploy/SERVER_SETUP.md`):
    `cd /root/naar_automations && git pull && pm2 restart naar-automations`
-   (a change in an automation's `job/` needs `npm ci --omit=dev` in that folder; a changed
-   timer or crontab needs to be installed again: see its README).
+   (a change in an automation's `job/` needs `npm ci --omit=dev` in that folder; schedule
+   times are changed on the website, not in code).
 4. Delete the branch (GitHub offers a button after the merge).
 
 ## Rules

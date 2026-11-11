@@ -11,12 +11,18 @@ import { renderEpicTable, initEpicColumnDropdown } from './modules/epic-table.js
 import { refreshAllChartsAndMetrics } from './modules/orchestrator.js';
 import { initEpicStatusFilter } from './modules/platform.js';
 
+// Daily Highlights is hidden for now (to be planned later). true = show and load it again
+// (also remove `hidden` from #highlightsSection in templates/scrum.html).
+const SHOW_HIGHLIGHTS = false;
+
 async function initDashboard() {
     loadSettingsFromStorage();
     registerChartPlugins();
     initSettingsPanel();
-    setupHighlightsToggle();
-    loadHighlights();
+    if (SHOW_HIGHLIGHTS) {
+        setupHighlightsToggle();
+        loadHighlights();
+    }
 
     try {
         await fetchSprints();
@@ -42,7 +48,7 @@ async function initDashboard() {
             refreshBtn.classList.add('spinning');
             refreshBtn.disabled = true;
             try {
-                await Promise.all([loadHighlights(), loadIssuesForSprints()]);
+                await Promise.all([SHOW_HIGHLIGHTS ? loadHighlights() : null, loadIssuesForSprints()]);
             } finally {
                 setTimeout(() => { refreshBtn.classList.remove('spinning'); refreshBtn.disabled = false; }, 600);
             }

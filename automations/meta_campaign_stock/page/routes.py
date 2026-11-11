@@ -11,18 +11,18 @@ import json
 import logging
 import os
 import re
-import shutil
 import subprocess
 import threading
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
-from zoneinfo import ZoneInfo
 
 from flask import Blueprint, abort, jsonify, render_template, request, send_file
 
+from web import scheduler
 from web.config import Config
+from web.shared.system import clean_env, find_node
 
 logger = logging.getLogger(__name__)
 
@@ -37,8 +37,8 @@ WHATSAPP_PREVIEW = 'whatsapp-preview.json'
 # PDFs with a store's full list, attached when the list is too long for the message
 SELLER_PDFS = 'seller-pdfs'
 PDF_NAME = re.compile(r'^[A-Za-z0-9_-]{1,80}\.pdf$')
-# Only these reach the job; it reads everything else (Slack channel, tokens) from its own .env
-PASS_ENV = ('PATH', 'HOME', 'LANG', 'LC_ALL', 'TZ')
+# The scheduled job's id (automations/meta_campaign_stock/jobs.py): its time is set on the Schedules page
+JOB_ID = 'meta-campaign-stock'
 
 
 def _latest(pattern: str) -> Optional[Path]:
@@ -96,17 +96,6 @@ def _log_tail(lines: int = 40) -> Optional[dict]:
         return None
 
 
-def _node() -> Optional[str]:
-    return Config.NODE_BIN or shutil.which('node') or next(
-        (p for p in ('/usr/bin/node', '/usr/local/bin/node', '/opt/homebrew/bin/node') if os.path.exists(p)), None)
-
-
-def _next_run(now: datetime) -> datetime:
-    hour, minute = (int(x) for x in Config.META_STOCK_RUN_TIME.split(':'))
-    run = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
-    return run if run > now else run + timedelta(days=1)
-
-
 def _file_info(path: Optional[Path]) -> Optional[dict]:
     if not path:
         return None
@@ -120,12 +109,13 @@ def meta_stock_page():
 
 @automations_bp.route('/api/automations/meta-campaign-stock', methods=['GET'])
 def meta_stock_status():
-    tz = ZoneInfo(Config.REPORT_TIMEZONE)
-    now = datetime.now(tz)
+    job = scheduler.job(JOB_ID)
+    plan = scheduler.settings(job)
+    nxt = scheduler.next_run(job)
     return jsonify({
         'runs': _history(),
-        'next_run': _next_run(now).isoformat(),
-        'run_time_label': f"{Config.META_STOCK_RUN_TIME} {now.strftime('%Z')}",
+        'next_run': nxt.isoformat() if nxt else None,
+        'run_time_label': scheduler.time_label(plan['time']) if plan['enabled'] else 'Off',
         'timezone': Config.REPORT_TIMEZONE,
         'image': _file_info(_latest_image()),
         'excel': _file_info(_latest_excel()),
@@ -142,12 +132,11 @@ def meta_stock_run():
         return jsonify({'error': "mode must be 'dry' or 'send'"}), 400
     if _running_pid():
         return jsonify({'error': 'A run is already in progress. Wait for it to finish.'}), 409
-    node = _node()
+    node = find_node(Config.NODE_BIN)
     if not node:
         return jsonify({'error': 'Node.js was not found on the server (set NODE_BIN in web/.env).'}), 500
 
-    env = {k: os.environ[k] for k in PASS_ENV if k in os.environ}
-    env.update(DRY_RUN='true' if mode == 'dry' else 'false', RUN_TRIGGER='dashboard')
+    env = clean_env(DRY_RUN='true' if mode == 'dry' else 'false', RUN_TRIGGER='dashboard')
     Config.META_STOCK_EXPORT_DIR.mkdir(parents=True, exist_ok=True)
     with open(Config.META_STOCK_EXPORT_DIR / RUN_LOG, 'w') as log:
         log.write(f"{'Test run (nothing sent)' if mode == 'dry' else 'Real run (posts to Slack)'} "

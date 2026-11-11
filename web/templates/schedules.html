@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedules · Naar Automations &amp; Dashboard</title>
+    <link rel="icon" href="https://gargashjirabackup.blob.core.windows.net/logos/naar/favicon.svg">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app-shell.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/schedules.css') }}">
+</head>
+<body class="has-sidebar">
+{% include 'partials/sidebar.html' %}
+<div class="dashboard-container">
+
+    <div class="header">
+        <div class="logo-area">
+            <div class="logo-text">
+                <h1>Schedules</h1>
+                <p class="sch-subtitle">Every automatic job of the dashboards and automations. Change a time or switch a job off here; it applies from the next run.</p>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="badge-sprint"><i class="fas fa-globe-asia"></i> <span id="schTz">IST</span></div>
+            <button id="schRefresh" class="refresh-btn" title="Reload"><i class="fas fa-sync-alt"></i></button>
+        </div>
+    </div>
+
+    <div id="schError" class="sch-banner sch-banner--error" role="alert" hidden></div>
+    <div id="schOff" class="sch-banner sch-banner--warn" hidden>
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>The scheduler isn't running on this machine, so nothing runs automatically here. On the server, cron starts it every minute (<code>deploy/crontab</code>).</span>
+    </div>
+
+    <section class="sch-panel">
+        <table class="sch-table">
+            <thead>
+                <tr><th>Job</th><th>Runs daily at</th><th>On</th><th>Next run</th><th>Last run</th><th></th></tr>
+            </thead>
+            <tbody id="schRows"><tr><td colspan="6" class="sch-empty">Loading…</td></tr></tbody>
+        </table>
+    </section>
+
+    <p class="sch-foot">Each job runs once a day. If you move a job to a later time after it already ran today, it runs again tomorrow.
+        Times are in <span id="schTzName">Asia/Kolkata</span>.</p>
+</div>
+<script type="module" src="{{ url_for('static', filename='js/schedules.js') }}"></script>
+</body>
+</html>

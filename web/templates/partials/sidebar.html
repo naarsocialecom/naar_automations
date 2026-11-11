@@ -1,8 +1,8 @@
-{# Left navigation on every page. Set active_nav to: ndo | scrum | meta-stock #}
+{# Left navigation on every page. Set active_nav to: ndo | scrum | schedules | meta-stock #}
 <aside class="app-sidebar" aria-label="Main navigation">
-    <a class="app-brand" href="/" title="Naar Automations">
+    <a class="app-brand" href="/" title="Naar Automations &amp; Dashboard">
         <img src="https://gargashjirabackup.blob.core.windows.net/logos/naar/Naar%20logo.png" alt="Naar">
-        <span>Automations</span>
+        <span>Automations<small>&amp; Dashboard</small></span>
     </a>
     <nav class="app-nav">
         <div class="app-nav-label">Dashboards</div>
@@ -10,6 +10,7 @@
         <a class="app-nav-link{{ ' is-active' if active_nav == 'scrum' }}" href="/dashboard"><i class="fas fa-columns"></i><span>Naar Scrum Dashboard</span></a>
 
         <div class="app-nav-label">Automations</div>
+        <a class="app-nav-link{{ ' is-active' if active_nav == 'schedules' }}" href="/automations"><i class="fas fa-clock"></i><span>Schedules</span></a>
         <a class="app-nav-link{{ ' is-active' if active_nav == 'meta-stock' }}" href="/automations/meta-campaign-stock"><i class="fas fa-bullhorn"></i><span>Meta Campaign Stock</span></a>
     </nav>
     {% if login_enabled %}

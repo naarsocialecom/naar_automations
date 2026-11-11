@@ -9,12 +9,14 @@ automations/<name>/
 │                    anything in its dry run (DRY_RUN=true)
 ├── page/            optional: its page on the website (same layout as a dashboard:
 │                    __init__.py exporting `blueprint`, routes.py, templates/, static/)
-└── deploy/          its schedule: a systemd service + timer (preferred) or a crontab line
+└── jobs.py          its schedule: JOBS = [{id, name, description, kind, page, default_time,
+                     command, cwd, env}] (see automations/meta_campaign_stock/jobs.py)
 ```
 
 1. Build and test the job with its dry run first; real sends go to a test channel / number.
-2. If it has a page: add `'automations.<name>.page'` to `MODULES` in `web/app.py` and a link under
+2. Add `'automations.<name>.jobs'` to `JOB_MODULES` in `web/modules.py`: it then shows on
+   **Automations → Schedules**, where its time is set and it can be switched off.
+3. If it has a page: add `'automations.<name>.page'` to `MODULES` in `web/modules.py` and a link under
    AUTOMATIONS in `web/templates/partials/sidebar.html`.
-3. On the server: `npm ci --omit=dev` (Node) in `job/`, create `job/.env`, install `deploy/` files,
-   and add it to the table in `deploy/SERVER_SETUP.md`.
-4. One schedule only (timer *or* cron), so it never runs twice.
+4. On the server: `npm ci --omit=dev` (Node) in `job/` and create `job/.env`. No cron or timer of
+   its own: the scheduler runs it.

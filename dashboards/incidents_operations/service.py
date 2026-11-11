@@ -42,6 +42,14 @@ CLOSED_TICKET_FIELDS = ['issuetype', 'status', 'summary', 'assignee', 'descripti
                         'issuelinks', 'subtasks', 'statuscategorychangedate']
 
 
+def _post_time_label() -> str:
+    """'7:00 PM IST', or 'off', from the Schedules page (dashboards/incidents_operations/jobs.py)."""
+    from web import scheduler
+    job = scheduler.job('incidents-operations-slack')
+    plan = scheduler.settings(job)
+    return scheduler.time_label(plan['time']) if plan['enabled'] else 'off'
+
+
 class SlackNotConfigured(RuntimeError):
     pass
 
@@ -455,7 +463,7 @@ class NdoService:
             'channel_id': Config.SLACK_CHANNEL_ID,
             'dev_channel_id': Config.SLACK_DEV_UPDATES_CHANNEL_ID,
             'ai_enabled': Config.ai_enabled(),
-            'post_time': Config.NDO_POST_TIME_LABEL,
+            'post_time': _post_time_label(),
             'post_without_updates': Config.NDO_POST_WITHOUT_UPDATES,
             'developer_updates': Config.NDO_DEVELOPER_UPDATES,
             'reminder_sent': bool(state.get('reminder_ts')),
@@ -491,7 +499,7 @@ class NdoService:
             status = (":warning: *No developer updates yet* — the daily summary will *not* be posted "
                       "without today's updates.")
         text = (f"{mention}:alarm_clock: *1 hour left* — the NDO daily summary goes out at "
-                f"*{Config.NDO_POST_TIME_LABEL}*.\n{status}\n"
+                f"*{_post_time_label()}*.\n{status}\n"
                 f"Post today's Incident / Operations ticket updates in {where}{link}.")
         resp = slack.post_message(text, channel=Config.SLACK_REMINDER_CHANNEL_ID)
         self.store.set_value(day, 'reminder_ts', resp['ts'])

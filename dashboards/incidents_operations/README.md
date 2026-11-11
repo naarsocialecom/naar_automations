@@ -13,9 +13,9 @@ Page: `/` and `/ndo` · API: `/api/ndo/*` · Branch prefix: `dashboard/incidents
 | `snapshot.py` | Back-up picture (Pillow) when the page screenshot fails |
 | `store.py` | Per-day state in `data/ndo_state.json` |
 | `ai_rephrase.py` | AI wording for developer updates (only when `NDO_DEVELOPER_UPDATES=true`) |
-| `daily.py` | Command line for the schedule: `check` / `preview` / `post` |
+| `daily.py` | Command line: `check` / `preview` / `post` |
+| `jobs.py` | Its scheduled job (default 19:00; change it on Automations → Schedules) |
 | `templates/ndo.html`, `static/ndo.js`, `static/ndo.css` | The page |
-| `crontab` | The 7 PM schedule for the server |
 
 Overall RAG (incident priority only): **Critical** = a Critical incident is open ·
 **Moderate** = a High incident is open · **On Track** = neither.
@@ -33,8 +33,7 @@ venv/bin/python -m dashboards.incidents_operations.daily check              # Sl
 venv/bin/python -m dashboards.incidents_operations.daily preview /tmp/ndo.png   # picture + message, nothing sent
 ```
 
-## Schedule (server)
+## Schedule
 
-```bash
-crontab /root/naar_automations/dashboards/incidents_operations/crontab     # replaces root's crontab
-```
+The 7 PM post is the job `incidents-operations-slack` in `jobs.py`, run by `web/scheduler.py`.
+Change its time or switch it off on the website: **Automations → Schedules**.

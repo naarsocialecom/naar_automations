@@ -1,7 +1,7 @@
 """
 Naar Automations website: the frame (login, sidebar, shared CSS/JS) plus every dashboard and
 automation page. Each one lives in its own folder and brings its own routes, template and
-JS/CSS as a Flask blueprint; this file only switches them on (MODULES below).
+JS/CSS as a Flask blueprint; this file switches them on (MODULES in web/modules.py).
 
     python -m web.app                         # local, from the repo root
     gunicorn web.app:app                      # server (deploy/ecosystem.config.js)
@@ -15,14 +15,8 @@ from flask_cors import CORS
 
 from web.auth import init_auth
 from web.config import config, Config
-
-# Dashboards and automations shown on the site. Adding one = its folder + one line here
-# (+ a sidebar link in web/templates/partials/sidebar.html).
-MODULES = [
-    'dashboards.incidents_operations',          # Incidents & Operations (also the landing page)
-    'dashboards.scrum',                         # Naar Scrum Dashboard
-    'automations.meta_campaign_stock.page',     # Meta Campaign Stock
-]
+from web.modules import MODULES
+from web.schedules import schedules_bp
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 
@@ -46,6 +40,7 @@ if not app.debug:
 
 # Site login (DASHBOARD_PASSWORD) first, then every module's pages
 init_auth(app)
+app.register_blueprint(schedules_bp)     # Automations → Schedules (every job's time)
 for module in MODULES:
     app.register_blueprint(importlib.import_module(module).blueprint)
 
@@ -78,4 +73,5 @@ def internal_error(error):
     return jsonify({'error': 'Internal server error'}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=Config.PORT, debug=app.config['DEBUG'])
+    # load_dotenv=False: settings come only from web/.env (config.py), never a stray .env in the folder
+    app.run(host='0.0.0.0', port=Config.PORT, debug=app.config['DEBUG'], load_dotenv=False)

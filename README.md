@@ -1,35 +1,37 @@
-# Naar Automations
+# Naar Automations & Dashboard
 
 One website (with a login) and the scheduled jobs behind it. Every dashboard and every
 automation has its own folder with everything it needs.
 
 | Part | Page | Runs |
 |---|---|---|
-| **Incidents & Operations** | `/` and `/ndo` | Website + 7 PM IST summary to Slack |
+| **Incidents & Operations** | `/` and `/ndo` | Website + daily Slack summary (19:00 IST) |
 | **Naar Scrum Dashboard** | `/dashboard` | Website |
-| **Meta Campaign Stock** | `/automations/meta-campaign-stock` | 11 AM IST timer, or the page's **Test run** / **Send to Slack** buttons |
+| **Schedules** | `/automations` | Every scheduled job: change its time or switch it off |
+| **Meta Campaign Stock** | `/automations/meta-campaign-stock` | Daily Slack report (11:00 IST), or the page's **Test run** / **Send to Slack** buttons |
 
 ## Folders
 
 ```
 naar_automations/
 ├── web/                          the website frame: login, sidebar, shared parts
-│   ├── app.py                    switches every dashboard / automation on (MODULES list)
+│   ├── app.py  modules.py        the website · which dashboards/automations and jobs are on
+│   ├── scheduler.py  schedules.py  runs every job at its time · the Schedules page
 │   ├── auth.py  config.py        login · every setting (from web/.env)
 │   ├── shared/                   Jira, Slack, page screenshots (used by several modules)
 │   ├── templates/  static/       login page, sidebar, base CSS, helpers.js
 │   └── .env.example
 ├── dashboards/                   one folder per dashboard
-│   ├── incidents_operations/     routes, logic, page, its 7 PM crontab, README
+│   ├── incidents_operations/     routes, logic, page, jobs.py (7 PM post), README
 │   ├── scrum/                    routes, page, charts, README + MODULE_MAP
 │   └── _template/                how to add a dashboard
 ├── automations/                  one folder per automation
 │   ├── meta_campaign_stock/
 │   │   ├── job/                  the Node.js job (own .env)
 │   │   ├── page/                 its page on the website
-│   │   └── deploy/               its systemd service + timer
+│   │   └── jobs.py               its daily run (11 AM)
 │   └── _template/                how to add an automation
-├── deploy/                       server-wide: pm2 file, SERVER_SETUP.md, Slack app manifest
+├── deploy/                       server: pm2 file, crontab (scheduler), SERVER_SETUP.md, Slack app manifest
 ├── docs/BRANCHING.md             how we branch, review and deploy
 ├── requirements.txt              Python packages for the website
 ├── data/  logs/                  created at runtime (not in git)
@@ -47,7 +49,8 @@ cp web/.env.example web/.env                           # fill in Jira, Slack; DA
 venv/bin/python -m web.app                             # http://localhost:5005 (run from the repo root)
 ```
 
-Incidents & Operations without posting: `venv/bin/python -m dashboards.incidents_operations.daily preview /tmp/ndo.png`.
+Scheduled jobs don't run on a laptop unless you start the scheduler yourself
+(`venv/bin/python -m web.scheduler`, once per minute). Incidents & Operations without posting: `venv/bin/python -m dashboards.incidents_operations.daily preview /tmp/ndo.png`.
 The Meta job: see `automations/meta_campaign_stock/README.md`.
 
 ## Adding a dashboard or automation

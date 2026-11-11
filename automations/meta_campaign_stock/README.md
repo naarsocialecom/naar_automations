@@ -6,7 +6,7 @@ Page: `/automations/meta-campaign-stock` · Branch prefix: `automation/meta-camp
 |---|---|
 | `job/` | The Node.js job (own `.env`, `package.json`); its files and run history go to `job/exports/` |
 | `page/` | Its page on the website: status, latest picture and Excel, **Test run** / **Send to Slack**, WhatsApp preview |
-| `deploy/` | The systemd service + timer (11 AM IST) |
+| `jobs.py` | Its scheduled job (default 11:00 IST; change it on Automations → Schedules) |
 
 The job runs once a day:
 
@@ -42,14 +42,9 @@ still recognises older posts.
 
 ## Schedule
 
-Only the systemd timer in `deploy/` (11 AM IST). Install or update it on the server with:
-
-```bash
-cp /root/naar_automations/automations/meta_campaign_stock/deploy/meta-campaign-stock.* /etc/systemd/system/
-systemctl daemon-reload && systemctl enable --now meta-campaign-stock.timer
-```
-
-Don't also add it to cron or PM2, or the report posts twice.
+The daily run is the job `meta-campaign-stock` in `jobs.py`, run by `web/scheduler.py`
+(cron starts it every minute on the server). Change the time or switch it off on the website:
+**Automations → Schedules**. Don't also add it to cron, PM2 or systemd, or the report posts twice.
 
 ## WhatsApp (preview only)
 

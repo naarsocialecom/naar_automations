@@ -256,7 +256,9 @@ function renderSlackStatus() {
         cls  = 'ndo-slack-status--done';
         html = `<i class="fas fa-check-circle"></i> Posted today at ${timeLabel(s.posted_at)}.`;
     } else {
-        html = `<i class="fas fa-clock"></i> Posts automatically every day at ${escapeHtml(s.post_time)}.`;
+        html = s.post_time === 'off'
+            ? '<i class="fas fa-pause"></i> Automatic post is switched off · <a href="/automations">Schedules</a>'
+            : `<i class="fas fa-clock"></i> Posts automatically every day at ${escapeHtml(s.post_time)} · <a href="/automations">change</a>`;
     }
     box.className = `ndo-slack-status ${cls}`;
     box.innerHTML = html;
