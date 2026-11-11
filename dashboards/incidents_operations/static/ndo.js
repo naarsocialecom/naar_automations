@@ -91,10 +91,10 @@ function render() {
         (report.tickets || []).filter(t => t.type === ty).forEach(t => out[ticketState(t.status)]?.push(t.key));
         return out;
     };
-    const STATE_PARTS = { active: ['In progress', 'var(--series-1)'], todo: ['To do', 'var(--series-8)'], hold: ['On hold', 'var(--series-4)'] };
+    const STATE_PARTS = { active: ['In progress', '#0065ff'], todo: ['To do', '#97a0af'], hold: ['On hold', '#ff991f'] };
     renderSplit('splitIncident', byState('Incident'),   STATE_PARTS);
     renderSplit('splitOps',      byState('Operations'), STATE_PARTS);
-    renderSplit('splitCritical',   split.critical_high, { Critical: ['Critical', 'var(--prio-critical)'], High: ['High', 'var(--prio-high)'] });
+    renderSplit('splitCritical',   split.critical_high, { Critical: ['Critical', '#cd4425'], High: ['High', '#e2647a'] });
     renderSplit('splitUnassigned', split.unassigned, TYPE_PARTS);
     renderSplit('splitNew',        split.new_24h,    TYPE_PARTS);
 
@@ -112,7 +112,7 @@ function render() {
 }
 
 // Colours are CSS variables: they end up in style="…" and follow the light / dark theme
-const TYPE_PARTS = { Incident: ['Incidents', 'var(--series-2)'], Operations: ['Operations', 'var(--series-1)'] };
+const TYPE_PARTS = { Incident: ['Incidents', '#de350b'], Operations: ['Operations', '#0052cc'] };
 
 // Small donut + legend under a tile: how its number splits (e.g. incidents vs operations).
 // parts maps a key in `keysBy` to [label, colour]; hovering a legend item lists its tickets.

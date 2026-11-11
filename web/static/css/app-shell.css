@@ -9,12 +9,12 @@ body.has-sidebar { padding-left: calc(var(--sidebar-w) + 32px); }
 
 /* Brand: logo left-aligned with the nav icons (both 12px in) */
 .app-brand {
-    display: flex; align-items: center; justify-content: flex-start; flex-shrink: 0;
-    height: 56px; padding: 0 12px; margin-bottom: 12px; border-radius: var(--r-md); text-decoration: none;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    height: 52px; padding: 0; margin-bottom: 2px; border-radius: var(--r-md); text-decoration: none;
     transition: background var(--dur) var(--ease);
 }
 .app-brand:hover { background: var(--surface-hover); }
-.app-brand img { height: 30px; width: auto; max-width: none; display: block; filter: var(--logo-filter); }
+.app-brand img { height: 34px; width: auto; max-width: none; display: block; filter: var(--logo-filter); }
 
 /* Nav */
 .app-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; overflow-y: auto; min-height: 0; }

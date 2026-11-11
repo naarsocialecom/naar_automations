@@ -10,31 +10,36 @@
 
 /* ── Tiles ─────────────────────────────────────────────────── */
 .ndo-tiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
+/* Tiles: the original look (bold round gradient icons, line above the split row), theme-aware surfaces */
 .ndo-tile {
-    display: flex; flex-wrap: wrap; align-items: center; align-content: center; gap: 12px; min-width: 0;
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--shadow-xs);
-    padding: 16px;
+    display: flex; flex-wrap: wrap; align-items: center; align-content: center; gap: 14px; min-width: 0;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow-xs);
+    padding: 18px 20px;
 }
 .ndo-tile > div:nth-child(2) { flex: 1 1 0; min-width: 0; }
 .ndo-tile-icon {
-    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center; font-size: 15px;
+    width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center;
+    color: #fff; font-size: 17px;
 }
-.ndo-tile-value { font-size: var(--fs-kpi); line-height: 32px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); font-variant-numeric: tabular-nums; }
-.ndo-tile-label { font-size: var(--fs-sm); color: var(--text-3); font-weight: 500; line-height: 18px; }
-.ndo-tile--incident   .ndo-tile-icon { background: var(--tint-coral);  color: var(--icon-coral); }
-.ndo-tile--ops        .ndo-tile-icon { background: var(--tint-blue);   color: var(--icon-blue); }
-.ndo-tile--critical   .ndo-tile-icon { background: var(--tint-amber);  color: var(--icon-amber); }
-.ndo-tile--unassigned .ndo-tile-icon { background: var(--tint-violet); color: var(--icon-violet); }
-.ndo-tile--new        .ndo-tile-icon { background: var(--tint-cyan);   color: var(--icon-cyan); }
+.ndo-tile-value { font-size: 30px; line-height: 1; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+.ndo-tile-label { font-size: 14px; color: var(--text-3); font-weight: 500; margin-top: 6px; }
+.ndo-tile--incident   .ndo-tile-icon { background: linear-gradient(135deg, #ff7452, #de350b); }
+.ndo-tile--ops        .ndo-tile-icon { background: linear-gradient(135deg, #4c9aff, #0052cc); }
+.ndo-tile--critical   .ndo-tile-icon { background: linear-gradient(135deg, #ffc400, #ff8b00); }
+.ndo-tile--unassigned .ndo-tile-icon { background: linear-gradient(135deg, #998dd9, #6554c0); }
+.ndo-tile--new        .ndo-tile-icon { background: linear-gradient(135deg, #79e2f2, #00a3bf); }
 
 /* Split row under a tile: small donut + counts per part */
-.ndo-tile-split { flex-basis: 100%; display: flex; align-items: center; gap: 10px; margin-top: 0; min-width: 0; }
+.ndo-tile-split {
+    flex-basis: 100%; display: flex; align-items: center; gap: 12px; min-width: 0;
+    border-top: 1px solid var(--border); padding-top: 12px; margin-top: 2px;
+}
 .ndo-tile-split:empty { display: none; }
-.ndo-donut { width: 28px; height: 28px; flex-shrink: 0; }
-.ndo-split-legend { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: var(--fs-xs); line-height: 16px; color: var(--text-3); min-width: 0; }
+.ndo-donut { width: 30px; height: 30px; flex-shrink: 0; }
+.ndo-split-legend { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 13px; line-height: 20px; color: var(--text-3); min-width: 0; }
 .ndo-split-legend span { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; cursor: default; }
 .ndo-split-legend i { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.ndo-split-legend b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.ndo-split-legend b { color: var(--text); font-weight: 700; font-variant-numeric: tabular-nums; }
 .ndo-split-legend .is-zero, .ndo-split-legend .is-zero b { color: var(--text-disabled); }
 .ndo-split-legend .is-zero i { background: var(--chart-track) !important; }
 
