@@ -1,6 +1,9 @@
 /* Home: Dashboards & Automations */
 .home-head { margin: 0.4rem 0 1.8rem; }
-.home-head h1 { font-size: 1.7rem; font-weight: 700; color: #172b4d; letter-spacing: -0.01em; }
+.home-head h1 {
+    display: inline-block; font-size: 1.65rem; font-weight: 700; letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #172b4d, #0052cc); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
 .home-head p { margin-top: 0.35rem; color: #5e6c84; font-size: 0.92rem; }
 .home-error { background: #ffebe6; color: #ae2a19; border-radius: 0.8rem; padding: 0.8rem 1rem; margin-bottom: 1.2rem; font-size: 0.88rem; }
 .home-error[hidden] { display: none; }

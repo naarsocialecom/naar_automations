@@ -19,7 +19,8 @@
     <!-- HEADER -->
     <div class="header">
         <div class="logo-area">
-            <img src="https://gargashjirabackup.blob.core.windows.net/logos/naar/Naar%20logo.png" alt="Naar" class="logo-img">
+            {# The sidebar shows the logo; only the Slack picture (no sidebar) has it in the header #}
+            {% if snapshot %}<img src="https://gargashjirabackup.blob.core.windows.net/logos/naar/Naar%20logo.png" alt="Naar" class="logo-img">{% endif %}
             <div class="logo-text"><h1>Incidents &amp; Operations</h1></div>
         </div>
         <div class="header-right">
