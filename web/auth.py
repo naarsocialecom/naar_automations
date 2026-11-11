@@ -6,6 +6,9 @@ Site-wide login: one shared password (DASHBOARD_PASSWORD) for every page and API
 - The server's own screenshot job (Slack image) sends INTERNAL_HEADER with a token derived
   from SECRET_KEY, so it gets in without a password.
 - Changing DASHBOARD_PASSWORD signs everyone out.
+- View links (Slack "View full dashboard"): <page>?view=<expiry>.<signature> opens that one page
+  read-only without the password until the expiry (VIEW_LINK_DAYS). Viewers can only GET that page
+  and its own data API; posting, other pages and settings still need the password.
 """
 import hashlib
 import hmac
@@ -13,7 +16,7 @@ import logging
 import time
 from datetime import timedelta
 
-from flask import Blueprint, jsonify, redirect, render_template, request, session
+from flask import Blueprint, g, jsonify, redirect, render_template, request, session
 
 from web.config import Config, ConfigError
 
@@ -23,6 +26,8 @@ auth_bp = Blueprint('auth', __name__)
 
 INTERNAL_HEADER = 'X-Naar-Internal'
 OPEN_PATHS = {'/login', '/logout', '/healthz'}
+# What a view link may open, per page: the page itself and the GET API it loads its data from
+VIEW_SCOPES = {'/ndo': ('/ndo', '/api/ndo/report')}
 
 
 def internal_token() -> str:
@@ -39,6 +44,33 @@ def _safe_next(target: str) -> str:
     if target and target.startswith('/') and not target.startswith('//') and '\\' not in target:
         return target
     return '/'
+
+
+def _view_sig(page: str, expires: int) -> str:
+    return hmac.new(Config.SECRET_KEY.encode(), f"view:{page}:{expires}".encode(), hashlib.sha256).hexdigest()[:32]
+
+
+def view_link(page: str) -> str:
+    """'/ndo?view=…': opens the page read-only, no password, for VIEW_LINK_DAYS."""
+    expires = int(time.time()) + Config.VIEW_LINK_DAYS * 86400
+    return f"{page}?view={expires}.{_view_sig(page, expires)}"
+
+
+def _valid_view(page: str, token: str) -> int:
+    """The expiry time when the token is valid for this page, else 0."""
+    try:
+        expires_s, sig = token.split('.', 1)
+        expires = int(expires_s)
+    except (ValueError, AttributeError):
+        return 0
+    if expires < time.time() or not hmac.compare_digest(sig, _view_sig(page, expires)):
+        return 0
+    return expires
+
+
+def viewing_only() -> bool:
+    """True for someone who came in through a view link (not signed in)."""
+    return bool(getattr(g, 'view_only', False))
 
 
 def signed_in() -> bool:
@@ -62,6 +94,18 @@ def init_auth(app):
         if request.path in OPEN_PATHS or request.path.startswith('/static/') or signed_in():
             return None
         if hmac.compare_digest(request.headers.get(INTERNAL_HEADER, ''), internal_token()):
+            return None
+        # A view link: remember it in this browser until it expires, then show the clean address
+        token = request.args.get('view')
+        if token and request.method == 'GET' and request.path in VIEW_SCOPES:
+            expires = _valid_view(request.path, token)
+            if expires:
+                session['view'] = {'page': request.path, 'until': expires}
+                return redirect(request.path)
+        view = session.get('view') or {}
+        if request.method == 'GET' and view.get('until', 0) > time.time() \
+                and request.path in VIEW_SCOPES.get(view.get('page'), ()):
+            g.view_only = True
             return None
         if request.path.startswith('/api/'):
             return jsonify({'error': 'Sign in required'}), 401

@@ -12,17 +12,20 @@
     <link rel="stylesheet" href="{{ url_for('ndo.static', filename='ndo.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/app-shell.css') }}">
 </head>
-{# The Slack screenshot (?snapshot=1) is taken without the sidebar #}
-<body{% if not snapshot %} class="has-sidebar"{% endif %}>
-{% if not snapshot %}{% include 'partials/sidebar.html' %}{% endif %}
+{# The Slack screenshot (?snapshot=1) and view-link visitors (no password) get no sidebar #}
+<body{% if not snapshot and not viewer %} class="has-sidebar"{% endif %}>
+{% if not snapshot and not viewer %}{% include 'partials/sidebar.html' %}{% endif %}
 <div class="dashboard-container">
+{% if viewer %}
+<div class="ndo-viewer-note"><i class="fas fa-eye"></i> View-only link from Slack · <a href="/login?next=/">Sign in</a> for the other pages and actions</div>
+{% endif %}
 <div id="ndoSnapshotArea">
 
     <!-- HEADER -->
     <div class="header">
         <div class="logo-area">
             {# The sidebar shows the logo; only the Slack picture (no sidebar) has it in the header #}
-            {% if snapshot %}<img src="https://gargashjirabackup.blob.core.windows.net/logos/naar/Naar%20logo.png" alt="Naar" class="logo-img">{% endif %}
+            {% if snapshot or viewer %}<img src="https://gargashjirabackup.blob.core.windows.net/logos/naar/Naar%20logo.png" alt="Naar" class="logo-img">{% endif %}
             <div class="logo-text"><h1>Incidents &amp; Operations</h1></div>
         </div>
         <div class="header-right">
@@ -121,7 +124,7 @@
 </div><!-- /ndoSnapshotArea: everything above is what the Slack image shows -->
 
     <!-- SLACK DAILY UPDATE -->
-    <div class="ndo-card ndo-slack-card">
+    <div class="ndo-card ndo-slack-card"{% if viewer %} style="display:none"{% endif %}>
         <div>
             <div class="ndo-card-title"><i class="fab fa-slack"></i> Slack daily update</div>
             <div id="ndoSlackStatus" class="ndo-slack-status"></div>

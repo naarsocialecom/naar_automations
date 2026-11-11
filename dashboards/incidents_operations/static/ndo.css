@@ -307,3 +307,10 @@ body.ndo-snapshot #refreshBtn,
 body.ndo-snapshot .highlights-toggle-btn { display: none !important; }
 body.ndo-snapshot .highlights-section { margin-bottom: 0; }
 body.ndo-snapshot .highlights-header { cursor: default; }
+
+/* Opened from a Slack view link (no password): small note at the top */
+.ndo-viewer-note {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 16px; padding: 8px 14px; border-radius: 10px;
+    background: var(--surface-2); border: 1px solid var(--border); color: var(--text-3); font-size: 13px;
+}
+.ndo-viewer-note a { color: var(--link, var(--accent)); font-weight: 600; }

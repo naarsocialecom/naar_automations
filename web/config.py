@@ -141,6 +141,8 @@ class Config:
     # Blank on a laptop = no login.
     DASHBOARD_PASSWORD = _get('DASHBOARD_PASSWORD')
     SESSION_DAYS = _int('SESSION_DAYS', 30)
+    # Read-only links in Slack messages (no password needed) stop working after this many days
+    VIEW_LINK_DAYS = _int('VIEW_LINK_DAYS', 7)
 
     # Automations (scheduled jobs in automations/, shown on the Automations pages)
     AUTOMATIONS_DIR = Path(_get('AUTOMATIONS_DIR') or ROOT_DIR / 'automations')

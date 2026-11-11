@@ -60,7 +60,9 @@ def _jira_error(e):
 
 @ndo_bp.route('/ndo')
 def ndo_page():
-    return render_template('ndo.html', active_nav='ndo', snapshot='snapshot' in request.args)
+    from web.auth import viewing_only
+    return render_template('ndo.html', active_nav='ndo', snapshot='snapshot' in request.args,
+                           viewer=viewing_only())
 
 
 @ndo_bp.route('/api/ndo/report', methods=['GET'])

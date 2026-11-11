@@ -180,6 +180,9 @@ class NdoService:
         report['slack'] = self.slack_status(state)
         report['digest'] = self._digest(day, report['dev_updates'])
         report['is_today'] = not past
+        if Config.DASHBOARD_URL and Config.DASHBOARD_PASSWORD:
+            from web.auth import view_link
+            report['view_link'] = f"{Config.DASHBOARD_URL}{view_link('/ndo')}"
         return report
 
     @staticmethod

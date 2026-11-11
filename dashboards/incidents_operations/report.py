@@ -384,5 +384,7 @@ def slack_text(report: Dict) -> str:
         lines += ['', f"*{ty}: {len(group)} open*" + (f" — {detail}" if detail else '')]
 
     if report.get('dashboard_url'):
-        lines += ['', f"<{report['dashboard_url']}/ndo|View full dashboard →>"]
+        # A read-only view link when the site has a login, so the page opens without the password
+        link = report.get('view_link') or f"{report['dashboard_url']}/ndo"
+        lines += ['', f"<{link}|View full dashboard →>"]
     return '\n'.join(lines)
