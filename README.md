@@ -46,7 +46,7 @@ Settings with passwords live in `web/.env` and `automations/<name>/job/.env`: ne
 python3 -m venv venv && venv/bin/pip install -r requirements.txt
 venv/bin/python -m playwright install chromium        # for the Slack picture
 cp web/.env.example web/.env                           # fill in Jira, Slack; DASHBOARD_PASSWORD may stay blank locally
-venv/bin/python -m web.app                             # http://localhost:5005 (run from the repo root)
+cd web && ../venv/bin/python app.py                  # http://localhost:5005 · Ctrl+C stops it
 ```
 
 Scheduled jobs don't run on a laptop unless you start the scheduler yourself

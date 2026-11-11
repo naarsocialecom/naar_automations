@@ -3,11 +3,18 @@ Naar Automations website: the frame (login, sidebar, shared CSS/JS) plus every d
 automation page. Each one lives in its own folder and brings its own routes, template and
 JS/CSS as a Flask blueprint; this file switches them on (MODULES in web/modules.py).
 
-    python -m web.app                         # local, from the repo root
-    gunicorn web.app:app                      # server (deploy/ecosystem.config.js)
+    cd web && ../../venv/bin/python app.py    # local (Ctrl+C stops it)
+    gunicorn web.app:app                      # server, from the repo root (deploy/ecosystem.config.js)
 """
 import importlib
 import logging
+import sys
+from pathlib import Path
+
+# Started as "python app.py" inside web/: let Python find the other folders
+# (web/, dashboards/, automations/ all sit in the repo folder one level up)
+if __package__ in (None, ''):
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from logging.handlers import RotatingFileHandler
 
 from flask import Flask, jsonify, request
