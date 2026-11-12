@@ -161,7 +161,7 @@ module.exports = function buildSummary({ title, threshold, date, context = {} })
     const variant = variantLabel(r);
     return (clean(r.title) || "Untitled") + (variant ? ` (${variant})` : "");
   };
-  // Email per campaign store (sent only when SELLER_EMAIL_MODE allows it; see index.js)
+  // Email per campaign store (sent only when the Meta page's Off/Test/On allows it; see index.js)
   const sellerEmail = buildSellerEmails({ lowStock, contacts: context.contacts || new Map(), clean, productName });
 
   // WhatsApp message per campaign store (preview only: nothing is sent)

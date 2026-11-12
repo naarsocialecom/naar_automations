@@ -116,23 +116,25 @@ module.exports = {
         mappingFile: path.resolve(__dirname, "..", process.env.META_MAPPING_FILE || "meta-campaign-sellers.json"),
       }
     : null,
-  // Low-stock email to each campaign seller, through Microsoft Graph.
-  //   off  = preview only (default)   test = every email goes to SELLER_EMAIL_TEST_TO   on = to the sellers
+  // Low-stock email to each campaign seller, through Microsoft Graph. Off / Test / On and the test
+  // inbox are chosen on the website's Meta page (saved in <repo>/data/meta-campaign-stock.json):
+  //   off = preview only (default)   test = every email goes to the test inbox   on = to the sellers
   sellerEmail: (() => {
-    // Off / Test / On is chosen on the website's Meta page (saved in <repo>/data/meta-campaign-stock.json);
-    // SELLER_EMAIL_MODE in .env is only the default until someone chooses there
-    let mode = oneOf("SELLER_EMAIL_MODE", "off", ["off", "test", "on"]);
+    let saved = {};
     try {
       const dataDir = process.env.DATA_DIR || path.resolve(__dirname, "..", "..", "..", "..", "data");
-      const saved = JSON.parse(fs.readFileSync(path.join(dataDir, "meta-campaign-stock.json"), "utf8")).seller_email_mode;
-      if (["off", "test", "on"].includes(saved)) mode = saved;
-    } catch { /* nothing chosen on the page yet */ }
+      saved = JSON.parse(fs.readFileSync(path.join(dataDir, "meta-campaign-stock.json"), "utf8")) || {};
+    } catch { /* nothing chosen on the page yet: off */ }
+    const mode = ["off", "test", "on"].includes(saved.seller_email_mode) ? saved.seller_email_mode : "off";
+    const from = process.env.SELLER_EMAIL_FROM || "";
+    // Test emails carry every seller's list: only to the sender's own domain (also checked on the page)
+    const domain = from.includes("@") ? from.split("@").pop().toLowerCase() : "";
+    const testTo = (Array.isArray(saved.test_to) ? saved.test_to : []).filter((a) => domain && String(a).toLowerCase().endsWith(`@${domain}`));
     const sending = mode !== "off" && !dryRun;
-    const testTo = list("SELLER_EMAIL_TEST_TO");
-    if (sending && mode === "test" && !testTo.length) throw new Error("Seller emails are on Test but SELLER_EMAIL_TEST_TO is empty (set it in .env)");
+    if (sending && mode === "test" && !testTo.length) throw new Error("Seller emails are on Test but no test address is set (Meta page → Email to sellers)");
     return {
       mode,
-      from: sending ? required("SELLER_EMAIL_FROM") : process.env.SELLER_EMAIL_FROM || "",
+      from: sending ? required("SELLER_EMAIL_FROM") : from,
       testTo,
       graph: sending
         ? { tenantId: required("GRAPH_TENANT_ID"), clientId: required("GRAPH_CLIENT_ID"), clientSecret: required("GRAPH_CLIENT_SECRET") }

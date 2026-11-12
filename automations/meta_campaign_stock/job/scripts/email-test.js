@@ -6,7 +6,7 @@
 //   npm run email:test -- --store "The Paper Collective" --to you@naar.io          # shows what it would send
 //   npm run email:test -- --store "The Paper Collective" --to you@naar.io --yes    # sends it
 //
-// Safety: --to must be listed in SELLER_EMAIL_TEST_TO (.env), and nothing is sent without --yes.
+// Safety: --to must be a test address set on the Meta page (Email to sellers → Test), and nothing is sent without --yes.
 const fs = require("fs");
 const path = require("path");
 require("dotenv").config({ path: path.resolve(__dirname, "..", "..", "..", "..", ".env") });
@@ -26,9 +26,9 @@ const fail = (msg) => { console.error(`Not sent: ${msg}`); process.exit(1); };
 (async () => {
   const opt = args();
   if (!opt.store || !opt.to) fail('use --store "<store name>" --to <test address>');
-  const allowed = (process.env.SELLER_EMAIL_TEST_TO || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+  const { sellerEmail } = require("../src/config");
   const to = opt.to.trim().toLowerCase();
-  if (!allowed.includes(to)) fail(`${opt.to} is not in SELLER_EMAIL_TEST_TO in .env`);
+  if (!sellerEmail.testTo.includes(to)) fail(`${opt.to} is not a test address (set it on the Meta page: Email to sellers → Test)`);
 
   const exportDir = path.resolve(__dirname, "..", process.env.EXPORT_DIR || "exports");
   let preview;

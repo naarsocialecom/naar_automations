@@ -1,6 +1,6 @@
 // Low-stock email to each campaign store's seller: one email per seller, only that seller's
 // store and products. This file only BUILDS the emails (subject, HTML, plain text); sending is
-// done by index.js through Microsoft Graph, and only when SELLER_EMAIL_MODE allows it.
+// done by index.js through Microsoft Graph, and only when the Meta page's Off/Test/On allows it.
 //
 // Up to MAX_PRODUCTS products go in the email's table. A longer list shows the SHORT_LIST lowest
 // ones and attaches the full list as a PDF (the same PDF the WhatsApp preview uses).

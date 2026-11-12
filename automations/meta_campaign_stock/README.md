@@ -50,18 +50,18 @@ The daily run is the job `meta-campaign-stock` in `jobs.py`, run by `web/schedul
 
 Each campaign seller gets **their own** email: only their store and their low-stock products (a table;
 more than 10 products → the 5 lowest in the table and the full list as a PDF attachment). The address
-comes from `sellerdetails.email`; the dashboard only shows it masked. **Off / Test / On** is switched on the Meta page
-(Email to sellers); the choice is saved on the server in `data/meta-campaign-stock.json` and the next daily run uses it
-(`SELLER_EMAIL_MODE` in `.env` is only the default until someone chooses on the page):
+comes from `sellerdetails.email`; the dashboard only shows it masked. **Off / Test / On** and the test address are set on
+the Meta page (Email to sellers); they are saved on the server in `data/meta-campaign-stock.json` and the next daily run
+uses them. Test addresses must be on the sender's domain (@naar.io), because a test email holds a seller's full list:
 
 | Mode | What the daily run does |
 |---|---|
 | `off` (default) | builds the preview only (Meta page → Email to sellers) |
-| `test` | sends every seller's email to `SELLER_EMAIL_TEST_TO` instead (subject starts with `[TEST for <store>]`) |
+| `test` | sends every seller's email to the test address(es) typed on the page instead (subject starts with `[TEST for <store>]`) |
 | `on` | sends each seller their own email, once per day |
 
 Test one store's email to yourself: `npm run email:test -- --store "Doodleholic" --to you@naar.io --yes`
-(the address must be in `SELLER_EMAIL_TEST_TO`). Sends are logged in `job/exports/seller-email-log.json`.
+(the address must be a test address set on the page). Sends are logged in `job/exports/seller-email-log.json`.
 
 **Setup (Microsoft 365 admin):**
 1. Exchange admin centre → create a **shared mailbox** `low-stocks@naar.io` (no licence needed).
@@ -75,7 +75,7 @@ Test one store's email to yourself: `npm run email:test -- --store "Doodleholic"
    Test-ApplicationAccessPolicy -AppId <client-id> -Identity someone.else@naar.io  # Denied
    ```
 4. `.env`: `GRAPH_TENANT_ID`, `GRAPH_CLIENT_ID`, `GRAPH_CLIENT_SECRET`, `SELLER_EMAIL_FROM=low-stocks@naar.io`,
-   `SELLER_EMAIL_TEST_TO=<your address>`, `SELLER_EMAIL_MODE=test` (later `on`).
+   then choose Off / Test / On (and the test address) on the Meta page.
 5. Delivery to Gmail/Outlook/etc.: `naar.io` should have SPF (`include:spf.protection.outlook.com`), DKIM
    (Microsoft 365 Defender → Email authentication → DKIM → enable for naar.io) and a DMARC record.
 

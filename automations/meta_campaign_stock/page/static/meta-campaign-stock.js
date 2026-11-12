@@ -156,45 +156,65 @@ function renderProducts() {
     $('mcsPager').querySelectorAll('button[data-p]').forEach(b => b.addEventListener('click', () => { productPage = Number(b.dataset.p); renderProducts(); }));
 }
 
-// Seller emails Off / Test / On (saved on the server; the next daily run uses it)
+// Seller emails Off / Test / On and the test inbox (saved on the server; the next daily run uses them)
 let mailSettings = null;
+let pendingTest = false;     // Test clicked, waiting for an address
 function renderMailSwitch(settings) {
     if (!settings || !$('mcsMailSwitch')) return;
     mailSettings = settings;
-    const { seller_email_mode: mode, email } = settings;
+    const { seller_email_mode: mode, email, test_to: testTo } = settings;
+    const shown = pendingTest ? 'test' : mode;
     $('mcsMailSwitch').querySelectorAll('button').forEach(b => {
-        const active = b.dataset.mode === mode;
+        const active = b.dataset.mode === shown;
         b.classList.toggle('is-active', active);
         b.setAttribute('aria-checked', active);
         b.disabled = b.dataset.mode !== 'off' && !email.ready;
         b.title = b.disabled ? 'Email is not set up yet (GRAPH_* and SELLER_EMAIL_FROM in .env)' : '';
     });
-    const changed = settings.updated_at ? ` · changed ${when_(settings.updated_at)}` : '';
-    $('mcsMailNote').innerHTML = {
-        off:  '<i class="fas fa-pause-circle"></i> <b>Off</b>: nothing is sent. The emails below are a preview.',
-        test: `<i class="fas fa-flask"></i> <b>Test</b>: each daily run sends every seller's email to <b>${escapeHtml(email.test_to.join(', ') || '–')}</b> only.`,
-        on:   `<i class="fas fa-paper-plane"></i> <b>On</b>: each daily run emails every seller their own list (once a day), from ${escapeHtml(email.from)}.`,
-    }[mode] + `<span class="auto-muted">${changed}</span>` + (email.ready ? '' : ' <span class="auto-muted">· Email isn\'t set up yet, so only Off is possible.</span>');
-    $('mcsMailNote').className = `mcs-mail-note is-${mode}`;
+    const changed = settings.updated_at && !pendingTest ? ` · changed ${when_(settings.updated_at)}` : '';
+    $('mcsMailNote').innerHTML = (pendingTest
+        ? `<i class="fas fa-flask"></i> <b>Test</b>: type where the test emails should go (any @${escapeHtml(email.domain)} address) and press Save.`
+        : {
+            off:  '<i class="fas fa-pause-circle"></i> <b>Off</b>: nothing is sent. The emails below are a preview.',
+            test: `<i class="fas fa-flask"></i> <b>Test</b>: each daily run sends every seller's email to <b>${escapeHtml(testTo.join(', '))}</b> only.`,
+            on:   `<i class="fas fa-paper-plane"></i> <b>On</b>: each daily run emails every seller their own list (once a day), from ${escapeHtml(email.from)}.`,
+        }[mode]) + `<span class="auto-muted">${changed}</span>` + (email.ready ? '' : ' <span class="auto-muted">· Email isn\'t set up yet, so only Off is possible.</span>');
+    $('mcsMailNote').className = `mcs-mail-note is-${shown}`;
+    $('mcsTestTo').hidden = shown !== 'test';
+    if (document.activeElement !== $('mcsTestToInput')) $('mcsTestToInput').value = testTo.join(', ');
 }
 
-async function setMailMode(mode) {
-    if (!mailSettings || mode === mailSettings.seller_email_mode) return;
-    if (mode === 'on' && !confirm('Turn seller emails ON?\n\nFrom the next daily run, every campaign seller gets their own low-stock email.')) return;
-    if (mode === 'test' && !confirm(`Turn seller emails to TEST?\n\nFrom the next daily run, every seller's email goes to ${mailSettings.email.test_to.join(', ')} only.`)) return;
+async function saveMail(body) {
     try {
         const res = await fetch(`${API}/settings`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Naar-Request': '1' },
-            body: JSON.stringify({ seller_email_mode: mode }),
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Naar-Request': '1' }, body: JSON.stringify(body),
         });
-        const body = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(body.error || `Could not save (${res.status})`);
-        renderMailSwitch(body);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || `Could not save (${res.status})`);
+        pendingTest = false;
+        renderMailSwitch(data);
         $('autoError').hidden = true;
+        return true;
     } catch (e) {
         $('autoError').textContent = e.message;
         $('autoError').hidden = false;
+        return false;
     }
+}
+
+function setMailMode(mode) {
+    if (!mailSettings) return;
+    if (mode === 'test') {
+        // First time (or no address yet): ask for the address before switching
+        if (!mailSettings.test_to.length) { pendingTest = true; renderMailSwitch(mailSettings); $('mcsTestToInput').focus(); return; }
+        if (mailSettings.seller_email_mode === 'test') return;
+        if (!confirm(`Turn seller emails to TEST?\n\nFrom the next daily run, every seller's email goes to ${mailSettings.test_to.join(', ')} only.`)) return;
+        return saveMail({ seller_email_mode: 'test' });
+    }
+    pendingTest = false;
+    if (mode === mailSettings.seller_email_mode) return renderMailSwitch(mailSettings);
+    if (mode === 'on' && !confirm('Turn seller emails ON?\n\nFrom the next daily run, every campaign seller gets their own low-stock email.')) return;
+    saveMail({ seller_email_mode: mode });
 }
 
 function render(data) {
@@ -323,6 +343,7 @@ async function load() {
 $('autoRefresh').addEventListener('click', load);
 $('autoRunDry')?.addEventListener('click', () => startRun('dry'));
 document.querySelectorAll('#mcsMailSwitch button').forEach(b => b.addEventListener('click', () => setMailMode(b.dataset.mode)));
+$('mcsTestTo')?.addEventListener('submit', e => { e.preventDefault(); saveMail({ seller_email_mode: 'test', test_to: $('mcsTestToInput').value }); });
 $('autoRunSend')?.addEventListener('click', () => startRun('send'));
 $('mcsSearch').addEventListener('input', () => { productPage = 1; renderProducts(); });
 $('mcsStoreFilter').addEventListener('change', () => { productPage = 1; renderProducts(); });

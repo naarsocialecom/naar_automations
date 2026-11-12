@@ -38,7 +38,7 @@ Plain `KEY=value` lines under simple titles (App, Jira, Slack, Meta Campaign Sto
 the template is `.env.example`. A `# KEY=value` line under a setting is its server value; on the server use:
 `APP_ENV=production`, `DEBUG=false`, `DASHBOARD_PASSWORD=<team password>`,
 `DASHBOARD_URL` / `CORS_ORIGINS=https://automations.naar.io`, `SNAPSHOT_BROWSER_CHANNEL=` (empty),
-`DRY_RUN=false`, `SELLER_EMAIL_MODE=off` / `test` / `on`.
+`DRY_RUN=false`. Seller emails (Off / Test / On, test address) are set on the Meta page, not here.
 
 Coming from the older layout (`web/.env` + the Meta job's `.env`)? This merges them into the one file
 (values kept, unused ones left out; the old files are kept as `.env.old`):

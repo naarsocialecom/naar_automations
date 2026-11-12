@@ -270,3 +270,12 @@
 .mcs-mail-note.is-test { background: var(--warning-bg); color: var(--warning-fg); }
 .mcs-mail-note.is-on { background: var(--success-bg); color: var(--success-fg); }
 .mcs-mail-note i { margin-right: 4px; }
+.mcs-testto { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: -2px 0 12px; }
+.mcs-testto[hidden] { display: none; }
+.mcs-testto label { font-size: 13px; font-weight: 600; color: var(--text-2); }
+.mcs-testto label i { color: var(--warning-fg); margin-right: 4px; }
+.mcs-testto input {
+    flex: 1 1 260px; max-width: 420px; font: inherit; font-size: 13px; color: var(--text); background: var(--surface);
+    border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; height: 34px;
+}
+.mcs-testto input:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }

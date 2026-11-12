@@ -123,6 +123,12 @@
         </header>
         <div class="auto-panel-body">
             <p class="mcs-mail-note" id="mcsMailNote"></p>
+            <!-- Test mode: where the test emails go (saved on the server with the mode) -->
+            <form class="mcs-testto" id="mcsTestTo" hidden>
+                <label for="mcsTestToInput"><i class="fas fa-flask"></i> Send test emails to</label>
+                <input id="mcsTestToInput" type="text" autocomplete="email" placeholder="you@naar.io (several: separate with commas)">
+                <button type="submit" class="btn btn--primary btn--sm">Save</button>
+            </form>
             <p class="auto-muted" id="autoMailMeta">–</p>
             <div class="auto-wa-list" id="autoMailList"></div>
         </div>
