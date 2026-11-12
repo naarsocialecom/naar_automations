@@ -279,3 +279,7 @@
     border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; height: 34px;
 }
 .mcs-testto input:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+.mcs-test-result { margin: 0 0 12px; padding: 9px 12px; border-radius: 10px; font-size: 13px; background: var(--surface-2); color: var(--text-2); }
+.mcs-test-result[hidden] { display: none; }
+.mcs-test-result.is-ok { background: var(--success-bg); color: var(--success-fg); }
+.mcs-test-result.is-fail { background: var(--danger-bg); color: var(--danger-fg); }

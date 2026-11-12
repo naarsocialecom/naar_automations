@@ -202,6 +202,42 @@ async function saveMail(body) {
     }
 }
 
+// "Send test emails now": saves the typed address (and Test), then sends every seller's email there at once
+async function sendTestNow() {
+    const btn = $('mcsTestNow');
+    const out = $('mcsTestResult');
+    const typed = $('mcsTestToInput').value.trim();
+    if (!typed) { $('mcsTestToInput').focus(); return; }
+    if (typed !== (mailSettings?.test_to || []).join(', ') || mailSettings?.seller_email_mode !== 'test') {
+        if (!(await saveMail({ seller_email_mode: 'test', test_to: typed }))) return;
+    }
+    const count = document.querySelectorAll('#autoMailList details').length;
+    if (!confirm(`Send all ${count} seller email${count === 1 ? '' : 's'} to ${mailSettings.test_to.join(', ')} now?\n\nNo seller receives anything.`)) return;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending…';
+    out.hidden = false;
+    out.className = 'mcs-test-result';
+    out.textContent = 'Sending the test emails… (a few seconds per seller)';
+    try {
+        const res = await fetch(`${API}/email-test`, { method: 'POST', headers: { 'X-Naar-Request': '1' } });
+        const r = await res.json().catch(() => ({}));
+        if (r.sent != null) {
+            out.className = `mcs-test-result ${r.failed ? 'is-fail' : 'is-ok'}`;
+            out.innerHTML = `${r.failed ? '<i class="fas fa-exclamation-circle"></i>' : '<i class="fas fa-check-circle"></i>'} `
+                + `<b>${r.sent} sent</b>${r.failed ? `, ${r.failed} failed` : ''} to ${escapeHtml(r.to.join(', '))} · emails as built ${when_(r.builtAt)}. Check the inbox (and spam the first time).`
+                + (r.errors?.length ? `<br>${r.errors.map(escapeHtml).join('<br>')}` : '');
+        } else {
+            throw new Error(r.error || `Could not send (${res.status})`);
+        }
+    } catch (e) {
+        out.className = 'mcs-test-result is-fail';
+        out.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${escapeHtml(e.message)}`;
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send test emails now';
+    }
+}
+
 function setMailMode(mode) {
     if (!mailSettings) return;
     if (mode === 'test') {
@@ -344,6 +380,7 @@ $('autoRefresh').addEventListener('click', load);
 $('autoRunDry')?.addEventListener('click', () => startRun('dry'));
 document.querySelectorAll('#mcsMailSwitch button').forEach(b => b.addEventListener('click', () => setMailMode(b.dataset.mode)));
 $('mcsTestTo')?.addEventListener('submit', e => { e.preventDefault(); saveMail({ seller_email_mode: 'test', test_to: $('mcsTestToInput').value }); });
+$('mcsTestNow')?.addEventListener('click', sendTestNow);
 $('autoRunSend')?.addEventListener('click', () => startRun('send'));
 $('mcsSearch').addEventListener('input', () => { productPage = 1; renderProducts(); });
 $('mcsStoreFilter').addEventListener('change', () => { productPage = 1; renderProducts(); });

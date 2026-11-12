@@ -216,6 +216,30 @@ def meta_stock_settings():
     return jsonify({**_settings(), 'email': setup})
 
 
+@automations_bp.route('/api/automations/meta-campaign-stock/email-test', methods=['POST'])
+def meta_stock_email_test():
+    """Send every seller's email to the page's test address(es) right now (never to a seller)."""
+    if request.headers.get('X-Naar-Request') != '1':
+        return jsonify({'error': 'Missing X-Naar-Request header'}), 403
+    if not _settings()['test_to']:
+        return jsonify({'error': 'Type and save a test address first'}), 400
+    node = find_node(Config.NODE_BIN)
+    if not node:
+        return jsonify({'error': 'Node.js was not found on the server (set NODE_BIN in .env).'}), 500
+    try:
+        done = subprocess.run([node, 'scripts/send-test-now.js'], cwd=Config.META_STOCK_DIR, env=clean_env(),
+                              capture_output=True, text=True, timeout=100)
+    except subprocess.TimeoutExpired:
+        return jsonify({'error': 'Sending took too long; check the inbox and try again.'}), 504
+    try:
+        result = json.loads(done.stdout.strip().splitlines()[-1])
+    except (ValueError, IndexError):
+        logger.error(f"send-test-now: {done.stderr[-500:]}")
+        return jsonify({'error': 'Sending failed (see the website log).'}), 500
+    logger.info(f"Meta Campaign Stock: test emails sent now: {result.get('sent', 0)} sent, {result.get('failed', 0)} failed")
+    return jsonify(result), (200 if result.get('ok') else 502)
+
+
 @automations_bp.route('/api/automations/meta-campaign-stock/run', methods=['POST'])
 def meta_stock_run():
     mode = (request.get_json(silent=True) or {}).get('mode')
