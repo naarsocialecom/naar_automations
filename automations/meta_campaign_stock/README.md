@@ -50,7 +50,9 @@ The daily run is the job `meta-campaign-stock` in `jobs.py`, run by `web/schedul
 
 Each campaign seller gets **their own** email: only their store and their low-stock products (a table;
 more than 10 products → the 5 lowest in the table and the full list as a PDF attachment). The address
-comes from `sellerdetails.email`; the dashboard only shows it masked. `SELLER_EMAIL_MODE` in `.env`:
+comes from `sellerdetails.email`; the dashboard only shows it masked. **Off / Test / On** is switched on the Meta page
+(Email to sellers); the choice is saved on the server in `data/meta-campaign-stock.json` and the next daily run uses it
+(`SELLER_EMAIL_MODE` in `.env` is only the default until someone chooses on the page):
 
 | Mode | What the daily run does |
 |---|---|

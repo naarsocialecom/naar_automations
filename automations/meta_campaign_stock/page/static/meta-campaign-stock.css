@@ -253,3 +253,20 @@
     .mcs-filters input { width: 100%; }
     .auto-panel-head:has(.mcs-filters) { flex-wrap: wrap; }
 }
+
+/* Seller emails Off / Test / On */
+.mcs-switch { display: inline-flex; padding: 3px; gap: 2px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); }
+.mcs-switch button {
+    font: inherit; font-size: 13px; font-weight: 600; color: var(--text-3); background: none; border: 0;
+    padding: 5px 14px; border-radius: 7px; cursor: pointer; min-height: 30px;
+}
+.mcs-switch button:hover:not(:disabled):not(.is-active) { color: var(--text); background: var(--surface-hover); }
+.mcs-switch button:disabled { opacity: 0.45; cursor: not-allowed; }
+.mcs-switch button.is-active[data-mode="off"]  { background: var(--surface); color: var(--text); box-shadow: var(--shadow-xs); }
+.mcs-switch button.is-active[data-mode="test"] { background: var(--warning-bg); color: var(--warning-fg); }
+.mcs-switch button.is-active[data-mode="on"]   { background: var(--success-bg); color: var(--success-fg); }
+.mcs-switch button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.mcs-mail-note { margin: 0 0 10px; padding: 9px 12px; border-radius: 10px; font-size: 13px; color: var(--text-2); background: var(--surface-2); }
+.mcs-mail-note.is-test { background: var(--warning-bg); color: var(--warning-fg); }
+.mcs-mail-note.is-on { background: var(--success-bg); color: var(--success-fg); }
+.mcs-mail-note i { margin-right: 4px; }

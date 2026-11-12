@@ -29,6 +29,8 @@ function when(iso) {
     return `${label}, ${time}`;
 }
 
+const when_ = iso => when(iso);
+
 function fromNow(iso) {
     const mins = Math.round((new Date(iso) - Date.now()) / 60000);
     if (mins < 60) return `in ${Math.max(mins, 0)} min`;
@@ -154,6 +156,47 @@ function renderProducts() {
     $('mcsPager').querySelectorAll('button[data-p]').forEach(b => b.addEventListener('click', () => { productPage = Number(b.dataset.p); renderProducts(); }));
 }
 
+// Seller emails Off / Test / On (saved on the server; the next daily run uses it)
+let mailSettings = null;
+function renderMailSwitch(settings) {
+    if (!settings || !$('mcsMailSwitch')) return;
+    mailSettings = settings;
+    const { seller_email_mode: mode, email } = settings;
+    $('mcsMailSwitch').querySelectorAll('button').forEach(b => {
+        const active = b.dataset.mode === mode;
+        b.classList.toggle('is-active', active);
+        b.setAttribute('aria-checked', active);
+        b.disabled = b.dataset.mode !== 'off' && !email.ready;
+        b.title = b.disabled ? 'Email is not set up yet (GRAPH_* and SELLER_EMAIL_FROM in .env)' : '';
+    });
+    const changed = settings.updated_at ? ` · changed ${when_(settings.updated_at)}` : '';
+    $('mcsMailNote').innerHTML = {
+        off:  '<i class="fas fa-pause-circle"></i> <b>Off</b>: nothing is sent. The emails below are a preview.',
+        test: `<i class="fas fa-flask"></i> <b>Test</b>: each daily run sends every seller's email to <b>${escapeHtml(email.test_to.join(', ') || '–')}</b> only.`,
+        on:   `<i class="fas fa-paper-plane"></i> <b>On</b>: each daily run emails every seller their own list (once a day), from ${escapeHtml(email.from)}.`,
+    }[mode] + `<span class="auto-muted">${changed}</span>` + (email.ready ? '' : ' <span class="auto-muted">· Email isn\'t set up yet, so only Off is possible.</span>');
+    $('mcsMailNote').className = `mcs-mail-note is-${mode}`;
+}
+
+async function setMailMode(mode) {
+    if (!mailSettings || mode === mailSettings.seller_email_mode) return;
+    if (mode === 'on' && !confirm('Turn seller emails ON?\n\nFrom the next daily run, every campaign seller gets their own low-stock email.')) return;
+    if (mode === 'test' && !confirm(`Turn seller emails to TEST?\n\nFrom the next daily run, every seller's email goes to ${mailSettings.email.test_to.join(', ')} only.`)) return;
+    try {
+        const res = await fetch(`${API}/settings`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Naar-Request': '1' },
+            body: JSON.stringify({ seller_email_mode: mode }),
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(body.error || `Could not save (${res.status})`);
+        renderMailSwitch(body);
+        $('autoError').hidden = true;
+    } catch (e) {
+        $('autoError').textContent = e.message;
+        $('autoError').hidden = false;
+    }
+}
+
 function render(data) {
     TZ = data.timezone || TZ;
     $('autoSchedule').textContent = data.next_run ? `Daily · ${data.run_time_label}` : 'Schedule off';
@@ -176,15 +219,7 @@ function render(data) {
     const runs = data.runs || [];
     // Seller emails: one per campaign store, click to see the email exactly as the seller gets it
     const mail = data.seller_email;
-    const MODES = {
-        off:  ['test', 'eye', 'Preview only · nothing is sent', 'No emails are sent (SELLER_EMAIL_MODE=off)'],
-        test: ['warn', 'flask', 'Test mode · emails go to the test inbox', 'Each daily run sends every seller\'s email to the test address only'],
-        on:   ['ok', 'paper-plane', 'Live · each seller gets their email', 'Each daily run emails every seller their own list (once a day)'],
-    };
-    const [mcls, micon, mlabel, mtip] = MODES[mail?.mode] || MODES.off;
-    $('autoMailMode').className = `auto-chip auto-chip--${mcls}`;
-    $('autoMailMode').title = mtip;
-    $('autoMailMode').innerHTML = `<i class="fas fa-${micon}"></i> ${mlabel}`;
+    renderMailSwitch(data.settings);
     const lastMail = runs.find(r => r.sellerEmail && r.sellerEmail.sent != null && !r.dryRun && r.sellerEmail.mode !== 'off')?.sellerEmail;
     if (mail?.sellers?.length) {
         const missing = mail.sellers.length - mail.withEmail;
@@ -287,6 +322,7 @@ async function load() {
 
 $('autoRefresh').addEventListener('click', load);
 $('autoRunDry')?.addEventListener('click', () => startRun('dry'));
+document.querySelectorAll('#mcsMailSwitch button').forEach(b => b.addEventListener('click', () => setMailMode(b.dataset.mode)));
 $('autoRunSend')?.addEventListener('click', () => startRun('send'));
 $('mcsSearch').addEventListener('input', () => { productPage = 1; renderProducts(); });
 $('mcsStoreFilter').addEventListener('change', () => { productPage = 1; renderProducts(); });

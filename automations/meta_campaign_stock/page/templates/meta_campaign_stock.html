@@ -114,9 +114,15 @@
     <section class="auto-panel auto-wa auto-mail">
         <header class="auto-panel-head">
             <span><i class="fas fa-envelope"></i> Email to sellers</span>
-            <span class="auto-chip auto-chip--test" id="autoMailMode"><i class="fas fa-eye"></i> Preview only · nothing is sent</span>
+            <!-- Off / Test / On: saved on the server, used by the next daily run -->
+            <span class="mcs-switch" id="mcsMailSwitch" role="radiogroup" aria-label="Seller emails">
+                <button type="button" data-mode="off" role="radio">Off</button>
+                <button type="button" data-mode="test" role="radio">Test</button>
+                <button type="button" data-mode="on" role="radio">On</button>
+            </span>
         </header>
         <div class="auto-panel-body">
+            <p class="mcs-mail-note" id="mcsMailNote"></p>
             <p class="auto-muted" id="autoMailMeta">–</p>
             <div class="auto-wa-list" id="autoMailList"></div>
         </div>

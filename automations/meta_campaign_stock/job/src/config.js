@@ -119,10 +119,17 @@ module.exports = {
   // Low-stock email to each campaign seller, through Microsoft Graph.
   //   off  = preview only (default)   test = every email goes to SELLER_EMAIL_TEST_TO   on = to the sellers
   sellerEmail: (() => {
-    const mode = oneOf("SELLER_EMAIL_MODE", "off", ["off", "test", "on"]);
+    // Off / Test / On is chosen on the website's Meta page (saved in <repo>/data/meta-campaign-stock.json);
+    // SELLER_EMAIL_MODE in .env is only the default until someone chooses there
+    let mode = oneOf("SELLER_EMAIL_MODE", "off", ["off", "test", "on"]);
+    try {
+      const dataDir = process.env.DATA_DIR || path.resolve(__dirname, "..", "..", "..", "..", "data");
+      const saved = JSON.parse(fs.readFileSync(path.join(dataDir, "meta-campaign-stock.json"), "utf8")).seller_email_mode;
+      if (["off", "test", "on"].includes(saved)) mode = saved;
+    } catch { /* nothing chosen on the page yet */ }
     const sending = mode !== "off" && !dryRun;
     const testTo = list("SELLER_EMAIL_TEST_TO");
-    if (sending && mode === "test" && !testTo.length) throw new Error("SELLER_EMAIL_MODE=test needs SELLER_EMAIL_TEST_TO (set it in .env)");
+    if (sending && mode === "test" && !testTo.length) throw new Error("Seller emails are on Test but SELLER_EMAIL_TEST_TO is empty (set it in .env)");
     return {
       mode,
       from: sending ? required("SELLER_EMAIL_FROM") : process.env.SELLER_EMAIL_FROM || "",

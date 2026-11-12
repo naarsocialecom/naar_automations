@@ -39,6 +39,9 @@ WHATSAPP_PREVIEW = 'whatsapp-preview.json'
 EMAIL_PREVIEW = 'email-preview.json'
 # What the page's dashboard shows: campaigns, stores, low-stock products (written by every run)
 DASHBOARD_DATA = 'dashboard.json'
+# Settings changed on this page (kept on the server, survive restarts and deploys); the job reads them too
+SETTINGS_FILE = 'meta-campaign-stock.json'
+SELLER_EMAIL_MODES = ('off', 'test', 'on')
 # PDFs with a store's full list, attached when the list is too long for the message
 SELLER_PDFS = 'seller-pdfs'
 PDF_NAME = re.compile(r'^[A-Za-z0-9_-]{1,80}\.pdf$')
@@ -70,6 +73,26 @@ def _history() -> list:
     except (OSError, ValueError) as e:
         logger.warning(f"Could not read {file}: {e}")
         return []
+
+
+def _settings() -> dict:
+    """{'seller_email_mode': off|test|on, 'updated_at'}: the page's choice, else SELLER_EMAIL_MODE from .env."""
+    try:
+        saved = json.loads((Config.DATA_DIR / SETTINGS_FILE).read_text())
+    except (OSError, ValueError):
+        saved = {}
+    mode = saved.get('seller_email_mode')
+    if mode not in SELLER_EMAIL_MODES:
+        mode = (os.getenv('SELLER_EMAIL_MODE') or 'off').strip().lower()
+        mode = mode if mode in SELLER_EMAIL_MODES else 'off'
+    return {'seller_email_mode': mode, 'updated_at': saved.get('updated_at')}
+
+
+def _email_setup() -> dict:
+    """Whether sending can work at all (Microsoft 365 app + sender filled in), and the test inbox."""
+    ready = all(os.getenv(k) for k in ('GRAPH_TENANT_ID', 'GRAPH_CLIENT_ID', 'GRAPH_CLIENT_SECRET', 'SELLER_EMAIL_FROM'))
+    test_to = [a.strip() for a in (os.getenv('SELLER_EMAIL_TEST_TO') or '').split(',') if a.strip()]
+    return {'ready': ready, 'from': os.getenv('SELLER_EMAIL_FROM') or '', 'test_to': test_to}
 
 
 def _dashboard() -> Optional[dict]:
@@ -143,9 +166,37 @@ def meta_stock_status():
         'dashboard': _dashboard(),
         # Seller addresses (masked) and the email texts are for the team, not for view-link visitors
         'seller_email': None if viewing_only() else _email_preview(),
+        'settings': None if viewing_only() else {**_settings(), 'email': _email_setup()},
         'viewer': viewing_only(),
         'run_log': _log_tail(),
     })
+
+
+@automations_bp.route('/api/automations/meta-campaign-stock/settings', methods=['POST'])
+def meta_stock_settings():
+    """Seller emails Off / Test / On, from the page. Signed-in team only (view links can't POST)."""
+    if request.headers.get('X-Naar-Request') != '1':
+        return jsonify({'error': 'Missing X-Naar-Request header'}), 403
+    mode = (request.get_json(silent=True) or {}).get('seller_email_mode')
+    if mode not in SELLER_EMAIL_MODES:
+        return jsonify({'error': "seller_email_mode must be 'off', 'test' or 'on'"}), 400
+    setup = _email_setup()
+    if mode != 'off' and not setup['ready']:
+        return jsonify({'error': 'Email is not set up yet: fill in GRAPH_* and SELLER_EMAIL_FROM in .env'}), 400
+    if mode == 'test' and not setup['test_to']:
+        return jsonify({'error': 'Test mode needs SELLER_EMAIL_TEST_TO in .env'}), 400
+    file = Config.DATA_DIR / SETTINGS_FILE
+    file.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        saved = json.loads(file.read_text())
+    except (OSError, ValueError):
+        saved = {}
+    saved.update(seller_email_mode=mode, updated_at=datetime.now().astimezone().isoformat(timespec='seconds'))
+    tmp = file.with_suffix('.tmp')
+    tmp.write_text(json.dumps(saved, indent=2))
+    os.replace(tmp, file)
+    logger.info(f"Meta Campaign Stock: seller emails set to {mode} from the page")
+    return jsonify({**_settings(), 'email': setup})
 
 
 @automations_bp.route('/api/automations/meta-campaign-stock/run', methods=['POST'])
