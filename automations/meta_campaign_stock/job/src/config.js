@@ -113,6 +113,22 @@ module.exports = {
         mappingFile: path.resolve(__dirname, "..", process.env.META_MAPPING_FILE || "meta-campaign-sellers.json"),
       }
     : null,
+  // Low-stock email to each campaign seller, through Microsoft Graph.
+  //   off  = preview only (default)   test = every email goes to SELLER_EMAIL_TEST_TO   on = to the sellers
+  sellerEmail: (() => {
+    const mode = oneOf("SELLER_EMAIL_MODE", "off", ["off", "test", "on"]);
+    const sending = mode !== "off" && !dryRun;
+    const testTo = list("SELLER_EMAIL_TEST_TO");
+    if (sending && mode === "test" && !testTo.length) throw new Error("SELLER_EMAIL_MODE=test needs SELLER_EMAIL_TEST_TO (set it in .env)");
+    return {
+      mode,
+      from: sending ? required("SELLER_EMAIL_FROM") : process.env.SELLER_EMAIL_FROM || "",
+      testTo,
+      graph: sending
+        ? { tenantId: required("GRAPH_TENANT_ID"), clientId: required("GRAPH_CLIENT_ID"), clientSecret: required("GRAPH_CLIENT_SECRET") }
+        : null,
+    };
+  })(),
   dryRun,
   deleteAfterSend: bool("DELETE_AFTER_SEND"),
 };

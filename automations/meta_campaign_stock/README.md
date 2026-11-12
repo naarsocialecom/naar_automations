@@ -46,6 +46,37 @@ The daily run is the job `meta-campaign-stock` in `jobs.py`, run by `web/schedul
 (cron starts it every minute on the server). Change the time or switch it off on the website:
 **Scheduler**. Don't also add it to cron, PM2 or systemd, or the report posts twice.
 
+## Email to sellers (Microsoft 365)
+
+Each campaign seller gets **their own** email: only their store and their low-stock products (a table;
+more than 10 products → the 5 lowest in the table and the full list as a PDF attachment). The address
+comes from `sellerdetails.email`; the dashboard only shows it masked. `SELLER_EMAIL_MODE` in `job/.env`:
+
+| Mode | What the daily run does |
+|---|---|
+| `off` (default) | builds the preview only (Meta page → Email to sellers) |
+| `test` | sends every seller's email to `SELLER_EMAIL_TEST_TO` instead (subject starts with `[TEST for <store>]`) |
+| `on` | sends each seller their own email, once per day |
+
+Test one store's email to yourself: `npm run email:test -- --store "Doodleholic" --to you@naar.io --yes`
+(the address must be in `SELLER_EMAIL_TEST_TO`). Sends are logged in `job/exports/seller-email-log.json`.
+
+**Setup (Microsoft 365 admin):**
+1. Exchange admin centre → create a **shared mailbox** `low-stocks@naar.io` (no licence needed).
+2. Entra ID → App registrations → the app → API permissions → Microsoft Graph → **Application** permission
+   **Mail.Send** → Grant admin consent. (Mail.Read is not needed.) Certificates & secrets → new client secret.
+3. Limit the app to that one mailbox (otherwise Mail.Send can send as anyone), in Exchange Online PowerShell:
+   ```powershell
+   New-DistributionGroup -Name "Naar low-stock senders" -Alias lowstocksenders -Type Security -Members low-stocks@naar.io
+   New-ApplicationAccessPolicy -AppId <client-id> -PolicyScopeGroupId lowstocksenders@naar.io -AccessRight RestrictAccess -Description "Naar low-stock emails"
+   Test-ApplicationAccessPolicy -AppId <client-id> -Identity low-stocks@naar.io    # Granted
+   Test-ApplicationAccessPolicy -AppId <client-id> -Identity someone.else@naar.io  # Denied
+   ```
+4. `job/.env`: `GRAPH_TENANT_ID`, `GRAPH_CLIENT_ID`, `GRAPH_CLIENT_SECRET`, `SELLER_EMAIL_FROM=low-stocks@naar.io`,
+   `SELLER_EMAIL_TEST_TO=<your address>`, `SELLER_EMAIL_MODE=test` (later `on`).
+5. Delivery to Gmail/Outlook/etc.: `naar.io` should have SPF (`include:spf.protection.outlook.com`), DKIM
+   (Microsoft 365 Defender → Email authentication → DKIM → enable for naar.io) and a DMARC record.
+
 ## WhatsApp (preview only)
 
 Each run writes `job/exports/whatsapp-preview.json` (numbers masked) and seller PDFs; nothing is sent.

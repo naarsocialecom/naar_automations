@@ -56,6 +56,7 @@
 /* Result chips (base chip in style.css) */
 .auto-chip--ok   { background: var(--success-bg); color: var(--success-fg); }
 .auto-chip--test { background: var(--neutral-bg); color: var(--neutral-fg); }
+.auto-chip--warn { background: var(--warning-bg); color: var(--warning-fg); }
 .auto-chip--fail { background: var(--danger-bg);  color: var(--danger-fg); }
 .auto-by { height: 20px; padding: 0 6px; margin-left: 4px; }
 
@@ -140,3 +141,13 @@
     .auto-wa-item summary::after { grid-row: 1; grid-column: 2; }
     .auto-wa-item summary > * { grid-column: 1; }
 }
+
+/* Email to sellers */
+.auto-mail .auto-panel-head > span:first-child i { color: var(--accent); }
+.auto-wa-phone i.fa-envelope { color: var(--text-3); }
+.auto-mail-subject { margin: 0 14px 8px; font-size: var(--fs-sm); color: var(--text); }
+.auto-mail-subject span { color: var(--text-3); margin-right: 6px; }
+.auto-mail-attach { margin: 0 14px 8px; display: flex; align-items: center; gap: 8px; font-size: var(--fs-sm); color: var(--text-2); }
+.auto-mail-attach i { color: var(--icon-coral); }
+.auto-mail-attach a { color: var(--accent); font-weight: 500; margin-left: auto; }
+.auto-mail-frame { display: block; width: calc(100% - 28px); height: 560px; margin: 0 14px 14px; border: 1px solid var(--border); border-radius: var(--r-md); background: #f4f5f7; }

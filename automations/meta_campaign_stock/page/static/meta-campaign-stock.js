@@ -108,26 +108,44 @@ function render(data) {
     $('autoExcelBtn').hidden = !data.excel;
     $('autoExcelMeta').textContent = data.excel ? `${data.excel.name} · ${when(data.excel.updated_at)}` : 'No Excel file yet.';
 
-    // WhatsApp preview: one message per campaign store, click to read it
-    const wa = data.whatsapp;
-    if (wa?.sellers?.length) {
-        const missing = wa.sellers.length - wa.withNumber;
-        $('autoWaMeta').textContent = `${wa.sellers.length} seller${wa.sellers.length === 1 ? '' : 's'} would get a message · `
-            + `${wa.withNumber} with a WhatsApp number${missing ? ` · ${missing} without` : ''} · built ${when(wa.generatedAt)}. Click a seller to read the message.`;
-        $('autoWaList').innerHTML = wa.sellers.map(s => `
-            <details class="auto-wa-item">
+    // Seller emails: one per campaign store, click to see the email exactly as the seller gets it
+    const mail = data.seller_email;
+    const MODES = {
+        off:  ['test', 'eye', 'Preview only · nothing is sent', 'No emails are sent (SELLER_EMAIL_MODE=off)'],
+        test: ['warn', 'flask', 'Test mode · emails go to the test inbox', 'Each daily run sends every seller\'s email to the test address only'],
+        on:   ['ok', 'paper-plane', 'Live · each seller gets their email', 'Each daily run emails every seller their own list (once a day)'],
+    };
+    const [mcls, micon, mlabel, mtip] = MODES[mail?.mode] || MODES.off;
+    $('autoMailMode').className = `auto-chip auto-chip--${mcls}`;
+    $('autoMailMode').title = mtip;
+    $('autoMailMode').innerHTML = `<i class="fas fa-${micon}"></i> ${mlabel}`;
+    const lastMail = runs.find(r => r.sellerEmail && r.sellerEmail.sent != null && !r.dryRun && r.sellerEmail.mode !== 'off')?.sellerEmail;
+    if (mail?.sellers?.length) {
+        const missing = mail.sellers.length - mail.withEmail;
+        $('autoMailMeta').textContent = `${mail.sellers.length} seller${mail.sellers.length === 1 ? '' : 's'} · `
+            + `${mail.withEmail} with an email address${missing ? ` · ${missing} without` : ''} · built ${when(mail.generatedAt)}`
+            + (lastMail ? ` · last send: ${lastMail.sent} sent, ${lastMail.failed} failed` : '')
+            + '. Click a seller to see their email.';
+        $('autoMailList').innerHTML = mail.sellers.map((s, i) => `
+            <details class="auto-wa-item" data-i="${i}">
                 <summary>
                     <b>${escapeHtml(s.storeName)}</b>
-                    <span class="auto-wa-phone${s.phone ? '' : ' is-missing'}">${s.phone ? `<i class="fab fa-whatsapp"></i> ${escapeHtml(s.phone)}` : escapeHtml(s.problem)}</span>
+                    <span class="auto-wa-phone${s.email ? '' : ' is-missing'}">${s.email ? `<i class="fas fa-envelope"></i> ${escapeHtml(s.email)}` : escapeHtml(s.problem)}</span>
                     <span class="auto-wa-count">${s.productCount} low-stock product${s.productCount === 1 ? '' : 's'}</span>
                 </summary>
-                <div class="auto-wa-msg">${s.attachment ? `<div class="auto-wa-file"><i class="fas fa-file-pdf"></i>
-                    <span><b>${escapeHtml(s.attachment.fileName)}</b><br>${s.attachment.productCount} products · PDF</span></div>` : ''}${escapeHtml(s.message)}</div>
-                ${s.attachment ? `<a class="auto-wa-link" href="${API}/seller-pdf/${encodeURIComponent(s.attachment.file)}" target="_blank" rel="noopener"><i class="fas fa-file-pdf"></i> View the PDF this seller would get</a>` : ''}
+                <div class="auto-mail-subject"><span>Subject</span> ${escapeHtml(s.subject)}</div>
+                ${s.attachment ? `<div class="auto-mail-attach"><i class="fas fa-file-pdf"></i> ${escapeHtml(s.attachment.fileName)} · ${s.attachment.productCount} products
+                    <a href="${API}/seller-pdf/${encodeURIComponent(s.attachment.file)}" target="_blank" rel="noopener">Open PDF</a></div>` : ''}
+                <iframe class="auto-mail-frame" sandbox title="Email to ${escapeHtml(s.storeName)}"></iframe>
             </details>`).join('');
+        // The email HTML goes into a sandboxed frame (no scripts) when a seller is opened
+        document.querySelectorAll('#autoMailList details').forEach(d => d.addEventListener('toggle', () => {
+            const frame = d.querySelector('iframe');
+            if (d.open && !frame.srcdoc) frame.srcdoc = mail.sellers[Number(d.dataset.i)].html;
+        }));
     } else {
-        $('autoWaMeta').textContent = wa ? 'No campaign store has products below the limit, so no messages.' : 'Run a test run to build the preview.';
-        $('autoWaList').innerHTML = '';
+        $('autoMailMeta').textContent = mail ? 'No campaign store has products below the limit, so no emails.' : 'Run a test run to build the preview.';
+        $('autoMailList').innerHTML = '';
     }
 
     // History

@@ -4,6 +4,7 @@
 // Slack, and the dashboard as an SVG string.
 const renderDashboard = require("./dashboard-image");
 const { buildWhatsAppPreview } = require("../whatsapp");
+const { buildSellerEmails } = require("../seller-email");
 
 const TOP_N = 10;
 // All active campaigns are listed, matched or not; this only guards the Slack message length
@@ -156,6 +157,13 @@ module.exports = function buildSummary({ title, threshold, date, context = {} })
     threshold,
   };
 
+  const productName = (r) => {
+    const variant = variantLabel(r);
+    return (clean(r.title) || "Untitled") + (variant ? ` (${variant})` : "");
+  };
+  // Email per campaign store (sent only when SELLER_EMAIL_MODE allows it; see index.js)
+  const sellerEmail = buildSellerEmails({ lowStock, contacts: context.contacts || new Map(), clean, productName });
+
   // WhatsApp message per campaign store (preview only: nothing is sent)
   const whatsapp = buildWhatsAppPreview({
     lowStock,
@@ -167,5 +175,5 @@ module.exports = function buildSummary({ title, threshold, date, context = {} })
     },
   });
 
-  return { text, slackText, image, stats, whatsapp };
+  return { text, slackText, image, stats, whatsapp, sellerEmail };
 };

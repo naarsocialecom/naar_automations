@@ -8,6 +8,7 @@ const { aggregate } = require("./db");
 const { sendExport } = require("./mailer");
 const { sendToSlack } = require("./slack");
 const { writeSellerPdf } = require("./seller-pdf");
+const { sendSellerEmails } = require("./send-seller-emails");
 
 const log = (...args) => console.log(`[${new Date().toISOString()}]`, ...args);
 
@@ -145,12 +146,33 @@ async function main() {
     log(`WhatsApp preview: ${wa.sellers.length} seller message(s), ${wa.withNumber} with a number - nothing sent`);
   }
 
+  // Seller emails: the preview (addresses masked) is saved for the dashboard; the real
+  // addresses stay in memory for this run only. Long lists get the same PDF as above.
+  const pdfDir = path.join(config.export.dir, "seller-pdfs");
+  const sellerEmail = summary?.sellerEmail;
+  if (sellerEmail) {
+    fs.mkdirSync(pdfDir, { recursive: true });
+    for (const s of sellerEmail.preview.sellers.filter((x) => x.attachment)) {
+      const file = `${String(s.sellerId).replace(/[^A-Za-z0-9_-]/g, "") || "seller"}.pdf`;
+      if (!fs.existsSync(path.join(pdfDir, file))) {
+        await writeSellerPdf(path.join(pdfDir, file),
+          { storeName: s.storeName, products: s.attachment.products, threshold: query.lowStockThreshold, date });
+      }
+      s.attachment = { fileName: s.attachment.fileName, file, productCount: s.attachment.products.length };
+    }
+    fs.writeFileSync(path.join(config.export.dir, "email-preview.json"), JSON.stringify({
+      generatedAt: new Date().toISOString(), mode: config.sellerEmail.mode, ...sellerEmail.preview,
+    }, null, 2));
+    log(`Seller email preview: ${sellerEmail.preview.sellers.length} email(s), ${sellerEmail.preview.withEmail} with an address (mode: ${config.sellerEmail.mode})`);
+  }
+
   const run = {
     ok: true,
     stats: summary?.stats || null,
     whatsapp: summary?.whatsapp
       ? { mode: "preview", sellers: summary.whatsapp.sellers.length, withNumber: summary.whatsapp.withNumber, sent: 0 }
       : null,
+    sellerEmail: sellerEmail ? { mode: config.sellerEmail.mode, sellers: sellerEmail.preview.sellers.length, withEmail: sellerEmail.preview.withEmail, sent: 0 } : null,
     metaError: context.meta?.error || null,
     files: result.files.map((f) => path.basename(f)),
     posts: [],
@@ -171,6 +193,15 @@ async function main() {
       const cleanup = config.slack.deletePrevious ? `, ${p.warning || `${p.deleted} previous report post(s) deleted`}` : "";
       log(`Posted to Slack ${p.channel}${cleanup}`);
     }
+  }
+
+  // Each seller's own email (test mode: all to the test inbox). A failure here never stops the report.
+  if (sellerEmail && config.sellerEmail.mode !== "off") {
+    run.sellerEmail = await sendSellerEmails({
+      settings: config.sellerEmail, preview: sellerEmail.preview, recipients: sellerEmail.recipients,
+      pdfDir, exportDir: config.export.dir, log,
+    });
+    log(`Seller emails (${run.sellerEmail.mode}): ${run.sellerEmail.sent} sent, ${run.sellerEmail.skipped} skipped, ${run.sellerEmail.failed} failed`);
   }
 
   if (config.mail) {

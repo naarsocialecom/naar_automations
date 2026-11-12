@@ -34,6 +34,8 @@ LOCK_FILE = '.run.lock'
 # Output of the latest run started from the website
 RUN_LOG = 'dashboard-run.log'
 WHATSAPP_PREVIEW = 'whatsapp-preview.json'
+# Seller emails as the latest run built them (addresses masked; SELLER_EMAIL_MODE says if they are sent)
+EMAIL_PREVIEW = 'email-preview.json'
 # PDFs with a store's full list, attached when the list is too long for the message
 SELLER_PDFS = 'seller-pdfs'
 PDF_NAME = re.compile(r'^[A-Za-z0-9_-]{1,80}\.pdf$')
@@ -65,6 +67,13 @@ def _history() -> list:
     except (OSError, ValueError) as e:
         logger.warning(f"Could not read {file}: {e}")
         return []
+
+
+def _email_preview() -> Optional[dict]:
+    try:
+        return json.loads((Config.META_STOCK_EXPORT_DIR / EMAIL_PREVIEW).read_text())
+    except (OSError, ValueError):
+        return None
 
 
 def _whatsapp_preview() -> Optional[dict]:
@@ -121,6 +130,7 @@ def meta_stock_status():
         'excel': _file_info(_latest_excel()),
         'running': _running_pid() is not None,
         'whatsapp': _whatsapp_preview(),
+        'seller_email': _email_preview(),
         'run_log': _log_tail(),
     })
 
