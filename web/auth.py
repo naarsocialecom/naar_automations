@@ -81,7 +81,7 @@ def init_auth(app):
     app.register_blueprint(auth_bp)
     if not Config.DASHBOARD_PASSWORD:
         if Config.APP_ENV == 'production':
-            raise ConfigError("Set DASHBOARD_PASSWORD in web/.env: the site needs a login in production.")
+            raise ConfigError("Set DASHBOARD_PASSWORD in .env: the site needs a login in production.")
         logger.warning('DASHBOARD_PASSWORD is not set: no login (fine on a laptop, not on a server)')
         return
 

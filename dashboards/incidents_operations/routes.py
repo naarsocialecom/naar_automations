@@ -54,7 +54,7 @@ def _slack_error(e):
 def _jira_error(e):
     logger.error(f"Jira: {e}")
     status = getattr(getattr(e, 'response', None), 'status_code', None)
-    hint = ' — check JIRA_EMAIL / JIRA_API_TOKEN in web/.env' if status in (401, 403) else ''
+    hint = ' — check JIRA_EMAIL / JIRA_API_TOKEN in .env' if status in (401, 403) else ''
     return _error(f"Jira request failed{f' ({status})' if status else ''}{hint}", 502)
 
 

@@ -24,20 +24,14 @@ mkdir -p data logs
 echo "== Meta Campaign Stock job (Node)"
 (cd "$JOB" && npm ci --omit=dev --silent)
 
-echo "== Settings files"
-if [ ! -f web/.env ]; then
-  cp web/.env.example web/.env
-  # A fresh random SECRET_KEY, so nobody has to make one by hand
-  sed -i "s/^SECRET_KEY=.*/SECRET_KEY=$(python3 -c 'import secrets;print(secrets.token_hex(32))')/" web/.env
-  echo "   created web/.env (SECRET_KEY filled in)"
+echo "== Settings file (.env)"
+if [ ! -f .env ]; then
+  # Merge old per-folder settings files if there are any, otherwise start from the template
+  python3 deploy/tidy_env.py --prod
+  grep -q '^SECRET_KEY=.\+' .env || sed -i "s/^SECRET_KEY=.*/SECRET_KEY=$(python3 -c 'import secrets;print(secrets.token_hex(32))')/" .env
 fi
-if [ ! -f "$JOB/.env" ]; then
-  cp "$JOB/.env.example" "$JOB/.env"
-  echo "   created automations/meta_campaign_stock/job/.env"
-fi
-chmod 600 web/.env "$JOB/.env"
+chmod 600 .env
 
 echo
-echo "Installed. Next: fill in the two settings files, then run deploy/start.sh"
-echo "   nano $ROOT/web/.env"
-echo "   nano $JOB/.env"
+echo "Installed. Next: check the settings, then run deploy/start.sh"
+echo "   nano $ROOT/.env"

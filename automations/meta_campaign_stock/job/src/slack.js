@@ -48,7 +48,7 @@ async function sendToSlack(slack, { files, rowCount, title, summary, filePrefix 
     conversations.push(dm.channel.id);
   }
   if (!conversations.length) {
-    throw new Error("Set SLACK_CHANNEL_ID and/or SLACK_USER_ID in .env");
+    throw new Error("Set META_SLACK_CHANNEL_ID in .env");
   }
 
   const bot = slack.deletePrevious ? await client.auth.test() : null;

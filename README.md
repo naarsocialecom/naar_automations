@@ -19,10 +19,9 @@ naar_automations/
 │   ├── app.py  modules.py        the website · which dashboards/automations and jobs are on
 │   ├── scheduler.py  schedules.py  runs every job at its time · the Scheduler page
 │   ├── home.py                   the home page (cards from each module's CARD)
-│   ├── auth.py  config.py        login · every setting (from web/.env)
+│   ├── auth.py  config.py        login · every setting (from .env)
 │   ├── shared/                   Jira, Slack, page screenshots (used by several modules)
 │   ├── templates/  static/       login page, sidebar, base CSS, helpers.js
-│   └── .env.example
 ├── dashboards/                   one folder per dashboard
 │   ├── incidents_operations/     routes, logic, page, jobs.py (7 PM post), README
 │   ├── scrum/                    routes, page, charts, README + MODULE_MAP
@@ -35,11 +34,12 @@ naar_automations/
 │   └── _template/                how to add an automation
 ├── deploy/                       server: pm2 file, crontab (scheduler), SERVER_SETUP.md, Slack app manifest
 ├── docs/BRANCHING.md             how we branch, review and deploy
+├── .env.example                  every setting (copy to .env); the one .env is used by everything
 ├── requirements.txt              Python packages for the website
 ├── data/  logs/                  created at runtime (not in git)
 ```
 
-Settings with passwords live in `web/.env` and `automations/<name>/job/.env`: never in git
+Settings with passwords live in `.env` and ``.env``: never in git
 (copy from `.env.example`).
 
 ## Run on a laptop
@@ -47,7 +47,7 @@ Settings with passwords live in `web/.env` and `automations/<name>/job/.env`: ne
 ```bash
 python3 -m venv venv && venv/bin/pip install -r requirements.txt
 venv/bin/python -m playwright install chromium        # for the Slack picture
-cp web/.env.example web/.env                           # fill in Jira, Slack; DASHBOARD_PASSWORD may stay blank locally
+cp .env.example .env                           # fill in Jira, Slack; DASHBOARD_PASSWORD may stay blank locally
 cd web && ../venv/bin/python app.py                  # http://localhost:5005 · Ctrl+C stops it
 ```
 

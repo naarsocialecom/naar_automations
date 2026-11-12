@@ -28,7 +28,7 @@ from web.schedules import schedules_bp
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 
-# Load configuration (all values come from web/.env — see config.py)
+# Load configuration (all values come from .env — see config.py)
 app.config.from_object(config.get(Config.APP_ENV, config['default']))
 app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024   # reject request bodies over 1 MB
 
@@ -82,5 +82,5 @@ def internal_error(error):
     return jsonify({'error': 'Internal server error'}), 500
 
 if __name__ == '__main__':
-    # load_dotenv=False: settings come only from web/.env (config.py), never a stray .env in the folder
+    # load_dotenv=False: settings come only from .env (config.py), never a stray .env in the folder
     app.run(host='0.0.0.0', port=Config.PORT, debug=app.config['DEBUG'], load_dotenv=False)

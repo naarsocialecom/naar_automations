@@ -4,7 +4,6 @@
 # Checks that the required settings are filled in (prints names only, never values).
 set -euo pipefail
 ROOT=/root/naar_automations
-JOB=$ROOT/automations/meta_campaign_stock/job
 cd "$ROOT"
 
 missing=0
@@ -17,9 +16,9 @@ need() {   # need <file> <NAME>...: each NAME must have a value
   done
 }
 echo "== Checking settings"
-need web/.env SECRET_KEY DASHBOARD_PASSWORD JIRA_DOMAIN JIRA_EMAIL JIRA_API_TOKEN JIRA_BOARD_ID JIRA_PROJECT_KEY \
-     SLACK_BOT_TOKEN SLACK_CHANNEL_ID DASHBOARD_URL CORS_ORIGINS
-need "$JOB/.env" MONGO_URI MONGO_DB_NAME SLACK_BOT_TOKEN SLACK_CHANNEL_ID META_ACCESS_TOKEN META_AD_ACCOUNT_ID
+need .env SECRET_KEY DASHBOARD_PASSWORD DASHBOARD_URL CORS_ORIGINS JIRA_DOMAIN JIRA_EMAIL JIRA_API_TOKEN \
+     JIRA_BOARD_ID JIRA_PROJECT_KEY SLACK_BOT_TOKEN SLACK_CHANNEL_ID META_SLACK_CHANNEL_ID \
+     MONGO_URI MONGO_DB_NAME META_ACCESS_TOKEN META_AD_ACCOUNT_ID
 [ "$missing" = 0 ] || { echo "Fill these in, then run this again. Nothing was started."; exit 1; }
 
 echo "== Website (pm2: naar-automations, port 5005)"

@@ -29,24 +29,21 @@ cd /root && git clone git@github.com:naarsocialecom/naar_automations.git
 bash /root/naar_automations/deploy/install.sh
 ```
 
-## 3. Fill in the two settings files
-
-Both files are plain `KEY=value` lines (templates: `web/.env.example`, `automations/meta_campaign_stock/job/.env.example`).
-A `# KEY=value` line under a setting is its server value. On the server use those values:
+## 3. Settings: one file, `/root/naar_automations/.env`
 
 ```bash
-nano /root/naar_automations/web/.env
-nano /root/naar_automations/automations/meta_campaign_stock/job/.env
+nano /root/naar_automations/.env
 ```
-Server values: `APP_ENV=production`, `DEBUG=false`, `DASHBOARD_PASSWORD=<team password>`,
+Plain `KEY=value` lines under simple titles (App, Jira, Slack, Meta Campaign Stock, Seller email);
+the template is `.env.example`. A `# KEY=value` line under a setting is its server value; on the server use:
+`APP_ENV=production`, `DEBUG=false`, `DASHBOARD_PASSWORD=<team password>`,
 `DASHBOARD_URL` / `CORS_ORIGINS=https://automations.naar.io`, `SNAPSHOT_BROWSER_CHANNEL=` (empty),
 `DRY_RUN=false`, `SELLER_EMAIL_MODE=off` / `test` / `on`.
 
-An older `.env` can be brought to this layout (values kept, unused keys removed, backup `.env.bak`):
+Coming from the older layout (`web/.env` + the Meta job's `.env`)? This merges them into the one file
+(values kept, unused ones left out; the old files are kept as `.env.old`):
 ```bash
-cd /root/naar_automations
-python3 deploy/tidy_env.py web/.env --prod
-python3 deploy/tidy_env.py automations/meta_campaign_stock/job/.env --prod
+cd /root/naar_automations && python3 deploy/tidy_env.py --prod
 ```
 
 Test the Meta job without sending: `cd /root/naar_automations/automations/meta_campaign_stock/job && npm run export:dry`
@@ -72,4 +69,4 @@ cd /root/naar_automations && git pull && bash deploy/install.sh && bash deploy/s
 2. Load balancer HTTPS:443 listener: add the certificate; if rules match host names, add `automations.naar.io`.
 3. DNS: `automations.naar.io` → CNAME / Alias to the load balancer.
 4. Listener rule: host `sprint-status.naar.io` → Redirect 301 to `https://automations.naar.io/#{path}?#{query}`.
-5. `web/.env`: DASHBOARD_URL and CORS_ORIGINS = `https://automations.naar.io`, then `bash deploy/start.sh`.
+5. `.env`: DASHBOARD_URL and CORS_ORIGINS = `https://automations.naar.io`, then `bash deploy/start.sh`.

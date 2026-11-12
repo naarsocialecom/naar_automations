@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
-require("dotenv").config({ path: path.resolve(__dirname, "..", ".env") });
+// The one .env in the repo folder (shared with the website)
+require("dotenv").config({ path: path.resolve(__dirname, "..", "..", "..", "..", ".env") });
 
 function required(name) {
   const value = process.env[name];
@@ -99,7 +100,8 @@ module.exports = {
   slack: sendSlack
     ? {
         token: required("SLACK_BOT_TOKEN"),
-        channelIds: list("SLACK_CHANNEL_ID"),
+        // The Meta report's own channel (SLACK_CHANNEL_ID is the Incidents & Operations one)
+        channelIds: list("META_SLACK_CHANNEL_ID"),
         userIds: list("SLACK_USER_ID"),
         // Yesterday's report post is removed unless SLACK_DELETE_PREVIOUS=false
         deletePrevious: process.env.SLACK_DELETE_PREVIOUS ? bool("SLACK_DELETE_PREVIOUS") : true,

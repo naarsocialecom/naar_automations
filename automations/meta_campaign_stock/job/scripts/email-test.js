@@ -9,7 +9,7 @@
 // Safety: --to must be listed in SELLER_EMAIL_TEST_TO (.env), and nothing is sent without --yes.
 const fs = require("fs");
 const path = require("path");
-require("dotenv").config({ path: path.resolve(__dirname, "..", ".env") });
+require("dotenv").config({ path: path.resolve(__dirname, "..", "..", "..", "..", ".env") });
 const { sendMail } = require("../src/graph-mail");
 
 function args() {

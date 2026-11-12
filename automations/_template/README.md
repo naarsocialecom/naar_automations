@@ -5,7 +5,7 @@ Branch: `automation/<name>/init` (see `docs/BRANCHING.md`).
 ```
 automations/<name>/
 ├── README.md        what it does, what it reads/sends, settings, how to test, schedule
-├── job/             the job itself (Node.js or Python) with its own .env.example; never sends
+├── job/             the job itself (Node.js or Python) its settings go in the one .env (and .env.example); never sends
 │                    anything in its dry run (DRY_RUN=true)
 ├── page/            optional: its page on the website (same layout as a dashboard:
 │                    __init__.py exporting `blueprint` and `CARD` (kind: 'automation'), routes.py,
@@ -19,5 +19,5 @@ automations/<name>/
    **Scheduler**, where its time is set and it can be switched off.
 3. If it has a page: add `'automations.<name>.page'` to `MODULES` in `web/modules.py` and a link under
    AUTOMATIONS in `web/templates/partials/sidebar.html`.
-4. On the server: `npm ci --omit=dev` (Node) in `job/` and create `job/.env`. No cron or timer of
+4. On the server: `npm ci --omit=dev` (Node) in `job/` and create `.env`. No cron or timer of
    its own: the scheduler runs it.

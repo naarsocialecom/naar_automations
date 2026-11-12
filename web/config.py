@@ -1,7 +1,7 @@
 """
 Application configuration.
 
-Every value comes from the environment, loaded from ``web/.env``.
+Every value comes from the environment, loaded from the one ``.env`` in the repo folder.
 Nothing deployment-specific (domains, credentials, IDs) is hardcoded here —
 copy ``.env.example`` to ``.env`` and fill it in.
 """
@@ -13,9 +13,9 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent          # web/
 ROOT_DIR = BASE_DIR.parent                          # the repo: web/, dashboards/, automations/
 
-# Load web/.env regardless of the working directory the app is started from.
+# Load <repo>/.env regardless of the working directory the app is started from.
 # Real environment variables (e.g. from systemd EnvironmentFile) take precedence.
-load_dotenv(BASE_DIR / '.env', override=False)
+load_dotenv(ROOT_DIR / '.env', override=False)
 
 
 class ConfigError(RuntimeError):
@@ -31,7 +31,7 @@ def _required(name: str) -> str:
     if not value:
         raise ConfigError(
             f"Missing required environment variable '{name}'. "
-            f"Add it to {BASE_DIR / '.env'} (see .env.example)."
+            f"Add it to {ROOT_DIR / '.env'} (see .env.example)."
         )
     return value
 

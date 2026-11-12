@@ -55,10 +55,10 @@ cd /root/naar_automations
 python3 -m venv venv
 venv/bin/pip install -r requirements.txt
 venv/bin/python -m playwright install --with-deps chromium     # for the 7 PM Slack picture
-cp web/.env.example web/.env && chmod 600 web/.env && nano web/.env
+cp .env.example .env && chmod 600 .env && nano .env      # the one settings file, in /root/naar_automations
 ```
 
-In `web/.env` for production: `APP_ENV=production`, `DEBUG=false`, a fresh `SECRET_KEY`,
+In `.env` for production: `APP_ENV=production`, `DEBUG=false`, a fresh `SECRET_KEY`,
 `DASHBOARD_PASSWORD` (the team password; the site won't start without it),
 `DASHBOARD_URL=https://automations.naar.io`, `CORS_ORIGINS` = that URL,
 `SNAPSHOT_BASE_URL` and `SNAPSHOT_BROWSER_CHANNEL` blank, `NDO_DEVELOPER_UPDATES=false`,
@@ -92,7 +92,7 @@ channel ID (C…) or a person's member ID (U…) for a direct message.
 ```bash
 cd /root/naar_automations/automations/meta_campaign_stock/job
 npm ci --omit=dev                                   # Node 18+
-cp .env.example .env && chmod 600 .env && nano .env  # MongoDB (read only), Slack, Meta
+nano /root/naar_automations/.env                 # MongoDB (read only), Slack, Meta
 npm run export:dry                                  # builds the files, sends nothing
 ```
 
@@ -126,8 +126,8 @@ cron, PM2 or systemd as well, or they run twice.
 ## Troubleshooting
 
 - **Site down after a deploy:** `pm2 logs naar-automations --lines 50`. "Set DASHBOARD_PASSWORD" means
-  it's missing from `web/.env`.
+  it's missing from `.env`.
 - **Slack picture is the plain drawn card:** Chromium is missing — rerun the Playwright install above.
 - **Report fails with a MongoDB timeout:** the server IP isn't in Atlas → Network Access.
 - **"The scheduler isn't running" on the Scheduler page:** `crontab -l` should show the `web.scheduler` line (section 5).
-- **Charts empty / Jira errors:** the `JIRA_API_TOKEN` in `web/.env` expired.
+- **Charts empty / Jira errors:** the `JIRA_API_TOKEN` in `.env` expired.

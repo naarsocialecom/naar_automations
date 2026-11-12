@@ -12,7 +12,7 @@
 // last 24 hours (send "hi" to it first). Real sending to sellers will use an approved template.
 const fs = require("fs");
 const path = require("path");
-require("dotenv").config({ path: path.resolve(__dirname, "..", ".env") });
+require("dotenv").config({ path: path.resolve(__dirname, "..", "..", "..", "..", ".env") });
 
 const API = "https://api.gupshup.io/wa/api/v1/msg";
 const digits = (s) => String(s ?? "").replace(/\D/g, "");

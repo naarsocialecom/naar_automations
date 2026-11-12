@@ -20,7 +20,7 @@ Page: `/` and `/ndo` · API: `/api/ndo/*` · Branch prefix: `dashboard/incidents
 Overall RAG (incident priority only): **Critical** = a Critical incident is open ·
 **Moderate** = a High incident is open · **On Track** = neither.
 
-## Settings (`web/.env`)
+## Settings (`.env`)
 
 `NDO_PROJECT_KEY`, `NDO_ISSUE_TYPES`, `NDO_EXCLUDED_STATUSES`, `JIRA_FIELD_SEVERITY`,
 `JIRA_FIELD_REQUIREMENT_OWNER`, `SLACK_BOT_TOKEN`, `SLACK_CHANNEL_ID` (channel `C…` or a person `U…`),

@@ -144,7 +144,7 @@ def meta_stock_run():
         return jsonify({'error': 'A run is already in progress. Wait for it to finish.'}), 409
     node = find_node(Config.NODE_BIN)
     if not node:
-        return jsonify({'error': 'Node.js was not found on the server (set NODE_BIN in web/.env).'}), 500
+        return jsonify({'error': 'Node.js was not found on the server (set NODE_BIN in .env).'}), 500
 
     env = clean_env(DRY_RUN='true' if mode == 'dry' else 'false', RUN_TRIGGER='dashboard')
     Config.META_STOCK_EXPORT_DIR.mkdir(parents=True, exist_ok=True)

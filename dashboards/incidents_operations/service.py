@@ -259,7 +259,7 @@ class NdoService:
         """Read a day's messages (default today) from the developer updates channel into Developer Updates."""
         slack = self._slack()
         if not Config.SLACK_DEV_UPDATES_CHANNEL_ID:
-            raise SlackNotConfigured('Set SLACK_DEV_UPDATES_CHANNEL_ID in web/.env')
+            raise SlackNotConfigured('Set SLACK_DEV_UPDATES_CHANNEL_ID in .env')
         day = self.resolve_day(day)
         start, end = self.day_window(day)
         with self._sync_lock:
@@ -479,7 +479,7 @@ class NdoService:
 
     def _slack(self) -> SlackClient:
         if not Config.slack_enabled():
-            raise SlackNotConfigured('Slack is not configured: set SLACK_BOT_TOKEN and SLACK_CHANNEL_ID in web/.env')
+            raise SlackNotConfigured('Slack is not configured: set SLACK_BOT_TOKEN and SLACK_CHANNEL_ID in .env')
         return SlackClient()
 
     def send_reminder(self) -> Dict:

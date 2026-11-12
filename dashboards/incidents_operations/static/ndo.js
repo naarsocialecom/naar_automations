@@ -253,7 +253,7 @@ function renderSlackStatus() {
     let cls = '', html;
     if (!s.enabled) {
         cls  = 'ndo-slack-status--off';
-        html = '<i class="fas fa-plug"></i> Slack not connected — set <code>SLACK_BOT_TOKEN</code> and <code>SLACK_CHANNEL_ID</code> in <code>web/.env</code>.';
+        html = '<i class="fas fa-plug"></i> Slack not connected — set <code>SLACK_BOT_TOKEN</code> and <code>SLACK_CHANNEL_ID</code> in <code>.env</code>.';
     } else if (s.posted_at) {
         cls  = 'ndo-slack-status--done';
         html = `<i class="fas fa-check-circle"></i> Posted today at ${timeLabel(s.posted_at)}.`;

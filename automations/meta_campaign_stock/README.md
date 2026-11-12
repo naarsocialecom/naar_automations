@@ -26,7 +26,7 @@ slack.com). The server's IP must be allowed in MongoDB Atlas → Network Access.
 ```bash
 cd /root/naar_automations/automations/meta_campaign_stock/job
 npm ci --omit=dev                # Node 18+
-cp .env.example .env && chmod 600 .env && nano .env
+nano /root/naar_automations/.env      # the one settings file (Meta Campaign Stock section)
 npm run export:dry               # builds the files, sends nothing
 npm run export                   # real run: posts to SLACK_CHANNEL_ID
 ```
@@ -50,7 +50,7 @@ The daily run is the job `meta-campaign-stock` in `jobs.py`, run by `web/schedul
 
 Each campaign seller gets **their own** email: only their store and their low-stock products (a table;
 more than 10 products → the 5 lowest in the table and the full list as a PDF attachment). The address
-comes from `sellerdetails.email`; the dashboard only shows it masked. `SELLER_EMAIL_MODE` in `job/.env`:
+comes from `sellerdetails.email`; the dashboard only shows it masked. `SELLER_EMAIL_MODE` in `.env`:
 
 | Mode | What the daily run does |
 |---|---|
@@ -72,7 +72,7 @@ Test one store's email to yourself: `npm run email:test -- --store "Doodleholic"
    Test-ApplicationAccessPolicy -AppId <client-id> -Identity low-stocks@naar.io    # Granted
    Test-ApplicationAccessPolicy -AppId <client-id> -Identity someone.else@naar.io  # Denied
    ```
-4. `job/.env`: `GRAPH_TENANT_ID`, `GRAPH_CLIENT_ID`, `GRAPH_CLIENT_SECRET`, `SELLER_EMAIL_FROM=low-stocks@naar.io`,
+4. `.env`: `GRAPH_TENANT_ID`, `GRAPH_CLIENT_ID`, `GRAPH_CLIENT_SECRET`, `SELLER_EMAIL_FROM=low-stocks@naar.io`,
    `SELLER_EMAIL_TEST_TO=<your address>`, `SELLER_EMAIL_MODE=test` (later `on`).
 5. Delivery to Gmail/Outlook/etc.: `naar.io` should have SPF (`include:spf.protection.outlook.com`), DKIM
    (Microsoft 365 Defender → Email authentication → DKIM → enable for naar.io) and a DMARC record.

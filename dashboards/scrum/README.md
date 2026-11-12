@@ -9,5 +9,5 @@ Page: `/dashboard` · API: `/api/sprints`, `/api/sprint/<id>`, `/api/issues`, `/
 - `routes.py`: the page and its API (Flask blueprint)
 - `templates/scrum.html`, `static/js/`, `static/css/`: the page; which JS file does what is in `MODULE_MAP.md`
 
-Settings (`web/.env`): `JIRA_BOARD_ID`, `JIRA_PROJECT_KEY`, `EPIC_TABLE_PAGE_SIZE`,
+Settings (`.env`): `JIRA_BOARD_ID`, `JIRA_PROJECT_KEY`, `EPIC_TABLE_PAGE_SIZE`,
 `JIRA_FIELD_PLATFORM`, `JIRA_FIELD_HIGHLIGHTS`, `JIRA_HIGHLIGHTS_TICKET`.

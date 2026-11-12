@@ -32,7 +32,7 @@ def check_slack() -> int:
     from web.config import Config
     from web.shared.slack_client import SlackClient
     if not Config.SLACK_BOT_TOKEN:
-        logger.error('SLACK_BOT_TOKEN is not set in web/.env')
+        logger.error('SLACK_BOT_TOKEN is not set in .env')
         return 2
     problems = SlackClient().check({
         'Summary channel (SLACK_CHANNEL_ID)': Config.SLACK_CHANNEL_ID,
