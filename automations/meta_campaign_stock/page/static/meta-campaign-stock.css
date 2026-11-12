@@ -79,7 +79,6 @@
 
 /* Excel */
 #autoExcelMeta { font-size: var(--fs-sm); color: var(--text-2); overflow-wrap: anywhere; }
-#autoExcelBtn { margin-top: 8px; }
 #autoExcelBtn[hidden] { display: none; }
 .auto-hint { font-size: var(--fs-xs); color: var(--text-3); margin-top: 12px; }
 
@@ -309,3 +308,10 @@ body.mcs-modal-open { overflow: hidden; }
 .mcs-modal-body img { max-width: 100%; height: auto; border-radius: var(--r-md); border: 1px solid var(--border); }
 @media (max-width: 640px) { .mcs-slack-actions { width: 100%; } .mcs-slack-actions .btn { flex: 1; } }
 .mcs-slack-actions .btn { display: inline-flex; align-items: center; gap: 6px; height: 36px; margin: 0; box-sizing: border-box; }
+
+/* No data yet */
+.mcs-empty { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+.mcs-empty[hidden], #mcsDash[hidden] { display: none; }
+.mcs-empty > i { font-size: 26px; color: var(--text-3); width: 48px; height: 48px; border-radius: 12px; background: var(--surface-2); display: grid; place-items: center; flex-shrink: 0; }
+.mcs-empty > div { flex: 1; }
+.mcs-empty p { margin: 4px 0 0; color: var(--text-3); font-size: 13px; }

@@ -49,6 +49,17 @@
     <!-- One line: when the data is from, last / next run, where it was posted -->
     <div class="mcs-strip" id="mcsStrip">Loading…</div>
 
+    <!-- Before the first run with this version there is no data yet: one clear message instead of empty panels -->
+    <section class="mcs-card mcs-empty" id="mcsEmpty" hidden>
+        <i class="fas fa-chart-bar"></i>
+        <div>
+            <div class="mcs-card-title">No dashboard data yet</div>
+            <p>The dashboard fills after a run. {% if viewer %}It will be here after the next daily run.{% else %}Press <b>Test run</b> to build it now (about a minute, nothing is sent), or wait for the next daily run.{% endif %}</p>
+        </div>
+        {% if not viewer %}<button type="button" class="btn btn--primary" id="mcsEmptyRun"><i class="fas fa-flask"></i> Test run</button>{% endif %}
+    </section>
+
+    <div id="mcsDash">
     <!-- Headline numbers -->
     <div class="mcs-tiles" id="mcsTiles"></div>
 
@@ -88,6 +99,7 @@
         </div>
         <div class="mcs-pager" id="mcsPager"></div>
     </section>
+    </div>
 
     <!-- Slack daily report: one compact card, like Incidents & Operations -->
     <section class="mcs-card mcs-slack-card">

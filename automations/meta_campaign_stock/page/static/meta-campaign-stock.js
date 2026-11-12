@@ -78,13 +78,9 @@ function tile(icon, cls, value, label, note = '') {
 }
 
 function renderDashboard(d) {
-    if (!d) {
-        $('mcsTiles').innerHTML = '';
-        ['mcsBar', 'mcsLegend', 'mcsStores'].forEach(id => { $(id).innerHTML = ''; });
-        $('mcsCampaigns').innerHTML = '<tr><td class="auto-empty">No data yet. Run a test run to build the dashboard.</td></tr>';
-        $('mcsProducts').innerHTML = '';
-        return;
-    }
+    $('mcsEmpty').hidden = !!d;
+    $('mcsDash').hidden = !d;
+    if (!d) return;
     const t = d.totals;
     $('mcsTiles').innerHTML = [
         tile('bullhorn', 'blue', num(t.campaigns), 'Active campaigns', `${num(t.matchedCampaigns)} linked${t.unmatchedCampaigns ? ` · ${num(t.unmatchedCampaigns)} not linked` : ''}`),
@@ -404,6 +400,7 @@ $('mcsModalClose').addEventListener('click', closePreview);
 $('mcsModal').addEventListener('click', e => { if (e.target === $('mcsModal')) closePreview(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('mcsModal').hidden) closePreview(); });
 $('autoRunDry')?.addEventListener('click', () => startRun('dry'));
+$('mcsEmptyRun')?.addEventListener('click', () => startRun('dry'));
 document.querySelectorAll('#mcsMailSwitch button').forEach(b => b.addEventListener('click', () => setMailMode(b.dataset.mode)));
 $('mcsTestTo')?.addEventListener('submit', e => { e.preventDefault(); saveMail({ seller_email_mode: 'test', test_to: $('mcsTestToInput').value }); });
 $('mcsTestNow')?.addEventListener('click', sendTestNow);
