@@ -29,10 +29,6 @@
         </div>
         <div class="header-right">
             <div class="badge-sprint"><i class="fas fa-clock"></i> <span id="autoSchedule">Daily</span></div>
-            {% if not viewer %}
-            <button type="button" class="btn btn--secondary" id="autoRunDry" title="Builds everything again and sends nothing"><i class="fas fa-flask"></i> Test run</button>
-            <button type="button" class="btn btn--primary" id="autoRunSend" title="Posts the report to Slack now"><i class="fab fa-slack"></i> Send to Slack</button>
-            {% endif %}
             <button id="autoRefresh" class="icon-btn refresh-btn" title="Reload" aria-label="Reload"><i class="fas fa-sync-alt"></i></button>
         </div>
     </div>
@@ -93,21 +89,21 @@
         <div class="mcs-pager" id="mcsPager"></div>
     </section>
 
-    <!-- Files: the Excel report and the picture that goes to Slack -->
-    <div class="mcs-files">
-        <section class="auto-panel">
-            <header class="auto-panel-head"><span><i class="fas fa-file-excel"></i> Excel report</span></header>
-            <div class="auto-panel-body">
-                <p class="auto-muted" id="autoExcelMeta">–</p>
-                <a class="btn btn--primary" id="autoExcelBtn" href="/api/automations/meta-campaign-stock/report.xlsx" hidden><i class="fas fa-download"></i> Download Excel</a>
-                <p class="auto-hint">Tabs: Meta campaigns · Below the limit in campaign stores · All campaign store products.</p>
-            </div>
-        </section>
-        <section class="auto-panel">
-            <header class="auto-panel-head"><span><i class="fas fa-image"></i> Slack picture</span><span class="auto-muted" id="autoImageMeta"></span></header>
-            <div class="auto-panel-body" id="autoImageBox"><div class="auto-empty">Loading…</div></div>
-        </section>
-    </div>
+    <!-- Slack daily report: one compact card, like Incidents & Operations -->
+    <section class="mcs-card mcs-slack-card">
+        <div>
+            <div class="mcs-card-title"><i class="fab fa-slack"></i> Slack daily report</div>
+            <div class="mcs-slack-status" id="mcsSlackStatus">–</div>
+        </div>
+        <div class="mcs-slack-actions">
+            <button type="button" class="btn btn--secondary" id="mcsPreviewBtn" disabled><i class="fas fa-image"></i> Preview</button>
+            <a class="btn btn--secondary" id="autoExcelBtn" href="/api/automations/meta-campaign-stock/report.xlsx" hidden><i class="fas fa-file-excel"></i> Excel</a>
+            {% if not viewer %}
+            <button type="button" class="btn btn--secondary" id="autoRunDry" title="Builds everything again from MongoDB and Meta; sends nothing"><i class="fas fa-flask"></i> Test run</button>
+            <button type="button" class="btn btn--primary" id="autoRunSend" title="Posts the report to Slack now"><i class="fas fa-paper-plane"></i> Post now</button>
+            {% endif %}
+        </div>
+    </section>
 
     {% if not viewer %}
     <!-- Email to sellers: one email per seller, only their own store and products -->
@@ -141,6 +137,19 @@
         Runs every day at the time set in the <a href="/scheduler">Scheduler</a>. Only one run can happen at a time, so a button run and the daily run never overlap.
     </footer>
     {% endif %}
+</div>
+<!-- The picture that goes to Slack, shown only when asked for -->
+<div id="mcsModal" class="mcs-modal" hidden role="dialog" aria-modal="true" aria-labelledby="mcsModalTitle">
+    <div class="mcs-modal-box">
+        <div class="mcs-modal-head">
+            <span id="mcsModalTitle"><i class="fab fa-slack"></i> Slack picture preview</span>
+            <div class="mcs-modal-actions">
+                <a class="btn btn--secondary btn--sm" id="mcsModalOpen" href="#" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> Open in new tab</a>
+                <button type="button" class="icon-btn icon-btn--ghost" id="mcsModalClose" aria-label="Close preview"><i class="fas fa-times"></i></button>
+            </div>
+        </div>
+        <div class="mcs-modal-body"><img id="mcsModalImg" alt="The picture posted to Slack"></div>
+    </div>
 </div>
 <script type="module" src="{{ url_for('meta_campaign_stock.static', filename='meta-campaign-stock.js') }}"></script>
 </body>

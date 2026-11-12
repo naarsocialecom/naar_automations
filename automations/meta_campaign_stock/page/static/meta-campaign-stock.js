@@ -253,23 +253,45 @@ function setMailMode(mode) {
     saveMail({ seller_email_mode: mode });
 }
 
+// Slack daily report card: schedule, last post, Preview (pop-up) / Excel / Test run / Post now
+let imageSrc = null;
+function renderSlackCard(data) {
+    const runs = data.runs || [];
+    const lastPosted = runs.find(r => r.ok && !r.dryRun && r.posts?.length);
+    const viewer = !$('autoRunSend');
+    const schedule = data.next_run
+        ? `<i class="fas fa-clock"></i> Posts automatically every day at ${escapeHtml(data.run_time_label)}${viewer ? '' : ' · <a href="/scheduler">change</a>'}`
+        : `<i class="fas fa-pause"></i> Daily post is switched off${viewer ? '' : ' · <a href="/scheduler">Scheduler</a>'}`;
+    const posted = lastPosted ? ` <span class="mcs-sep">·</span> <i class="fas fa-check-circle mcs-ok"></i> Last posted ${when(lastPosted.finishedAt)}` : ' <span class="mcs-sep">·</span> Not posted yet';
+    $('mcsSlackStatus').innerHTML = schedule + posted;
+    imageSrc = data.image ? `${API}/image.png?v=${encodeURIComponent(data.image.updated_at)}` : null;
+    $('mcsPreviewBtn').disabled = !imageSrc;
+    $('mcsPreviewBtn').title = imageSrc ? `The picture posted to Slack · ${when(data.image.updated_at)}` : 'No picture yet. Press Test run.';
+    $('autoExcelBtn').hidden = !data.excel;
+    if (data.excel) $('autoExcelBtn').title = `${data.excel.name} · ${when(data.excel.updated_at)}`;
+}
+
+function openPreview() {
+    if (!imageSrc) return;
+    $('mcsModalImg').src = imageSrc;
+    $('mcsModalOpen').href = imageSrc;
+    $('mcsModal').hidden = false;
+    document.body.classList.add('mcs-modal-open');
+    $('mcsModalClose').focus();
+}
+function closePreview() {
+    $('mcsModal').hidden = true;
+    document.body.classList.remove('mcs-modal-open');
+    $('mcsPreviewBtn').focus();
+}
+
 function render(data) {
     TZ = data.timezone || TZ;
     $('autoSchedule').textContent = data.next_run ? `Daily · ${data.run_time_label}` : 'Schedule off';
     renderStrip(data);
     renderDashboard(data.dashboard);
 
-    // Slack picture: small preview, click for full size
-    if (data.image) {
-        const src = `${API}/image.png?v=${encodeURIComponent(data.image.updated_at)}`;
-        $('autoImageBox').innerHTML = `<a href="${src}" target="_blank" rel="noopener" title="Open full size"><img class="mcs-thumb" src="${src}" alt="The picture posted to Slack"></a>`;
-        $('autoImageMeta').textContent = when(data.image.updated_at);
-    } else {
-        $('autoImageBox').innerHTML = '<div class="auto-empty">No picture yet.</div>';
-        $('autoImageMeta').textContent = '';
-    }
-    $('autoExcelBtn').hidden = !data.excel;
-    $('autoExcelMeta').textContent = data.excel ? `${data.excel.name} · ${when(data.excel.updated_at)}` : 'No Excel file yet.';
+    renderSlackCard(data);
 
     if (!$('autoMailList')) return;     // view-only visitors don't see the seller emails
     const runs = data.runs || [];
@@ -377,6 +399,10 @@ async function load() {
 }
 
 $('autoRefresh').addEventListener('click', load);
+$('mcsPreviewBtn').addEventListener('click', openPreview);
+$('mcsModalClose').addEventListener('click', closePreview);
+$('mcsModal').addEventListener('click', e => { if (e.target === $('mcsModal')) closePreview(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('mcsModal').hidden) closePreview(); });
 $('autoRunDry')?.addEventListener('click', () => startRun('dry'));
 document.querySelectorAll('#mcsMailSwitch button').forEach(b => b.addEventListener('click', () => setMailMode(b.dataset.mode)));
 $('mcsTestTo')?.addEventListener('submit', e => { e.preventDefault(); saveMail({ seller_email_mode: 'test', test_to: $('mcsTestToInput').value }); });

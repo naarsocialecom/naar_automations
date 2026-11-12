@@ -244,10 +244,7 @@
 .mcs-pager:empty { display: none; }
 .mcs-pager span:last-child { display: flex; gap: 8px; }
 
-.mcs-files { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; margin-bottom: 16px; }
-.mcs-thumb { display: block; width: 100%; max-height: 220px; object-fit: cover; object-position: top; border-radius: 10px; border: 1px solid var(--border); }
 
-@media (max-width: 1100px) { .mcs-files { grid-template-columns: 1fr; } }
 @media (max-width: 640px) {
     .mcs-filters { flex-direction: column; width: 100%; }
     .mcs-filters input { width: 100%; }
@@ -283,3 +280,32 @@
 .mcs-test-result[hidden] { display: none; }
 .mcs-test-result.is-ok { background: var(--success-bg); color: var(--success-fg); }
 .mcs-test-result.is-fail { background: var(--danger-bg); color: var(--danger-fg); }
+
+/* Slack daily report card (same look as Incidents & Operations) */
+.mcs-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--shadow-xs);
+    padding: 16px 20px;
+}
+.mcs-slack-card { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.mcs-card-title { font-size: 15px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px; }
+.mcs-card-title i { color: var(--text-3); }
+.mcs-slack-status { margin-top: 4px; color: var(--text-3); font-size: 13px; }
+.mcs-slack-status i { margin-right: 4px; }
+.mcs-slack-status a { color: var(--accent); text-decoration: none; }
+.mcs-slack-status a:hover { text-decoration: underline; }
+.mcs-slack-status .mcs-ok { color: var(--success-fg); }
+.mcs-sep { margin: 0 4px; }
+.mcs-slack-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+/* Slack picture pop-up */
+body.mcs-modal-open { overflow: hidden; }
+.mcs-modal { position: fixed; inset: 0; z-index: 1000; background: var(--overlay); display: flex; align-items: center; justify-content: center; padding: 2.5vh 2.5vw; }
+.mcs-modal[hidden] { display: none; }
+.mcs-modal-box { width: 100%; max-width: 1400px; max-height: 100%; display: flex; flex-direction: column; overflow: hidden; background: var(--surface); border-radius: var(--r-xl); box-shadow: var(--shadow-lg); }
+.mcs-modal-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 56px; padding: 0 12px 0 20px; border-bottom: 1px solid var(--border); font-size: 16px; font-weight: 600; color: var(--text); }
+.mcs-modal-head > span i { color: var(--text-3); margin-right: 6px; }
+.mcs-modal-actions { display: flex; align-items: center; gap: 8px; }
+.mcs-modal-body { overflow: auto; background: var(--surface-2); padding: 16px; text-align: center; }
+.mcs-modal-body img { max-width: 100%; height: auto; border-radius: var(--r-md); border: 1px solid var(--border); }
+@media (max-width: 640px) { .mcs-slack-actions { width: 100%; } .mcs-slack-actions .btn { flex: 1; } }
+.mcs-slack-actions .btn { display: inline-flex; align-items: center; gap: 6px; height: 36px; margin: 0; box-sizing: border-box; }
