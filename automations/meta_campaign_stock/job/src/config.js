@@ -132,6 +132,13 @@ module.exports = {
         : null,
     };
   })(),
+  // The website (same .env): the Slack message links to this report's page there
+  site: {
+    url: (process.env.DASHBOARD_URL || "").replace(/\/$/, ""),
+    secret: process.env.SECRET_KEY || "",
+    loginOn: isSet("DASHBOARD_PASSWORD"),
+    viewDays: Number(process.env.VIEW_LINK_DAYS || 7),
+  },
   dryRun,
   deleteAfterSend: bool("DELETE_AFTER_SEND"),
 };

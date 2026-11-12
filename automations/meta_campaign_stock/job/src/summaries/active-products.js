@@ -175,5 +175,50 @@ module.exports = function buildSummary({ title, threshold, date, context = {} })
     },
   });
 
-  return { text, slackText, image, stats, whatsapp, sellerEmail };
+  // Everything the website's dashboard shows (saved as exports/dashboard.json by index.js)
+  const detailsById = new Map(meta.campaignRows.map((r) => [r.campaignId, r.details || {}]));
+  const storesById = new Map();
+  for (const r of meta.campaignRows.filter((x) => x.sellerId)) {
+    const st = storesById.get(r.sellerId) || { name: clean(r.shopName) || r.sellerId, products: 0, low: 0, out: 0, campaigns: [] };
+    st.products = Math.max(st.products, r.variants || r.activeProducts || 0);
+    st.low = Math.max(st.low, r.lowStockVariants || 0);
+    st.out = Math.max(st.out, r.outOfStockVariants || 0);
+    st.campaigns.push(clean(r.campaign));
+    storesById.set(r.sellerId, st);
+  }
+  const dashboard = {
+    date,
+    threshold,
+    meta: { connected: meta.connected, error: meta.error || null },
+    totals: {
+      campaigns: meta.connected ? campaigns.size : null,
+      matchedCampaigns: campaigns.size - unmatched.length,
+      unmatchedCampaigns: unmatched.length,
+      stores: storeCount,
+      checked: variantCount,
+      below: lowStock.length,
+      out: outOfStock,
+      low: lowStock.length - outOfStock,
+      healthy: Math.max(0, variantCount - lowStock.length),
+      spend7d: null,
+    },
+    campaigns: [...campaigns].map(([id, c]) => {
+      const d = detailsById.get(id) || {};
+      return { id, name: clean(c.name), stores: c.shops, products: c.products, below: c.lowStock, matched: c.shops.length > 0,
+        objective: d.objective || null, startTime: d.startTime || null, currency: d.currency || null,
+        dailyBudget: d.dailyBudget ?? null, lifetimeBudget: d.lifetimeBudget ?? null, insights: d.insights || null };
+    }).sort((a, b) => b.matched - a.matched || b.below - a.below || a.name.localeCompare(b.name)),
+    stores: [...storesById.values()].map((st) => ({ ...st, campaigns: [...new Set(st.campaigns)] }))
+      .sort((a, b) => b.low - a.low || a.name.localeCompare(b.name)),
+    products: lowStock.map((r) => ({ store: clean(r.shopName) || "Unknown shop", product: productName(r), stock: Math.max(0, r.availableQuantity) })),
+  };
+  const withSpend = dashboard.campaigns.filter((c) => c.insights);
+  if (withSpend.length) {
+    dashboard.totals.spend7d = withSpend.reduce((a, c) => a + c.insights.spend, 0);
+    dashboard.totals.currency = withSpend.find((c) => c.currency)?.currency || null;
+    dashboard.totals.clicks7d = withSpend.reduce((a, c) => a + c.insights.clicks, 0);
+    dashboard.totals.impressions7d = withSpend.reduce((a, c) => a + c.insights.impressions, 0);
+  }
+
+  return { text, slackText, image, stats, whatsapp, sellerEmail, dashboard };
 };

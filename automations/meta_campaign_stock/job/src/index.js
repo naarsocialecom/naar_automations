@@ -9,6 +9,7 @@ const { sendExport } = require("./mailer");
 const { sendToSlack } = require("./slack");
 const { writeSellerPdf } = require("./seller-pdf");
 const { sendSellerEmails } = require("./send-seller-emails");
+const crypto = require("crypto");
 
 const log = (...args) => console.log(`[${new Date().toISOString()}]`, ...args);
 
@@ -166,6 +167,12 @@ async function main() {
     log(`Seller email preview: ${sellerEmail.preview.sellers.length} email(s), ${sellerEmail.preview.withEmail} with an address (mode: ${config.sellerEmail.mode})`);
   }
 
+  // The website's dashboard data (every run, also test runs)
+  if (summary?.dashboard) {
+    fs.writeFileSync(path.join(config.export.dir, "dashboard.json"),
+      JSON.stringify({ generatedAt: new Date().toISOString(), ...summary.dashboard }, null, 2));
+  }
+
   const run = {
     ok: true,
     stats: summary?.stats || null,
@@ -182,6 +189,19 @@ async function main() {
     log("DRY_RUN=true, nothing sent");
     recordRun(run);
     return;
+  }
+
+  // Link to this report's page on the website. With the site login on, it is a read-only view
+  // link (same signature as web/auth.py view_link), so it opens without the password for a few days.
+  if (summary && config.site.url) {
+    const page = "/automations/meta-campaign-stock";
+    let href = `${config.site.url}${page}`;
+    if (config.site.loginOn && config.site.secret) {
+      const expires = Math.floor(Date.now() / 1000) + config.site.viewDays * 86400;
+      const sig = crypto.createHmac("sha256", config.site.secret).update(`view:${page}:${expires}`).digest("hex").slice(0, 32);
+      href += `?view=${expires}.${sig}`;
+    }
+    summary.slackText += `\n<${href}|Open the Meta Campaign Stock dashboard →>`;
   }
 
   const report = { ...result, title: query.title, summary, filePrefix: config.export.filePrefix };

@@ -21,6 +21,7 @@ from typing import Optional
 from flask import Blueprint, abort, jsonify, render_template, request, send_file
 
 from web import scheduler
+from web.auth import viewing_only
 from web.config import Config
 from web.shared.system import clean_env, find_node
 
@@ -36,6 +37,8 @@ RUN_LOG = 'dashboard-run.log'
 WHATSAPP_PREVIEW = 'whatsapp-preview.json'
 # Seller emails as the latest run built them (addresses masked; SELLER_EMAIL_MODE says if they are sent)
 EMAIL_PREVIEW = 'email-preview.json'
+# What the page's dashboard shows: campaigns, stores, low-stock products (written by every run)
+DASHBOARD_DATA = 'dashboard.json'
 # PDFs with a store's full list, attached when the list is too long for the message
 SELLER_PDFS = 'seller-pdfs'
 PDF_NAME = re.compile(r'^[A-Za-z0-9_-]{1,80}\.pdf$')
@@ -67,6 +70,13 @@ def _history() -> list:
     except (OSError, ValueError) as e:
         logger.warning(f"Could not read {file}: {e}")
         return []
+
+
+def _dashboard() -> Optional[dict]:
+    try:
+        return json.loads((Config.META_STOCK_EXPORT_DIR / DASHBOARD_DATA).read_text())
+    except (OSError, ValueError):
+        return None
 
 
 def _email_preview() -> Optional[dict]:
@@ -113,7 +123,7 @@ def _file_info(path: Optional[Path]) -> Optional[dict]:
 
 @automations_bp.route('/automations/meta-campaign-stock')
 def meta_stock_page():
-    return render_template('meta_campaign_stock.html', active_nav='meta-stock')
+    return render_template('meta_campaign_stock.html', active_nav='meta-stock', viewer=viewing_only())
 
 
 @automations_bp.route('/api/automations/meta-campaign-stock', methods=['GET'])
@@ -130,7 +140,10 @@ def meta_stock_status():
         'excel': _file_info(_latest_excel()),
         'running': _running_pid() is not None,
         'whatsapp': _whatsapp_preview(),
-        'seller_email': _email_preview(),
+        'dashboard': _dashboard(),
+        # Seller addresses (masked) and the email texts are for the team, not for view-link visitors
+        'seller_email': None if viewing_only() else _email_preview(),
+        'viewer': viewing_only(),
         'run_log': _log_tail(),
     })
 

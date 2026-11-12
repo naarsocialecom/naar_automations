@@ -3,30 +3,59 @@ const fs = require("fs");
 // Reads the ACTIVE campaigns (Ads Manager "Delivery: Active") of each ad account
 // from the Meta Marketing API. Read-only: it only sends GET requests, and the
 // token needs nothing more than ads_read.
-// Returns [{ id, name, account }].
+// Returns [{ id, name, account, objective, startTime, dailyBudget, lifetimeBudget, currency, insights }].
+// Budgets and spend are in the account currency; insights are the last 7 days (null when unavailable).
+async function metaGet(url, token, account) {
+  // Token in the header, not the URL, so it never shows up in an error or log
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(30000) });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok || body.error) throw new Error(`Meta API (${account}): ${body.error?.message || `HTTP ${res.status}`}`);
+  return body;
+}
+
 async function fetchActiveCampaigns({ token, accountIds, apiVersion }) {
+  const base = `https://graph.facebook.com/${apiVersion}`;
   const campaigns = [];
   for (const raw of accountIds) {
     const account = raw.startsWith("act_") ? raw : `act_${raw}`;
+    // Account currency (budgets come in its smallest unit, e.g. paise)
+    let currency = null;
+    try { currency = (await metaGet(`${base}/${account}?fields=currency`, token, account)).currency || null; } catch { /* optional */ }
     const params = new URLSearchParams({
-      fields: "id,name,effective_status",
+      fields: "id,name,effective_status,objective,start_time,daily_budget,lifetime_budget",
       effective_status: JSON.stringify(["ACTIVE"]),
       limit: "200",
     });
-    let url = `https://graph.facebook.com/${apiVersion}/${account}/campaigns?${params}`;
+    let url = `${base}/${account}/campaigns?${params}`;
+    const found = [];
     while (url) {
-      // Token in the header, not the URL, so it never shows up in an error or log
-      const res = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
-        signal: AbortSignal.timeout(30000),
-      });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok || body.error) {
-        throw new Error(`Meta API (${account}): ${body.error?.message || `HTTP ${res.status}`}`);
-      }
-      campaigns.push(...body.data.map((c) => ({ id: c.id, name: c.name, account })));
+      const body = await metaGet(url, token, account);
+      found.push(...body.data.map((c) => ({
+        id: c.id, name: c.name, account, currency,
+        objective: c.objective || null,
+        startTime: c.start_time || null,
+        dailyBudget: c.daily_budget != null ? Number(c.daily_budget) / 100 : null,
+        lifetimeBudget: c.lifetime_budget != null ? Number(c.lifetime_budget) / 100 : null,
+        insights: null,
+      })));
       url = body.paging?.next;
     }
+    // Last 7 days' results per campaign; skipped quietly if the token can't read insights
+    try {
+      const ip = new URLSearchParams({ level: "campaign", date_preset: "last_7d", limit: "500",
+        fields: "campaign_id,spend,impressions,clicks,reach" });
+      let iurl = `${base}/${account}/insights?${ip}`;
+      const byId = new Map(found.map((c) => [c.id, c]));
+      while (iurl) {
+        const body = await metaGet(iurl, token, account);
+        for (const r of body.data || []) {
+          const c = byId.get(r.campaign_id);
+          if (c) c.insights = { spend: Number(r.spend || 0), impressions: Number(r.impressions || 0), clicks: Number(r.clicks || 0), reach: Number(r.reach || 0) };
+        }
+        iurl = body.paging?.next;
+      }
+    } catch { /* insights are extra; the report works without them */ }
+    campaigns.push(...found);
   }
   return campaigns;
 }

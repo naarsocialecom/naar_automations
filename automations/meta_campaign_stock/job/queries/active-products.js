@@ -288,7 +288,9 @@ async function buildSheets({ db, collection, aggregate, meta }) {
     stockBySeller.set(r.sellerId, s);
   }
   const campaignRows = metaResult.campaigns.flatMap((c) => {
-    const base = { campaign: c.name, campaignId: c.id, account: c.account };
+    const base = { campaign: c.name, campaignId: c.id, account: c.account,
+      // For the dashboard only (the Excel sheet keeps its own columns)
+      details: { objective: c.objective, startTime: c.startTime, dailyBudget: c.dailyBudget, lifetimeBudget: c.lifetimeBudget, currency: c.currency, insights: c.insights } };
     if (!c.sellers.length) {
       // A mapping-file entry whose seller does not exist is called out, so it can be fixed
       const matchedBy = c.unresolved?.length

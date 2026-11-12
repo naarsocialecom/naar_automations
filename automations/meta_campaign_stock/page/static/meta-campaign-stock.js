@@ -1,6 +1,6 @@
-// Meta campaign stock report page: run history (run-history.json), next run, latest
-// picture and Excel file, plus "Test run" / "Send to Slack" buttons that start the job
-// in the background and follow its output until it finishes.
+// Meta Campaign Stock dashboard: campaigns, stores and low-stock products from the latest run
+// (dashboard.json), the Excel file and Slack picture, the seller emails, and "Test run" /
+// "Send to Slack" buttons that start the job in the background and follow its output.
 
 const API = '/api/automations/meta-campaign-stock';
 const $ = id => document.getElementById(id);
@@ -46,68 +46,134 @@ function result(run) {
 
 const chip = r => `<span class="auto-chip auto-chip--${r.cls}" title="${escapeHtml(r.tip)}"><i class="fas fa-${r.icon}"></i> ${r.label}</span>`;
 
+const PAGE_SIZE = 15;
+let products = [];
+let productPage = 1;
+const money = (n, cur) => n == null ? '–' : `${cur === 'INR' ? '₹' : cur ? cur + ' ' : ''}${Number(n).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
+const compact = n => n == null ? '–' : Intl.NumberFormat('en-IN', { notation: 'compact', maximumFractionDigits: 1 }).format(n);
+const OBJECTIVES = { OUTCOME_SALES: 'Sales', OUTCOME_TRAFFIC: 'Traffic', OUTCOME_AWARENESS: 'Awareness', OUTCOME_ENGAGEMENT: 'Engagement', OUTCOME_LEADS: 'Leads', OUTCOME_APP_PROMOTION: 'App promotion' };
+const objective = o => OBJECTIVES[o] || (o ? o.replace(/^OUTCOME_/, '').toLowerCase().replace(/^./, c => c.toUpperCase()) : '–');
+const since = iso => iso ? new Date(iso).toLocaleDateString('en-GB', { timeZone: TZ, day: 'numeric', month: 'short' }) : '–';
+
+function renderStrip(data) {
+    const runs = data.runs || [];
+    const last = runs[0];
+    const lastPosted = runs.find(r => r.ok && !r.dryRun && r.posts?.length);
+    lastPostedChannels = lastPosted ? lastPosted.posts.map(p => p.channel).join(', ') : '';
+    const d = data.dashboard;
+    const parts = [];
+    if (d) parts.push(`<span><i class="fas fa-database"></i> Data from <b>${when(d.generatedAt)}</b></span>`);
+    if (last) parts.push(`<span>Last run ${chip(result(last))}</span>`);
+    parts.push(data.next_run ? `<span><i class="fas fa-clock"></i> Next run <b>${when(data.next_run)}</b> · ${fromNow(data.next_run)}</span>`
+        : '<span><i class="fas fa-pause"></i> Daily run switched off</span>');
+    if (lastPosted) parts.push(`<span><i class="fab fa-slack"></i> Posted ${when(lastPosted.finishedAt)}</span>`);
+    $('mcsStrip').innerHTML = parts.join('<i class="mcs-dot"></i>');
+}
+
+function tile(icon, cls, value, label, note = '') {
+    return `<div class="mcs-tile mcs-tile--${cls}"><span class="mcs-tile-icon"><i class="fas fa-${icon}"></i></span>
+        <div><div class="mcs-tile-value">${value}</div><div class="mcs-tile-label">${label}</div>${note ? `<div class="mcs-tile-note">${note}</div>` : ''}</div></div>`;
+}
+
+function renderDashboard(d) {
+    if (!d) {
+        $('mcsTiles').innerHTML = '';
+        ['mcsBar', 'mcsLegend', 'mcsStores'].forEach(id => { $(id).innerHTML = ''; });
+        $('mcsCampaigns').innerHTML = '<tr><td class="auto-empty">No data yet. Run a test run to build the dashboard.</td></tr>';
+        $('mcsProducts').innerHTML = '';
+        return;
+    }
+    const t = d.totals;
+    $('mcsTiles').innerHTML = [
+        tile('bullhorn', 'blue', num(t.campaigns), 'Active campaigns', `${num(t.matchedCampaigns)} linked${t.unmatchedCampaigns ? ` · ${num(t.unmatchedCampaigns)} not linked` : ''}`),
+        tile('store', 'violet', num(t.stores), 'Stores in campaigns'),
+        tile('boxes', 'teal', num(t.checked), 'Products checked'),
+        tile('exclamation-triangle', 'amber', num(t.below), `Below ${d.threshold}`),
+        tile('ban', 'red', num(t.out), 'Out of stock'),
+        ...(t.spend7d != null ? [tile('rupee-sign', 'green', `<span title="${money(t.spend7d, t.currency)}">${t.currency === 'INR' ? '₹' : ''}${compact(t.spend7d)}</span>`, 'Spend · last 7 days', `${compact(t.clicks7d)} clicks`)] : []),
+    ].join('');
+    if (d.meta?.error) $('mcsTiles').insertAdjacentHTML('beforeend', `<div class="mcs-meta-error"><i class="fas fa-exclamation-circle"></i> Meta: ${escapeHtml(d.meta.error)}</div>`);
+
+    // Stock health bar: out / low / fine
+    const total = Math.max(1, t.checked);
+    const seg = [['out', 'Out of stock', t.out], ['low', `Low (1 to ${d.threshold - 1} left)`, t.low], ['ok', `Fine (${d.threshold}+)`, t.healthy]];
+    $('mcsBar').innerHTML = seg.filter(([, , n]) => n).map(([k, label, n]) =>
+        `<span class="mcs-bar-${k}" style="flex:${n}" title="${label}: ${num(n)}"></span>`).join('');
+    $('mcsLegend').innerHTML = seg.map(([k, label, n]) =>
+        `<span><i class="mcs-bar-${k}"></i>${label} <b>${num(n)}</b> <em>${Math.round(n / total * 100)}%</em></span>`).join('');
+    $('mcsHealthNote').textContent = `${num(t.checked)} products in ${num(t.stores)} stores`;
+
+    // Campaigns
+    const anyInsights = d.campaigns.some(c => c.insights);
+    $('mcsCampaignNote').textContent = anyInsights ? 'results: last 7 days' : '';
+    $('mcsCampaigns').innerHTML = `<thead><tr><th>Campaign</th><th>Objective</th><th>Since</th><th>Budget</th>
+        ${anyInsights ? '<th class="r">Spend</th><th class="r">Clicks</th>' : ''}<th>Stores</th><th class="r">Products</th><th class="r">Below ${d.threshold}</th></tr></thead>
+        <tbody>${d.campaigns.map(c => `<tr class="${c.matched ? '' : 'is-unlinked'}">
+            <td class="mcs-name" title="${escapeHtml(c.name)}">${escapeHtml(c.name)}</td>
+            <td>${escapeHtml(objective(c.objective))}</td>
+            <td class="mcs-nowrap">${since(c.startTime)}</td>
+            <td class="mcs-nowrap">${c.dailyBudget != null ? `${money(c.dailyBudget, c.currency)}/day` : c.lifetimeBudget != null ? `${money(c.lifetimeBudget, c.currency)} total` : '–'}</td>
+            ${anyInsights ? `<td class="r">${c.insights ? money(c.insights.spend, c.currency) : '–'}</td><td class="r">${c.insights ? num(c.insights.clicks) : '–'}</td>` : ''}
+            <td class="mcs-stores">${c.matched ? c.stores.map(s => `<span class="mcs-store-chip" title="${escapeHtml(s)}">${escapeHtml(s)}</span>`).join(' ') : '<span class="auto-muted">not linked to a store</span>'}</td>
+            <td class="r">${c.matched ? num(c.products) : '–'}</td>
+            <td class="r">${c.matched ? `<span class="mcs-below ${c.below ? 'is-low' : 'is-ok'}">${c.below ? num(c.below) : 'OK'}</span>` : '–'}</td>
+        </tr>`).join('')}</tbody>`;
+
+    // Stores
+    const maxLow = Math.max(1, ...d.stores.map(s => s.low));
+    $('mcsStores').innerHTML = d.stores.length ? d.stores.map(s => `<div class="mcs-store">
+        <div class="mcs-store-top"><b title="${escapeHtml(s.campaigns.join(', '))}">${escapeHtml(s.name)}</b><span>${num(s.low)} <em>of ${num(s.products)}</em></span></div>
+        <div class="mcs-store-track"><span class="mcs-bar-out" style="width:${s.out / maxLow * 100}%"></span><span class="mcs-bar-low" style="width:${(s.low - s.out) / maxLow * 100}%"></span></div>
+        <div class="mcs-store-note">${num(s.out)} out of stock · ${num(s.low - s.out)} low</div>
+    </div>`).join('') : '<div class="auto-empty">No campaign stores.</div>';
+
+    // Products (search, store filter, pages)
+    products = d.products;
+    const stores = [...new Set(products.map(p => p.store))].sort();
+    const sel = $('mcsStoreFilter');
+    const keep = sel.value;
+    sel.innerHTML = '<option value="">All stores</option>' + stores.map(s => `<option${s === keep ? ' selected' : ''}>${escapeHtml(s)}</option>`).join('');
+    renderProducts();
+}
+
+function renderProducts() {
+    const q = $('mcsSearch').value.trim().toLowerCase();
+    const store = $('mcsStoreFilter').value;
+    const list = products.filter(p => (!store || p.store === store) && (!q || p.product.toLowerCase().includes(q) || p.store.toLowerCase().includes(q)));
+    $('mcsProductCount').textContent = num(list.length);
+    const pages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+    productPage = Math.min(productPage, pages);
+    const rows = list.slice((productPage - 1) * PAGE_SIZE, productPage * PAGE_SIZE);
+    $('mcsProducts').innerHTML = `<thead><tr><th>Store</th><th>Product</th><th class="r">Stock</th></tr></thead><tbody>${rows.length
+        ? rows.map(p => `<tr><td class="mcs-nowrap">${escapeHtml(p.store)}</td><td>${escapeHtml(p.product)}</td>
+            <td class="r"><span class="mcs-stock ${p.stock <= 0 ? 'is-out' : 'is-low'}">${p.stock <= 0 ? 'Out of stock' : `${p.stock} left`}</span></td></tr>`).join('')
+        : '<tr><td colspan="3" class="auto-empty">No products match.</td></tr>'}</tbody>`;
+    $('mcsPager').innerHTML = pages > 1 ? `<span>Showing ${(productPage - 1) * PAGE_SIZE + 1}–${Math.min(productPage * PAGE_SIZE, list.length)} of ${num(list.length)}</span>
+        <span><button class="btn btn--secondary btn--sm" data-p="${productPage - 1}" ${productPage === 1 ? 'disabled' : ''}>Previous</button>
+        <button class="btn btn--secondary btn--sm" data-p="${productPage + 1}" ${productPage === pages ? 'disabled' : ''}>Next</button></span>` : '';
+    $('mcsPager').querySelectorAll('button[data-p]').forEach(b => b.addEventListener('click', () => { productPage = Number(b.dataset.p); renderProducts(); }));
+}
+
 function render(data) {
     TZ = data.timezone || TZ;
     $('autoSchedule').textContent = data.next_run ? `Daily · ${data.run_time_label}` : 'Schedule off';
-    const runs = data.runs || [];
-    const last = runs[0];
-    // Real (non-test) runs say where it was posted; a test run in between doesn't change that
-    const lastPosted = runs.find(r => r.ok && !r.dryRun && r.posts?.length);
+    renderStrip(data);
+    renderDashboard(data.dashboard);
 
-    // Last run
-    if (last) {
-        const r = result(last);
-        $('autoLastRun').textContent = when(last.finishedAt || last.startedAt);
-        $('autoLastRunNote').innerHTML = chip(r) + (r.cls === 'fail' ? `<div class="auto-fail">${escapeHtml(last.error)}</div>` : '')
-            + (last.metaError ? `<div class="auto-fail">Meta: ${escapeHtml(last.metaError)}</div>` : '');
-    } else {
-        $('autoLastRun').textContent = 'Not run yet';
-        $('autoLastRunNote').textContent = 'The first run will show here.';
-    }
-
-    // Next run
-    $('autoNextRun').textContent = data.next_run ? when(data.next_run) : 'Off';
-    $('autoNextRunNote').innerHTML = data.next_run ? `${fromNow(data.next_run)} · <a href="/scheduler">change</a>` : 'Switched off on the <a href="/scheduler">Scheduler</a> page';
-
-    // Posted to
-    lastPostedChannels = lastPosted ? lastPosted.posts.map(p => p.channel).join(', ') : '';
-    if (lastPosted) {
-        const channels = lastPosted.posts.map(p => p.channel);
-        $('autoPosted').textContent = channels.join(', ');
-        const deleted = lastPosted.posts.reduce((a, p) => a + (p.deleted || 0), 0);
-        const warning = lastPosted.posts.find(p => p.warning)?.warning;
-        $('autoPostedNote').textContent = warning ? `Warning: ${warning}`
-            : `${when(lastPosted.finishedAt)} · ${deleted} older post${deleted === 1 ? '' : 's'} removed`;
-    } else {
-        $('autoPosted').textContent = '–';
-        $('autoPostedNote').textContent = 'No Slack post yet';
-    }
-
-    // Latest numbers (from the newest successful run)
-    const s = runs.find(r => r.ok && r.stats)?.stats;
-    $('autoStats').innerHTML = s ? [
-        ['Active campaigns', s.campaigns, ''],
-        ['Stores matched', s.stores, ''],
-        [`Below ${s.threshold}`, s.belowThreshold, 'warn'],
-        ['Out of stock', s.outOfStock, 'crit'],
-    ].map(([label, n, cls]) => `<div class="auto-stat auto-stat--${cls}"><b>${num(n)}</b><span>${label}</span></div>`).join('')
-        : '<span class="auto-muted">No numbers yet</span>';
-
-    // Picture
+    // Slack picture: small preview, click for full size
     if (data.image) {
         const src = `${API}/image.png?v=${encodeURIComponent(data.image.updated_at)}`;
-        $('autoImageBox').innerHTML = `<a href="${src}" target="_blank" rel="noopener" title="Open full size">
-            <img class="auto-image" src="${src}" alt="Latest Meta campaign stock report"></a>`;
-        $('autoImageMeta').textContent = `Created ${when(data.image.updated_at)}`;
+        $('autoImageBox').innerHTML = `<a href="${src}" target="_blank" rel="noopener" title="Open full size"><img class="mcs-thumb" src="${src}" alt="The picture posted to Slack"></a>`;
+        $('autoImageMeta').textContent = when(data.image.updated_at);
     } else {
-        $('autoImageBox').innerHTML = '<div class="auto-empty">No report picture yet.</div>';
+        $('autoImageBox').innerHTML = '<div class="auto-empty">No picture yet.</div>';
         $('autoImageMeta').textContent = '';
     }
-
-    // Excel
     $('autoExcelBtn').hidden = !data.excel;
     $('autoExcelMeta').textContent = data.excel ? `${data.excel.name} · ${when(data.excel.updated_at)}` : 'No Excel file yet.';
 
+    if (!$('autoMailList')) return;     // view-only visitors don't see the seller emails
+    const runs = data.runs || [];
     // Seller emails: one per campaign store, click to see the email exactly as the seller gets it
     const mail = data.seller_email;
     const MODES = {
@@ -148,22 +214,17 @@ function render(data) {
         $('autoMailList').innerHTML = '';
     }
 
-    // History
-    $('autoRuns').innerHTML = runs.length ? runs.slice(0, 10).map(run => {
-        const st = run.stats || {};
-        const by = run.trigger === 'dashboard' ? '<span class="auto-by" title="Started from this page">button</span>' : '';
-        return `<tr><td>${when(run.finishedAt || run.startedAt)} ${by}</td><td>${chip(result(run))}</td>
-            <td>${num(st.campaigns)}</td><td>${num(st.belowThreshold)}</td><td>${num(st.outOfStock)}</td></tr>`;
-    }).join('') : '<tr><td colspan="5" class="auto-empty">No runs yet.</td></tr>';
 }
 
 // Run panel: buttons off while a run is going; its output is shown live
 function renderRun(data) {
+    if (!$('autoRunDry')) return;          // view-only: no run buttons
     const running = !!data.running;
     $('autoRunDry').disabled = running;
     $('autoRunSend').disabled = running;
     const log = data.run_log;
-    $('autoRunStatus').hidden = !running && !log;
+    const recent = log && (Date.now() - new Date(log.updated_at)) < 15 * 60 * 1000;
+    $('autoRunStatus').hidden = !running && !recent;
     // Output open while running; folded away once it's done
     if (running) $('autoRunOutput').open = true;
     else if (wasRunning) $('autoRunOutput').open = false;
@@ -225,6 +286,8 @@ async function load() {
 }
 
 $('autoRefresh').addEventListener('click', load);
-$('autoRunDry').addEventListener('click', () => startRun('dry'));
-$('autoRunSend').addEventListener('click', () => startRun('send'));
+$('autoRunDry')?.addEventListener('click', () => startRun('dry'));
+$('autoRunSend')?.addEventListener('click', () => startRun('send'));
+$('mcsSearch').addEventListener('input', () => { productPage = 1; renderProducts(); });
+$('mcsStoreFilter').addEventListener('change', () => { productPage = 1; renderProducts(); });
 load();

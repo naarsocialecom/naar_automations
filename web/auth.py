@@ -27,7 +27,12 @@ auth_bp = Blueprint('auth', __name__)
 INTERNAL_HEADER = 'X-Naar-Internal'
 OPEN_PATHS = {'/login', '/logout', '/healthz'}
 # What a view link may open, per page: the page itself and the GET API it loads its data from
-VIEW_SCOPES = {'/ndo': ('/ndo', '/api/ndo/report')}
+VIEW_SCOPES = {
+    '/ndo': ('/ndo', '/api/ndo/report'),
+    '/automations/meta-campaign-stock': ('/automations/meta-campaign-stock', '/api/automations/meta-campaign-stock',
+                                         '/api/automations/meta-campaign-stock/image.png',
+                                         '/api/automations/meta-campaign-stock/report.xlsx'),
+}
 
 
 def internal_token() -> str:

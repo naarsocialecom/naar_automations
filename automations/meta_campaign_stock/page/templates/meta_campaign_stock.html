@@ -11,104 +11,105 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/app-shell.css') }}">
     <link rel="stylesheet" href="{{ url_for('meta_campaign_stock.static', filename='meta-campaign-stock.css') }}">
 </head>
-<body class="has-sidebar">
-{% include 'partials/sidebar.html' %}
+{# View-link visitors (Slack link, no password) get the dashboard only: no sidebar, no buttons, no seller emails #}
+<body{% if not viewer %} class="has-sidebar"{% endif %}>
+{% if not viewer %}{% include 'partials/sidebar.html' %}{% endif %}
 <div class="dashboard-container">
+{% if viewer %}
+<div class="mcs-viewer-note"><i class="fas fa-eye"></i> View-only link from Slack · <a href="/login?next=/automations/meta-campaign-stock">Sign in</a> for the other pages and actions</div>
+{% endif %}
 
     <div class="header">
         <div class="logo-area">
+            {% if viewer %}<img src="https://gargashjirabackup.blob.core.windows.net/logos/naar/Naar%20logo.png" alt="Naar" class="logo-img">{% endif %}
             <div class="logo-text">
                 <h1>Meta Campaign Stock</h1>
-                <p class="page-subtitle">Active Meta campaigns, their stores, and every product below the stock limit, posted to Slack once a day.</p>
+                <p class="page-subtitle">Active Meta campaigns, the stores they promote, and every product running low.</p>
             </div>
         </div>
         <div class="header-right">
             <div class="badge-sprint"><i class="fas fa-clock"></i> <span id="autoSchedule">Daily</span></div>
-            <button id="autoRefresh" class="icon-btn refresh-btn" title="Reload status" aria-label="Reload status"><i class="fas fa-sync-alt"></i></button>
+            {% if not viewer %}
+            <button type="button" class="btn btn--secondary" id="autoRunDry" title="Builds everything again and sends nothing"><i class="fas fa-flask"></i> Test run</button>
+            <button type="button" class="btn btn--primary" id="autoRunSend" title="Posts the report to Slack now"><i class="fab fa-slack"></i> Send to Slack</button>
+            {% endif %}
+            <button id="autoRefresh" class="icon-btn refresh-btn" title="Reload" aria-label="Reload"><i class="fas fa-sync-alt"></i></button>
         </div>
     </div>
 
     <div id="autoError" class="banner auto-error" role="alert" hidden></div>
 
-    <!-- Run now -->
-    <section class="auto-run">
-        <div class="auto-run-text">
-            <div class="auto-run-title"><i class="fas fa-play-circle"></i> Run now</div>
-            <p>A <b>test run</b> builds the picture and Excel file and sends nothing. <b>Send to Slack</b> posts them to the
-                report's Slack channel and removes the previous report post. Takes about a minute.</p>
-        </div>
-        <div class="auto-run-actions">
-            <button type="button" class="btn btn--secondary auto-btn auto-btn--ghost" id="autoRunDry"><i class="fas fa-flask"></i> Test run</button>
-            <button type="button" class="btn btn--primary auto-btn" id="autoRunSend"><i class="fab fa-slack"></i> Send to Slack</button>
-        </div>
-        <div class="auto-run-status" id="autoRunStatus" hidden>
-            <div class="auto-run-state" id="autoRunState"></div>
-            <details class="auto-run-output" id="autoRunOutput">
-                <summary>Show output</summary>
-                <pre class="auto-run-log" id="autoRunLog"></pre>
-            </details>
+    {% if not viewer %}
+    <!-- Shown while a button run is going (and its result afterwards) -->
+    <section class="mcs-run" id="autoRunStatus" hidden>
+        <div class="auto-run-state" id="autoRunState"></div>
+        <details class="auto-run-output" id="autoRunOutput">
+            <summary>Show output</summary>
+            <pre class="auto-run-log" id="autoRunLog"></pre>
+        </details>
+    </section>
+    {% endif %}
+
+    <!-- One line: when the data is from, last / next run, where it was posted -->
+    <div class="mcs-strip" id="mcsStrip">Loading…</div>
+
+    <!-- Headline numbers -->
+    <div class="mcs-tiles" id="mcsTiles"></div>
+
+    <!-- Stock health of every product in the campaign stores -->
+    <section class="auto-panel mcs-health">
+        <header class="auto-panel-head"><span><i class="fas fa-heartbeat"></i> Stock in campaign stores</span><span class="auto-muted" id="mcsHealthNote"></span></header>
+        <div class="auto-panel-body">
+            <div class="mcs-bar" id="mcsBar"></div>
+            <div class="mcs-legend" id="mcsLegend"></div>
         </div>
     </section>
 
-    <!-- Status cards -->
-    <div class="auto-cards">
-        <div class="auto-card">
-            <div class="auto-card-label">Last run</div>
-            <div class="auto-card-value" id="autoLastRun">–</div>
-            <div class="auto-card-note" id="autoLastRunNote"></div>
-        </div>
-        <div class="auto-card">
-            <div class="auto-card-label">Next run</div>
-            <div class="auto-card-value" id="autoNextRun">–</div>
-            <div class="auto-card-note" id="autoNextRunNote"></div>
-        </div>
-        <div class="auto-card">
-            <div class="auto-card-label">Posted to Slack</div>
-            <div class="auto-card-value" id="autoPosted">–</div>
-            <div class="auto-card-note" id="autoPostedNote"></div>
-        </div>
-        <div class="auto-card">
-            <div class="auto-card-label">Latest numbers</div>
-            <div class="auto-stats" id="autoStats">–</div>
-        </div>
-    </div>
-
-    <div class="auto-grid">
-        <!-- Latest dashboard picture (what Slack received) -->
+    <div class="mcs-grid">
         <section class="auto-panel">
-            <header class="auto-panel-head">
-                <span><i class="fas fa-image"></i> Latest report</span>
-                <span class="auto-muted" id="autoImageMeta"></span>
-            </header>
-            <div class="auto-panel-body" id="autoImageBox">
-                <div class="auto-empty">Loading…</div>
+            <header class="auto-panel-head"><span><i class="fab fa-facebook"></i> Active campaigns</span><span class="auto-muted" id="mcsCampaignNote"></span></header>
+            <div class="auto-panel-body auto-panel-body--flush mcs-scroll">
+                <table class="mcs-table" id="mcsCampaigns"></table>
             </div>
         </section>
-
-        <div class="auto-side">
-            <section class="auto-panel">
-                <header class="auto-panel-head"><span><i class="fas fa-file-excel"></i> Excel file</span></header>
-                <div class="auto-panel-body">
-                    <p class="auto-muted" id="autoExcelMeta">–</p>
-                    <a class="btn btn--primary auto-btn" id="autoExcelBtn" href="/api/automations/meta-campaign-stock/report.xlsx" hidden>
-                        <i class="fas fa-download"></i> Download Excel
-                    </a>
-                    <p class="auto-hint">Tabs: Meta campaigns · Below the limit in campaign stores · All campaign store products.</p>
-                </div>
-            </section>
-
-            <section class="auto-panel">
-                <header class="auto-panel-head"><span><i class="fas fa-history"></i> Recent runs</span></header>
-                <div class="auto-panel-body auto-panel-body--flush">
-                    <table class="auto-runs">
-                        <thead><tr><th>When</th><th>Result</th><th title="Active Meta campaigns">Campaigns</th><th title="Products below the stock limit">Below</th><th title="Out of stock">Out</th></tr></thead>
-                        <tbody id="autoRuns"><tr><td colspan="5" class="auto-empty">Loading…</td></tr></tbody>
-                    </table>
-                </div>
-            </section>
-        </div>
+        <section class="auto-panel">
+            <header class="auto-panel-head"><span><i class="fas fa-store"></i> Stores</span><span class="auto-muted">most low stock first</span></header>
+            <div class="auto-panel-body" id="mcsStores"></div>
+        </section>
     </div>
 
+    <!-- Every product below the limit, lowest first -->
+    <section class="auto-panel mcs-products">
+        <header class="auto-panel-head">
+            <span><i class="fas fa-box-open"></i> Low-stock products <span class="mcs-count" id="mcsProductCount">0</span></span>
+            <span class="mcs-filters">
+                <select id="mcsStoreFilter" aria-label="Filter by store"><option value="">All stores</option></select>
+                <input type="search" id="mcsSearch" placeholder="Search products…" aria-label="Search products">
+            </span>
+        </header>
+        <div class="auto-panel-body auto-panel-body--flush mcs-scroll">
+            <table class="mcs-table" id="mcsProducts"></table>
+        </div>
+        <div class="mcs-pager" id="mcsPager"></div>
+    </section>
+
+    <!-- Files: the Excel report and the picture that goes to Slack -->
+    <div class="mcs-files">
+        <section class="auto-panel">
+            <header class="auto-panel-head"><span><i class="fas fa-file-excel"></i> Excel report</span></header>
+            <div class="auto-panel-body">
+                <p class="auto-muted" id="autoExcelMeta">–</p>
+                <a class="btn btn--primary" id="autoExcelBtn" href="/api/automations/meta-campaign-stock/report.xlsx" hidden><i class="fas fa-download"></i> Download Excel</a>
+                <p class="auto-hint">Tabs: Meta campaigns · Below the limit in campaign stores · All campaign store products.</p>
+            </div>
+        </section>
+        <section class="auto-panel">
+            <header class="auto-panel-head"><span><i class="fas fa-image"></i> Slack picture</span><span class="auto-muted" id="autoImageMeta"></span></header>
+            <div class="auto-panel-body" id="autoImageBox"><div class="auto-empty">Loading…</div></div>
+        </section>
+    </div>
+
+    {% if not viewer %}
     <!-- Email to sellers: one email per seller, only their own store and products -->
     <section class="auto-panel auto-wa auto-mail">
         <header class="auto-panel-head">
@@ -123,8 +124,9 @@
 
     <footer class="auto-footer">
         <i class="fas fa-info-circle"></i>
-        Runs on the server every day at the time set in the <a href="/scheduler">Scheduler</a>. Only one run can happen at a time, so a button run and the daily run never overlap.
+        Runs every day at the time set in the <a href="/scheduler">Scheduler</a>. Only one run can happen at a time, so a button run and the daily run never overlap.
     </footer>
+    {% endif %}
 </div>
 <script type="module" src="{{ url_for('meta_campaign_stock.static', filename='meta-campaign-stock.js') }}"></script>
 </body>

@@ -5,7 +5,7 @@ Page: `/automations/meta-campaign-stock` · Branch prefix: `automation/meta-camp
 | Folder | What's in it |
 |---|---|
 | `job/` | The Node.js job (own `.env`, `package.json`); its files and run history go to `job/exports/` |
-| `page/` | Its page on the website: status, latest picture and Excel, **Test run** / **Send to Slack**, WhatsApp preview |
+| `page/` | Its dashboard on the website: campaigns (objective, budget, last-7-day spend and clicks), stores, low-stock products, Excel and Slack picture, seller emails, **Test run** / **Send to Slack**. The Slack message links to it (read-only, no password, for `VIEW_LINK_DAYS`) |
 | `jobs.py` | Its scheduled job (default 11:00 IST; change it on Scheduler) |
 
 The job runs once a day:
