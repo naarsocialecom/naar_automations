@@ -11,7 +11,7 @@ missing=0
 need() {   # need <file> <NAME>...: each NAME must have a value
   local file=$1; shift
   for name in "$@"; do
-    if ! grep -qE "^${name}=.+" "$file" || grep -qE "^${name}=(https://your-site|https://dashboard.example.com)" "$file"; then
+    if ! grep -qE "^${name}=.+" "$file" || grep -qE "^${name}=(https://your-site|https://dashboard.example.com|http://localhost)" "$file"; then
       echo "   missing in ${file#$ROOT/}: $name"; missing=1
     fi
   done

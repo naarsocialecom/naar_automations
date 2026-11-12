@@ -31,21 +31,23 @@ bash /root/naar_automations/deploy/install.sh
 
 ## 3. Fill in the two settings files
 
-Open the old file next to the new one and copy the values across:
-```bash
-cat /root/old-settings/website.env         # look only, don't share
-nano /root/naar_automations/web/.env
-```
-`web/.env`: JIRA_* (domain, email, API token, board ID, project key), SLACK_BOT_TOKEN, SLACK_CHANNEL_ID,
-DASHBOARD_PASSWORD (the team password), DASHBOARD_URL and CORS_ORIGINS = https://automations.naar.io
-(or https://sprint-status.naar.io until the new domain works). SECRET_KEY is already filled in.
+Both files are plain `KEY=value` lines (templates: `web/.env.example`, `automations/meta_campaign_stock/job/.env.example`).
+A `# KEY=value` line under a setting is its server value. On the server use those values:
 
 ```bash
-cat /root/old-settings/meta.env
+nano /root/naar_automations/web/.env
 nano /root/naar_automations/automations/meta_campaign_stock/job/.env
 ```
-Meta `.env`: MONGO_URI, MONGO_DB_NAME, SLACK_BOT_TOKEN, SLACK_CHANNEL_ID, META_ACCESS_TOKEN,
-META_AD_ACCOUNT_ID (and the other values from the old file). Keep `EXPORT_DIR=./exports` and `DRY_RUN=false`.
+Server values: `APP_ENV=production`, `DEBUG=false`, `DASHBOARD_PASSWORD=<team password>`,
+`DASHBOARD_URL` / `CORS_ORIGINS=https://automations.naar.io`, `SNAPSHOT_BROWSER_CHANNEL=` (empty),
+`DRY_RUN=false`, `SELLER_EMAIL_MODE=off` / `test` / `on`.
+
+An older `.env` can be brought to this layout (values kept, unused keys removed, backup `.env.bak`):
+```bash
+cd /root/naar_automations
+python3 deploy/tidy_env.py web/.env --prod
+python3 deploy/tidy_env.py automations/meta_campaign_stock/job/.env --prod
+```
 
 Test the Meta job without sending: `cd /root/naar_automations/automations/meta_campaign_stock/job && npm run export:dry`
 

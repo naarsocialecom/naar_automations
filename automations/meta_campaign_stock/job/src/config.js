@@ -64,7 +64,7 @@ function loadQuery(name) {
 
 const dryRun = bool("DRY_RUN");
 const format = oneOf("EXPORT_FORMAT", "xlsx", ["csv", "xlsx", "both"]);
-const delivery = oneOf("DELIVERY", "email", ["email", "slack", "both"]);
+const delivery = oneOf("DELIVERY", "slack", ["email", "slack", "both"]);
 const queryName = process.env.QUERY || "active-products";
 
 // Email/Slack settings are only required when we actually send that way
@@ -81,7 +81,7 @@ module.exports = {
   export: {
     format,
     dir: path.resolve(__dirname, "..", process.env.EXPORT_DIR || "exports"),
-    filePrefix: process.env.EXPORT_FILE_PREFIX || queryName,
+    filePrefix: process.env.EXPORT_FILE_PREFIX || "product-export",
   },
   mail: sendEmail
     ? {
@@ -101,7 +101,8 @@ module.exports = {
         token: required("SLACK_BOT_TOKEN"),
         channelIds: list("SLACK_CHANNEL_ID"),
         userIds: list("SLACK_USER_ID"),
-        deletePrevious: bool("SLACK_DELETE_PREVIOUS"),
+        // Yesterday's report post is removed unless SLACK_DELETE_PREVIOUS=false
+        deletePrevious: process.env.SLACK_DELETE_PREVIOUS ? bool("SLACK_DELETE_PREVIOUS") : true,
       }
     : null,
   // Meta Marketing API (read-only); off until META_ACCESS_TOKEN is filled in
