@@ -63,3 +63,8 @@ Work on a branch named after it (see `docs/BRANCHING.md`).
 ## Server
 
 Fresh install: `deploy/INSTALL.md` (`deploy/install.sh`, then `deploy/start.sh`). Details: `deploy/SERVER_SETUP.md`.
+
+**Update the live site** (after pushing to `main`): `bash /root/naar_automations/deploy/deploy.sh`
+— pulls, updates packages only if their lists changed, restarts pm2, checks the site answers.
+`--force` restarts without new code; `--rollback` goes back to the version before the last deploy.
+It stops without changing anything if files were edited by hand on the server. History: `logs/deploy.log`.

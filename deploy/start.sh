@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Start (or restart) Naar Automations and switch on its scheduler, as root:
-#   bash /root/naar_automations/deploy/start.sh
+#   bash /root/naar_automations/deploy/start.sh      (first start; for updates use deploy/deploy.sh)
 # Checks that the required settings are filled in (prints names only, never values).
 set -euo pipefail
 ROOT=/root/naar_automations
