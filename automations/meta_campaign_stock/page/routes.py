@@ -117,6 +117,30 @@ def _email_preview() -> Optional[dict]:
         return None
 
 
+SEND_LOG = 'seller-email-log.json'
+SELLER_ID = re.compile(r'^[A-Za-z0-9_-]{1,64}$')
+
+
+def _last_sent() -> dict:
+    """Per seller, when their email last went out (daily run or by hand), from the job's send log.
+    Times only: the log never holds addresses."""
+    try:
+        book = json.loads((Config.META_STOCK_EXPORT_DIR / SEND_LOG).read_text())
+    except (OSError, ValueError):
+        return {}
+    out = {}
+    for day in sorted(book, reverse=True)[:7]:
+        for seller, entry in (book.get(day) or {}).items():
+            if seller in out or not isinstance(entry, dict):
+                continue
+            sends = [{'at': entry['on'], 'how': 'daily'}] if entry.get('on') else []
+            sends += [{'at': m['at'], 'how': 'manual'} for m in entry.get('manual') or []
+                      if isinstance(m, dict) and m.get('target') == 'seller' and not m.get('dry')]
+            if sends:
+                out[seller] = max(sends, key=lambda x: x['at'])
+    return out
+
+
 def _whatsapp_preview() -> Optional[dict]:
     """Latest WhatsApp preview from the job (numbers already masked; nothing has been sent)."""
     try:
@@ -174,6 +198,7 @@ def meta_stock_status():
         'dashboard': _dashboard(),
         # Seller addresses (masked) and the email texts are for the team, not for view-link visitors
         'seller_email': None if viewing_only() else _email_preview(),
+        'seller_last_sent': None if viewing_only() else _last_sent(),
         'settings': None if viewing_only() else {**_settings(), 'email': _email_setup()},
         'viewer': viewing_only(),
         'run_log': _log_tail(),
@@ -238,6 +263,40 @@ def meta_stock_email_test():
         return jsonify({'error': 'Sending failed (see the website log).'}), 500
     logger.info(f"Meta Campaign Stock: test emails sent now: {result.get('sent', 0)} sent, {result.get('failed', 0)} failed")
     return jsonify(result), (200 if result.get('ok') else 502)
+
+
+@automations_bp.route('/api/automations/meta-campaign-stock/seller-email/<seller_id>', methods=['POST'])
+def meta_stock_seller_email(seller_id):
+    """One seller's email from today's preview, right now: to the seller, or to the test address."""
+    if request.headers.get('X-Naar-Request') != '1':
+        return jsonify({'error': 'Missing X-Naar-Request header'}), 403
+    if viewing_only():
+        abort(403)
+    target = (request.get_json(silent=True) or {}).get('target')
+    if target not in ('seller', 'test'):
+        return jsonify({'error': "target must be 'seller' or 'test'"}), 400
+    if not SELLER_ID.match(seller_id):
+        return jsonify({'error': 'Unknown seller'}), 400
+    if _running_pid():
+        return jsonify({'error': 'A run is in progress. Try again when it has finished.'}), 409
+    node = find_node(Config.NODE_BIN)
+    if not node:
+        return jsonify({'error': 'Node.js was not found on the server (set NODE_BIN in .env).'}), 500
+    try:
+        done = subprocess.run([node, 'scripts/send-one-now.js', '--seller', seller_id, '--target', target],
+                              cwd=Config.META_STOCK_DIR, env=clean_env(), capture_output=True, text=True, timeout=60)
+    except subprocess.TimeoutExpired:
+        return jsonify({'error': 'Sending took too long; check the send log before trying again.'}), 504
+    try:
+        result = json.loads(done.stdout.strip().splitlines()[-1])
+    except (ValueError, IndexError):
+        logger.error(f"send-one-now: {done.stderr[-500:]}")
+        return jsonify({'error': 'Sending failed (see the website log).'}), 500
+    if result.get('ok'):
+        logger.info(f"Meta Campaign Stock: {result.get('store')} email sent by hand ({target})")
+    else:
+        logger.info(f"Meta Campaign Stock: {target} email for {seller_id} not sent: {result.get('error')}")
+    return jsonify(result), (200 if result.get('ok') else 400)
 
 
 @automations_bp.route('/api/automations/meta-campaign-stock/run', methods=['POST'])

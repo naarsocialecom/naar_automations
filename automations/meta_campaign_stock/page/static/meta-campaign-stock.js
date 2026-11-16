@@ -300,19 +300,22 @@ function render(data) {
         $('autoMailMeta').textContent = `${mail.sellers.length} seller${mail.sellers.length === 1 ? '' : 's'} · `
             + `${mail.withEmail} with an email address${missing ? ` · ${missing} without` : ''} · built ${when(mail.generatedAt)}`
             + (lastMail ? ` · last send: ${lastMail.sent} sent, ${lastMail.failed} failed` : '')
-            + '. Click a seller to see their email.';
+            + '. Click a seller to see their email or send it again by hand.';
         $('autoMailList').innerHTML = mail.sellers.map((s, i) => `
             <details class="auto-wa-item" data-i="${i}">
                 <summary>
                     <b>${escapeHtml(s.storeName)}</b>
                     <span class="auto-wa-phone${s.email ? '' : ' is-missing'}">${s.email ? `<i class="fas fa-envelope"></i> ${escapeHtml(s.email)}` : escapeHtml(s.problem)}</span>
                     <span class="auto-wa-count">${s.productCount} low-stock product${s.productCount === 1 ? '' : 's'}</span>
+                    ${lastSentLabel(data.seller_last_sent?.[s.sellerId])}
                 </summary>
+                ${sendRow(s, i, data)}
                 <div class="auto-mail-subject"><span>Subject</span> ${escapeHtml(s.subject)}</div>
                 ${s.attachment ? `<div class="auto-mail-attach"><i class="fas fa-file-pdf"></i> ${escapeHtml(s.attachment.fileName)} · ${s.attachment.productCount} products
                     <a href="${API}/seller-pdf/${encodeURIComponent(s.attachment.file)}" target="_blank" rel="noopener">Open PDF</a></div>` : ''}
                 <iframe class="auto-mail-frame" sandbox title="Email to ${escapeHtml(s.storeName)}"></iframe>
             </details>`).join('');
+        document.querySelectorAll('#autoMailList .mcs-send-btn').forEach(b => b.addEventListener('click', () => sendOne(b, mail.sellers[Number(b.dataset.i)])));
         // The email HTML goes into a sandboxed frame (no scripts) when a seller is opened
         document.querySelectorAll('#autoMailList details').forEach(d => d.addEventListener('toggle', () => {
             const frame = d.querySelector('iframe');
@@ -323,6 +326,64 @@ function render(data) {
         $('autoMailList').innerHTML = '';
     }
 
+}
+
+// "Sent today 11:00 (daily)" next to a seller: when their email last went out
+function lastSentLabel(last) {
+    if (!last) return '<span class="mcs-last-sent is-none">Not sent yet</span>';
+    return `<span class="mcs-last-sent"><i class="fas fa-check"></i> Sent ${escapeHtml(when(last.at))} (${last.how === 'manual' ? 'by hand' : 'daily'})</span>`;
+}
+
+// One seller's buttons: send their email now (to them, or a test copy to the test address)
+function sendRow(s, i, data) {
+    const day = x => new Date(x).toLocaleDateString('en-CA', { timeZone: TZ });
+    const email = data.settings?.email || {};
+    const testTo = data.settings?.test_to || [];
+    const why = !email.ready ? 'Email is not set up yet (GRAPH_* and SELLER_EMAIL_FROM in .env)'
+        : data.running ? 'A run is in progress'
+        : day(data.seller_email.generatedAt) !== day(Date.now()) ? 'These emails are not from today. Press Test run first so the stock is fresh'
+        : '';
+    const sellerWhy = why || (s.email ? '' : `No email address: ${s.problem || 'none saved'}`);
+    const testWhy = why || (testTo.length ? '' : 'Save a test address first (Test, above)');
+    return `<div class="mcs-send-row">
+        <button type="button" class="btn btn--primary btn--sm mcs-send-btn" data-i="${i}" data-target="seller"${sellerWhy ? ` disabled title="${escapeHtml(sellerWhy)}"` : ''}>
+            <i class="fas fa-paper-plane"></i> Send stock alert to seller</button>
+        <button type="button" class="btn btn--sm mcs-send-btn" data-i="${i}" data-target="test"${testWhy ? ` disabled title="${escapeHtml(testWhy)}"` : ''}>
+            <i class="fas fa-flask"></i> Send test to me</button>
+        <span class="mcs-send-out" aria-live="polite">${why ? escapeHtml(why) : ''}</span>
+    </div>`;
+}
+
+async function sendOne(btn, s) {
+    const target = btn.dataset.target;
+    const where = target === 'seller' ? s.email : (mailSettings?.test_to || []).join(', ');
+    if (!confirm(target === 'seller'
+        ? `Send ${s.storeName}'s low-stock email to the seller now?\n\nTo: ${where}\n${s.productCount} low-stock product(s), from today's list.`
+        : `Send a TEST copy of ${s.storeName}'s email to ${where} now?\n\nThe seller receives nothing.`)) return;
+    const out = btn.parentElement.querySelector('.mcs-send-out');
+    const label = btn.innerHTML;
+    btn.parentElement.querySelectorAll('button').forEach(b => { b.disabled = true; });
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending…';
+    out.className = 'mcs-send-out';
+    out.textContent = '';
+    try {
+        const res = await fetch(`${API}/seller-email/${encodeURIComponent(s.sellerId)}`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Naar-Request': '1' },
+            body: JSON.stringify({ target }),
+        });
+        const r = await res.json().catch(() => ({}));
+        if (!res.ok || !r.ok) throw new Error(r.error || `Not sent (${res.status})`);
+        out.classList.add('is-ok');
+        out.textContent = `Sent to ${(r.to || []).join(', ')} at ${when(r.at).split(', ')[1]}${r.dry ? ' (dry, nothing really sent)' : ''}.`;
+        const tag = btn.closest('details')?.querySelector('.mcs-last-sent');
+        if (target === 'seller' && !r.dry && tag) tag.outerHTML = lastSentLabel({ at: r.at, how: 'manual' });
+    } catch (err) {
+        out.classList.add('is-error');
+        out.textContent = err.message;
+    } finally {
+        btn.innerHTML = label;
+        btn.parentElement.querySelectorAll('button').forEach(b => { b.disabled = !!b.title; });
+    }
 }
 
 // Run panel: buttons off while a run is going; its output is shown live

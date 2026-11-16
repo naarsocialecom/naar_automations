@@ -60,6 +60,15 @@ uses them. Test addresses must be on the sender's domain (@naar.io), because a t
 | `test` | sends every seller's email to the test address(es) typed on the page instead (subject starts with `[TEST for <store>]`) |
 | `on` | sends each seller their own email, once per day |
 
+**Send one seller's email by hand** (seller missed it, or a reminder): Meta page → Email to sellers →
+open the seller → **Send stock alert to seller** (to their own address) or **Send test to me** (to the test
+address). This works whatever Off / Test / On says, and uses today's emails only (press **Test run** first
+if the list is older). The address is read from MongoDB (read only) when you press the button and is never
+saved. Limits: 3 manual emails per seller per day, 10 minutes apart. Each one is logged in
+`job/exports/seller-email-log.json` (`manual`), and the seller row shows when they were last emailed.
+Script behind it: `node scripts/send-one-now.js --seller <sellerId> --target seller|test`
+(`DRY_SEND=true` prints instead of sending).
+
 Test one store's email to yourself: `npm run email:test -- --store "Doodleholic" --to you@naar.io --yes`
 (the address must be a test address set on the page). Sends are logged in `job/exports/seller-email-log.json`.
 
