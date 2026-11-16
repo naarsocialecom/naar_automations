@@ -33,10 +33,11 @@ def schedules_save(job_id):
     body = request.get_json(silent=True) or {}
     time = body.get('time')
     enabled = body.get('enabled')
+    days = body.get('days')
     if enabled is not None and not isinstance(enabled, bool):
         return jsonify({'error': 'enabled must be true or false'}), 400
     try:
-        saved = scheduler.save_settings(job_id, time=time, enabled=enabled)
+        saved = scheduler.save_settings(job_id, time=time, enabled=enabled, days=days)
     except KeyError:
         return jsonify({'error': f'No scheduled job {job_id}'}), 404
     except ValueError as e:

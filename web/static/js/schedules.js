@@ -1,8 +1,9 @@
-// Scheduler: list every scheduled job; change its time or switch it on/off.
+// Scheduler: list every scheduled job; change its time and days, or switch it on/off.
 import { escapeHtml } from '/static/js/helpers.js';
 
 const $ = id => document.getElementById(id);
 let TZ = 'Asia/Kolkata';
+const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];   // index = Python weekday()
 
 function when(iso) {
     if (!iso) return '–';
@@ -42,14 +43,17 @@ function render(data) {
                 <div class="sch-desc">${escapeHtml(j.description)}</div>
                 ${j.log.length ? `<details class="sch-log"><summary>Last output</summary><pre>${escapeHtml(j.log.join('\n'))}</pre></details>` : ''}
             </td>
-            <td data-label="Runs daily at">
+            <td data-label="Runs at">
                 <div class="sch-time">
                     <input type="time" value="${escapeHtml(j.time)}" aria-label="Time for ${escapeHtml(j.name)}">
                     <button type="button" class="btn btn--primary btn--sm sch-save" hidden>Save</button>
                 </div>
-                <div class="sch-muted">${j.time === j.default_time ? 'Default' : `Default ${escapeHtml(j.default_time)}`}</div>
+                <div class="sch-days" role="group" aria-label="Days for ${escapeHtml(j.name)}">
+                    ${DAYS.map((d, i) => `<button type="button" class="sch-day" data-day="${i}" aria-pressed="${j.days.includes(i)}" title="${d}">${d[0]}</button>`).join('')}
+                </div>
+                <div class="sch-muted">${escapeHtml(j.days_label)} · ${j.time === j.default_time ? 'Default time' : `Default ${escapeHtml(j.default_time)}`}</div>
             </td>
-            <td data-label="On"><label class="sch-switch" title="${j.enabled ? 'On: runs every day' : 'Off: does not run'}">
+            <td data-label="On"><label class="sch-switch" title="${j.enabled ? `On: runs ${escapeHtml(j.days_label)}` : 'Off: does not run'}">
                 <input type="checkbox" ${j.enabled ? 'checked' : ''}><span></span></label></td>
             <td data-label="Next run">${j.enabled ? `<b class="sch-when">${when(j.next_run)}</b>` : '<span class="sch-chip sch-chip--muted"><i class="fas fa-pause"></i> Off</span>'}</td>
             <td data-label="Last run">${lastRun(j.last_run)}</td>
@@ -59,9 +63,18 @@ function render(data) {
     document.querySelectorAll('#schRows tr[data-id]').forEach(row => {
         const input = row.querySelector('input[type=time]');
         const save = row.querySelector('.sch-save');
-        const original = input.value;
-        input.addEventListener('input', () => { save.hidden = !input.value || input.value === original; });
-        save.addEventListener('click', () => update(row.dataset.id, { time: input.value }, `Run time changed to ${input.value}`));
+        const dayBtns = [...row.querySelectorAll('.sch-day')];
+        const picked = () => dayBtns.filter(b => b.getAttribute('aria-pressed') === 'true').map(b => +b.dataset.day);
+        const original = { time: input.value, days: picked().join() };
+        const dirty = () => { save.hidden = !input.value || !picked().length
+            || (input.value === original.time && picked().join() === original.days); };
+        input.addEventListener('input', dirty);
+        dayBtns.forEach(b => b.addEventListener('click', () => {
+            b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+            dirty();
+        }));
+        save.addEventListener('click', () => update(row.dataset.id, { time: input.value, days: picked() },
+            `Saved: ${picked().map(i => DAYS[i]).join(', ')} at ${input.value}`));
         row.querySelector('.sch-switch input').addEventListener('change', e => {
             const on = e.target.checked;
             if (!on && !confirm('Switch this job off? It will not run until you switch it on again.')) { e.target.checked = true; return; }

@@ -9,7 +9,8 @@ data/schedules.json. On the server, cron starts this every minute (deploy/cronta
     python -m web.scheduler list         # show the jobs, their times and last runs
     python -m web.scheduler run <id>     # run one job now and record it (used by the check itself)
 
-A job runs once per day: at its time, or within GRACE_MINUTES after it (if the server was busy).
+A job runs once per day on its chosen weekdays (all seven by default): at its time, or within
+GRACE_MINUTES after it (if the server was busy).
 Changing the time to later the same day after it already ran does not run it twice that day.
 """
 import fcntl
@@ -33,6 +34,8 @@ RUNS_FILE = Config.DATA_DIR / 'schedule-runs.json'       # last run per job + he
 LOCK_FILE = Config.DATA_DIR / 'scheduler.lock'
 JOB_LOG_DIR = Config.LOG_DIR / 'jobs'
 GRACE_MINUTES = 30
+ALL_DAYS = [0, 1, 2, 3, 4, 5, 6]                       # Monday = 0 … Sunday = 6 (datetime.weekday())
+DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 JOB_TIMEOUT_SECONDS = 30 * 60
 
 
@@ -85,8 +88,26 @@ def _locked():
 
 def settings(job_def: Dict, saved: Dict = None) -> Dict:
     saved = (saved if saved is not None else _read(SCHEDULES_FILE)).get(job_def['id']) or {}
+    days = saved.get('days')
     return {'time': saved.get('time') or job_def['default_time'], 'enabled': saved.get('enabled', True),
-            'updated_at': saved.get('updated_at')}
+            'days': days if valid_days(days) else list(ALL_DAYS), 'updated_at': saved.get('updated_at')}
+
+
+def valid_days(value) -> bool:
+    return isinstance(value, list) and len(value) > 0 and all(
+        isinstance(d, int) and not isinstance(d, bool) and 0 <= d <= 6 for d in value)
+
+
+def days_label(days: List[int]) -> str:
+    """[0..6] → 'Every day'; [0..4] → 'Mon–Fri'; [0, 2, 4] → 'Mon, Wed, Fri'."""
+    days = sorted(set(days))
+    if days == ALL_DAYS:
+        return 'Every day'
+    if days == [0, 1, 2, 3, 4]:
+        return 'Mon–Fri'
+    if days == [5, 6]:
+        return 'Weekends'
+    return ', '.join(DAY_NAMES[d] for d in days)
 
 
 def valid_time(value: str) -> bool:
@@ -97,19 +118,22 @@ def valid_time(value: str) -> bool:
         return False
 
 
-def save_settings(job_id: str, time: str = None, enabled: bool = None) -> Dict:
+def save_settings(job_id: str, time: str = None, enabled: bool = None, days: List[int] = None) -> Dict:
     """Called by the website. Returns the job's new settings."""
     job_def = job(job_id)
     if not job_def:
         raise KeyError(job_id)
     if time is not None and not valid_time(time):
         raise ValueError('Time must be HH:MM (24-hour), e.g. 19:00')
+    if days is not None and not valid_days(days):
+        raise ValueError('Pick at least one day (0 = Monday … 6 = Sunday)')
     with _locked():
         data = _read(SCHEDULES_FILE)
         current = settings(job_def, data)
         data[job_id] = {
             'time': time if time is not None else current['time'],
             'enabled': bool(enabled) if enabled is not None else current['enabled'],
+            'days': sorted(set(days)) if days is not None else current['days'],
             'updated_at': now().isoformat(timespec='seconds'),
         }
         _write(SCHEDULES_FILE, data)
@@ -130,7 +154,12 @@ def next_run(job_def: Dict, at: datetime = None, runs: Dict = None) -> Optional[
     runs = runs if runs is not None else _read(RUNS_FILE)
     ran_today = (runs.get('jobs', {}).get(job_def['id']) or {}).get('last_date') == at.date().isoformat()
     today = _today_at(s['time'], at)
-    return today if today > at and not ran_today else today + timedelta(days=1)
+    first = 0 if today > at and not ran_today else 1
+    for offset in range(first, first + 7):
+        candidate = today + timedelta(days=offset)
+        if candidate.weekday() in s['days']:
+            return candidate
+    return None
 
 
 def time_label(hhmm: str) -> str:
@@ -154,6 +183,7 @@ def status() -> Dict:
             'id': j['id'], 'name': j['name'], 'description': j['description'], 'kind': j['kind'],
             'page': j['page'], 'time': s['time'], 'time_label': time_label(s['time']),
             'default_time': j['default_time'], 'enabled': s['enabled'], 'updated_at': s['updated_at'],
+            'days': s['days'], 'days_label': days_label(s['days']),
             'next_run': nxt.isoformat() if nxt else None, 'last_run': run or None,
             'log': log_tail(j['id']),
         })
@@ -188,7 +218,8 @@ def check() -> None:
             s = settings(j, saved)
             start = _today_at(s['time'], at)
             last = (runs.get('jobs') or {}).get(j['id']) or {}
-            if s['enabled'] and start <= at < start + timedelta(minutes=GRACE_MINUTES) \
+            if s['enabled'] and at.weekday() in s['days'] \
+                    and start <= at < start + timedelta(minutes=GRACE_MINUTES) \
                     and last.get('last_date') != at.date().isoformat():
                 # Claimed before starting, so the next minute's check can't start it again
                 runs.setdefault('jobs', {})[j['id']] = {**last, 'last_date': at.date().isoformat(),
@@ -243,7 +274,7 @@ def _print_list() -> None:
           f" · times in {st['timezone']}")
     for j in st['jobs']:
         last = j['last_run'] or {}
-        print(f"- {j['id']}: {j['time_label'] if j['enabled'] else 'OFF'} · next {j['next_run'] or '-'}"
+        print(f"- {j['id']}: {j['days_label'] + ' ' + j['time_label'] if j['enabled'] else 'OFF'} · next {j['next_run'] or '-'}"
               f" · last {last.get('started_at', '-')} {last.get('status', '')}")
 
 
